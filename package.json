@@ -1,0 +1,91 @@
+{
+  "name": "logging-view-plugin",
+  "version": "0.0.1",
+  "private": true,
+  "repository": "git@github.com/jgbernalp/logging-console-plugin",
+  "scripts": {
+    "clean": "rm -rf dist",
+    "clean:standalone": "rm -rf dist-standalone",
+    "build": "npm run clean && NODE_ENV=production npm run ts-node node_modules/.bin/webpack",
+    "build:dev": "npm run clean && npm run ts-node node_modules/.bin/webpack",
+    "build:standalone": "npm run clean:standalone && npm run ts-node node_modules/.bin/webpack -- --config webpack.standalone.config.ts",
+    "build:standalone:instrumented": "npm run clean:standalone && npm run ts-node node_modules/.bin/webpack -- --config webpack.standalone.instrumented.config.ts",
+    "start:dist": "serve -s ./dist -p 9003 -C",
+    "start:standalone": "serve -s ./dist-standalone -p 9003 -C",
+    "dev": "npm run ts-node node_modules/.bin/webpack serve",
+    "dev:standalone": "npm run ts-node node_modules/.bin/webpack serve -- --config webpack.standalone.config.ts",
+    "start:console": "./scripts/start-console.sh -e",
+    "i18n": "i18next \"src/**/*.{js,jsx,ts,tsx}\" [-oc] -c i18next-parser.config.js",
+    "ts-node": "ts-node -O '{\"module\":\"commonjs\"}'",
+    "lint": "eslint ./src --fix",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "test:unit": "jest --config jest.config.js",
+    "test:unit:watch": "jest --config jest.config.js --watch",
+    "test:unit:coverage": "jest --config jest.config.js --coverage"
+  },
+  "devDependencies": {
+    "@cypress/code-coverage": "^3.10.0",
+    "@jsdevtools/coverage-istanbul-loader": "^3.0.5",
+    "@openshift-console/dynamic-plugin-sdk": "^0.0.8",
+    "@openshift-console/dynamic-plugin-sdk-webpack": "^0.0.6",
+    "@patternfly/react-core": "4.175.4",
+    "@types/jest": "^28.1.4",
+    "@types/node": "^17.0.21",
+    "@types/react": "^17.0.37",
+    "@types/react-dom": "17.0.17",
+    "@types/react-helmet": "^6.1.4",
+    "@types/react-router-dom": "^5.3.2",
+    "@types/webpack-dev-server": "^4.7.2",
+    "@typescript-eslint/eslint-plugin": "^5.15.0",
+    "@typescript-eslint/parser": "^5.15.0",
+    "css-loader": "^6.7.1",
+    "cypress": "^10.3.0",
+    "eslint": "^8.11.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-react": "^7.29.4",
+    "html-webpack-plugin": "^5.5.0",
+    "jest": "^28.1.2",
+    "nyc": "^15.1.0",
+    "prettier": "^2.6.0",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
+    "react-helmet": "^6.1.0",
+    "react-i18next": "^11.8.11",
+    "react-router": "5.2.0",
+    "react-router-dom": "5.2.0",
+    "serve": "^13.0.2",
+    "style-loader": "^3.3.1",
+    "ts-jest": "^28.0.5",
+    "ts-loader": "^9.2.8",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.2",
+    "webpack": "^5.68.0",
+    "webpack-cli": "^4.9.2",
+    "webpack-dev-server": "^4.7.4"
+  },
+  "consolePlugin": {
+    "name": "logging-view-plugin",
+    "version": "0.0.1",
+    "displayName": "Logging View Plugin",
+    "description": "This plugin adds the logs UI to Openshift console",
+    "exposedModules": {
+      "LogsPage": "./pages/logs-page",
+      "LogsDetailPage": "./pages/logs-detail-page",
+      "LogActionsProvider": "./hooks/useLogActionsExtension"
+    },
+    "dependencies": {
+      "@console/pluginAPI": "*"
+    }
+  },
+  "dependencies": {
+    "@patternfly/patternfly": "^4.202.1",
+    "@patternfly/react-charts": "^6.55.16",
+    "@patternfly/react-icons": "^4.57.2",
+    "@patternfly/react-table": "^4.71.16"
+  },
+  "nyc": {
+    "report-dir": "./coverage/cov-cypress"
+  }
+}
