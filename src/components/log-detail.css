@@ -1,0 +1,8 @@
+.pf-c-description-list.pf-m-compact.co-logs-detail_descripton-list{
+  --pf-c-description-list--RowGap: var(--pf-global--spacer--sm);
+}
+
+.co-logs-detail__list-term{
+  overflow-wrap: anywhere;
+}
+
