@@ -89,8 +89,8 @@ spec:
           imagePullPolicy: Always
           resources:
             requests:
-              cpu: 10m
-              memory: 50Mi
+              cpu: 100m
+              memory: 128Mi
           volumeMounts:
             - name: plugin-serving-cert
               readOnly: true
