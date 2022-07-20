@@ -8,9 +8,9 @@ import {
 
 const LOGS_PAGE_URL = '/monitoring/logs';
 const QUERY_RANGE_STREAMS_URL_MATCH =
-  '/api/proxy/plugin/logging-view-plugin/backend/loki/api/v1/query_range?query=%7B*';
+  '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/query_range?query=%7B*';
 const QUERY_RANGE_MATRIX_URL_MATCH =
-  '/api/proxy/plugin/logging-view-plugin/backend/loki/api/v1/query_range?query=sum*';
+  '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/query_range?query=sum*';
 const TEST_MESSAGE = "loki_1 | level=info msg='test log'";
 
 describe('Logs Page', () => {

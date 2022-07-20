@@ -1,3 +1,8 @@
+export type Config = {
+  useTenantInHeader?: boolean;
+  isStreamingEnabledInDefaultPage?: boolean;
+};
+
 export type MetricValue = Array<number | string>;
 
 export type TimeRange = { start: number; end: number };

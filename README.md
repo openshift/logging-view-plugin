@@ -44,7 +44,7 @@ might fail since it runs an amd64 image. You can workaround the problem with
 [qemu-user-static](https://github.com/multiarch/qemu-user-static) by running
 these commands:
 
-```bash
+```sh
 podman machine ssh
 sudo -i
 rpm-ostree install qemu-user-static
@@ -55,22 +55,22 @@ systemctl reboot
 
 #### Unit tests
 
-```shell
+```sh
 npm run test:unit
 ```
 
 #### e2e tests
 
-In order to run the e2e tests, you need to build and run the plugin in standalone mode in one console.
+In order to run the e2e tests, you need first to build the plugin in standalone mode
 
-```shell
-npm run build:standalone:instrumented && npm run start:standalone
+```sh
+npm run build:standalone:instrumented
 ```
 
-and run the cypress tests in a different console.
+and then run the cypress tests
 
-```shell
-npm run cypress:run
+```sh
+npm run test:e2e
 ```
 
 ## Deployment on cluster
@@ -89,4 +89,10 @@ config to enable the plugin.
 ```sh
 oc patch consoles.operator.openshift.io cluster \
   --patch '{ "spec": { "plugins": ["logging-view-plugin"] } }' --type=merge
+```
+
+## Build the image
+
+```sh
+./scripts/image.sh -t latest
 ```

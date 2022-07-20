@@ -26,11 +26,9 @@ const App = () => {
                   </Link>
                 </li>
                 <li className="pf-c-nav__item">
-                  <a href="#" aria-current="page">
-                    <Link className="pf-c-nav__link" to="/monitoring/logs">
-                      Logs
-                    </Link>
-                  </a>
+                  <Link className="pf-c-nav__link" to="/monitoring/logs">
+                    Logs
+                  </Link>
                 </li>
               </ul>
             </nav>

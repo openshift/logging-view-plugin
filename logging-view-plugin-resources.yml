@@ -137,6 +137,22 @@ spec:
       alias: backend
       authorize: true
       service:
-        name: lokistack-dev-query-frontend-http
+        name: lokistack-sample-gateway-http
         namespace: openshift-logging
-        port: 3001
+        port: 8080
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logging-view-config
+  namespace: logging-view
+  labels:
+    app: logging-view-plugin
+    app.kubernetes.io/part-of: logging-view-plugin
+data:
+  config: |
+    {
+      "useTenantInHeader": true,
+      "isStreamingEnabledInDefaultPage": true
+    }

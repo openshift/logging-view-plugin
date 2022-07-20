@@ -2,7 +2,7 @@ FROM docker.io/library/node:16 AS build
 
 ADD . /usr/src/app
 WORKDIR /usr/src/app
-RUN yarn install --network-timeout 1000000 && yarn build
+RUN npm install && npm run build
 
 FROM docker.io/library/nginx:stable
 
