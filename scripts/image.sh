@@ -22,7 +22,7 @@ else
     OCI_BIN="docker"
 fi
 
-BASE_IMAGE="quay.io/gbernal/logging-view-plugin"
+BASE_IMAGE="quay.io/openshift-logging/logging-view-plugin"
 IMAGE=${BASE_IMAGE}:${TAG}
 
 echo "Building image '${IMAGE}' with ${OCI_BIN}"

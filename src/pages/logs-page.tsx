@@ -13,13 +13,13 @@ import {
 import { SyncAltIcon } from '@patternfly/react-icons';
 import * as React from 'react';
 import { useHistory, useLocation } from 'react-router';
-import { TestIds } from '../test-ids';
 import { LogsHistogram } from '../components/logs-histogram';
 import { LogsQueryInput } from '../components/logs-query-input';
 import { LogsTable } from '../components/logs-table';
 import { useLogs } from '../hooks/useLogs';
 import { useQueryParams } from '../hooks/useQueryParams';
 import { isSeverity, Severity } from '../severity';
+import { TestIds } from '../test-ids';
 import { timeRangeOptions } from '../time-range-options';
 
 const DEFAULT_TIME_RANGE = '1h';
@@ -202,6 +202,7 @@ const LogsPage: React.FunctionComponent = () => {
     timeRange,
     interval,
     toggleStreaming,
+    config,
   } = useLogs();
 
   const handleToggleStreaming = () => {
@@ -311,7 +312,7 @@ const LogsPage: React.FunctionComponent = () => {
           isLoadingMore={isLoadingMoreLogsData}
           hasMoreLogsData={hasMoreLogsData}
           error={logsError}
-          showStreaming
+          showStreaming={config.isStreamingEnabledInDefaultPage}
         >
           <LogsQueryInput
             value={query}

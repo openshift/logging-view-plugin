@@ -1,6 +1,8 @@
+import { useK8sWatchResource } from '@openshift-console/dynamic-plugin-sdk';
 import { WSFactory } from '@openshift-console/dynamic-plugin-sdk/lib/utils/k8s/ws-factory';
 import * as React from 'react';
 import {
+  Config,
   isMatrixResult,
   isStreamsResult,
   QueryRangeResponse,
@@ -18,6 +20,17 @@ const DEFAULT_TIME_RANGE = '1h';
 const QUERY_LOGS_LIMIT = 200;
 const STREAMING_MAX_LOGS_LIMIT = 1e3;
 
+type RawConfig = { data: { config: string } };
+
+const defaultConfig: Config = {
+  isStreamingEnabledInDefaultPage: true,
+};
+
+const isRawConfig = (obj: unknown): obj is RawConfig =>
+  obj !== null &&
+  (obj as RawConfig).data &&
+  typeof (obj as RawConfig).data.config === 'string';
+
 type State = {
   timeSpan: number;
   isLoadingHistogramData: boolean;
@@ -29,6 +42,7 @@ type State = {
   logsError?: unknown;
   hasMoreLogsData?: boolean;
   isStreaming: boolean;
+  config: Config;
 };
 
 type Action =
@@ -82,6 +96,12 @@ type Action =
       type: 'histogramError';
       payload: {
         error: unknown;
+      };
+    }
+  | {
+      type: 'setConfig';
+      payload: {
+        config: Config;
       };
     };
 
@@ -200,6 +220,11 @@ const reducer = (state: State, action: Action): State => {
         isLoadingMoreLogsData: false,
         logsError: action.payload.error,
       };
+    case 'setConfig':
+      return {
+        ...state,
+        config: action.payload.config,
+      };
 
     default:
       return state;
@@ -234,10 +259,16 @@ export const useLogs = (
 ) => {
   const currentQuery = React.useRef<string | undefined>();
   const currentSeverityFilter = React.useRef<Set<Severity> | undefined>();
+  const currentConfig = React.useRef<Config>(defaultConfig);
   const [localTimeSpan, setTimeSpan] = React.useState<number>(initialTimeSpan);
   const logsAbort = React.useRef<() => void | undefined>();
   const histogramAbort = React.useRef<() => void | undefined>();
   const ws = React.useRef<WSFactory | null>();
+  const [configData, configLoaded, configError] = useK8sWatchResource({
+    namespace: 'logging-view',
+    name: 'logging-view-config',
+    kind: 'ConfigMap',
+  });
 
   const [
     {
@@ -251,6 +282,7 @@ export const useLogs = (
       logsError,
       hasMoreLogsData,
       isStreaming,
+      config,
     },
     dispatch,
   ] = React.useReducer(reducer, {
@@ -260,7 +292,23 @@ export const useLogs = (
     isLoadingMoreLogsData: false,
     hasMoreLogsData: false,
     isStreaming: false,
+    config: defaultConfig,
   });
+
+  React.useEffect(() => {
+    if (!configError && configLoaded) {
+      try {
+        if (isRawConfig(configData)) {
+          const parsedConfig = JSON.parse(configData.data.config);
+          const mergedConfig = { ...defaultConfig, ...parsedConfig };
+          dispatch({ type: 'setConfig', payload: { config: mergedConfig } });
+          currentConfig.current = mergedConfig;
+        }
+      } catch (e) {
+        console.error('Error parsing configuration from ConfigMap', e);
+      }
+    }
+  }, [configLoaded, configError, configData]);
 
   const getMoreLogs = async ({
     lastTimestamp,
@@ -289,6 +337,7 @@ export const useLogs = (
         end: lastTimestamp,
         severity: severityFilter,
         limit: QUERY_LOGS_LIMIT,
+        config: currentConfig.current,
       });
 
       logsAbort.current = abort;
@@ -331,6 +380,7 @@ export const useLogs = (
         end,
         severity: severityFilter,
         limit: QUERY_LOGS_LIMIT,
+        config: currentConfig.current,
       });
 
       logsAbort.current = abort;
@@ -445,6 +495,7 @@ export const useLogs = (
         end,
         severity: severityFilter,
         interval: intervalFromSpan(localTimeSpan),
+        config: currentConfig.current,
       });
 
       histogramAbort.current = abort;
@@ -501,6 +552,7 @@ export const useLogs = (
     getHistogram,
     histogramError,
     toggleStreaming,
+    config,
     timeRange: timeRangeFromSpan(timeSpan),
     interval: intervalFromSpan(timeSpan),
   };

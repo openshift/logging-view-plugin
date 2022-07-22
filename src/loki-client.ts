@@ -1,9 +1,9 @@
 import { WSFactory } from '@openshift-console/dynamic-plugin-sdk/lib/utils/k8s/ws-factory';
-import { QueryRangeResponse } from './logs.types';
+import { Config, QueryRangeResponse } from './logs.types';
 import { Severity, severityAbbreviations } from './severity';
 import { durationFromTimestamp, notEmptyString } from './value-utils';
 
-const LOKI_ENDPOINT = '/api/proxy/plugin/logging-view-plugin/backend/';
+const LOKI_ENDPOINT = '/api/proxy/plugin/logging-view-plugin/backend';
 
 type QueryRangeParams = {
   query: string;
@@ -11,6 +11,7 @@ type QueryRangeParams = {
   end: number;
   severity?: Set<Severity>;
   limit?: number;
+  config?: Config;
 };
 
 type HistogramQuerParams = {
@@ -19,6 +20,7 @@ type HistogramQuerParams = {
   end: number;
   interval: number;
   severity?: Set<Severity>;
+  config?: Config;
 };
 
 const getSeverityFilter = (severity: Set<Severity>): string => {
@@ -41,17 +43,18 @@ class TimeoutError extends Error {
 
 type CancellableFetch<T> = { request: () => Promise<T>; abort: () => void };
 
+type RequestInitWithTimeout = RequestInit & { timeout?: number };
+
 const cancellableFetch = <T>(
-  input: RequestInfo,
-  init?: RequestInit & { timeout: number },
+  url: string,
+  init?: RequestInitWithTimeout,
 ): CancellableFetch<T> => {
   const abortController = new AbortController();
   const abort = () => abortController.abort();
 
-  const fetchPromise = fetch(input, {
+  const fetchPromise = fetch(url, {
     ...init,
-    // TODO: allow org id based on configuration
-    headers: { Accept: 'application/json', 'X-Scope-OrgID': 'application' },
+    headers: { ...init?.headers, Accept: 'application/json' },
     signal: abortController.signal,
   }).then(async (response) => {
     if (!response.ok) {
@@ -69,7 +72,7 @@ const cancellableFetch = <T>(
 
   const timeoutPromise = new Promise<T>((_resolve, reject) => {
     setTimeout(
-      () => reject(new TimeoutError(input.toString(), timeout)),
+      () => reject(new TimeoutError(url.toString(), timeout)),
       timeout,
     );
   });
@@ -79,11 +82,29 @@ const cancellableFetch = <T>(
   return { request, abort };
 };
 
+const getFetchConfig = (
+  config?: Config,
+): { requestInit?: RequestInitWithTimeout; endpoint: string } => {
+  if (config && config.useTenantInHeader) {
+    return {
+      requestInit: {
+        headers: { 'X-Scope-OrgID': 'application' },
+      },
+      endpoint: LOKI_ENDPOINT,
+    };
+  }
+
+  return {
+    endpoint: `${LOKI_ENDPOINT}/api/logs/v1/application`,
+  };
+};
+
 export const executeQueryRange = ({
   query,
   start,
   end,
   severity,
+  config,
   limit = 100,
 }: QueryRangeParams): CancellableFetch<QueryRangeResponse> => {
   const severityFilterExpression =
@@ -101,8 +122,11 @@ export const executeQueryRange = ({
     limit: String(limit),
   };
 
+  const { endpoint, requestInit } = getFetchConfig(config);
+
   return cancellableFetch<QueryRangeResponse>(
-    `${LOKI_ENDPOINT}loki/api/v1/query_range?${new URLSearchParams(params)}`,
+    `${endpoint}/loki/api/v1/query_range?${new URLSearchParams(params)}`,
+    requestInit,
   );
 };
 
@@ -112,6 +136,7 @@ export const executeHistogramQuery = ({
   end,
   interval,
   severity,
+  config,
 }: HistogramQuerParams): CancellableFetch<QueryRangeResponse> => {
   const intervalString = durationFromTimestamp(interval);
   const severityFilterExpression =
@@ -132,8 +157,11 @@ export const executeHistogramQuery = ({
     step: intervalString,
   };
 
+  const { endpoint, requestInit } = getFetchConfig(config);
+
   return cancellableFetch<QueryRangeResponse>(
-    `${LOKI_ENDPOINT}loki/api/v1/query_range?${new URLSearchParams(params)}`,
+    `${endpoint}/loki/api/v1/query_range?${new URLSearchParams(params)}`,
+    requestInit,
   );
 };
 
@@ -142,6 +170,7 @@ export const connectToTailSocket = ({
   start,
   severity,
   limit = 200,
+  config,
 }: Omit<QueryRangeParams, 'end'>) => {
   const severityFilterExpression =
     severity.size > 0 ? getSeverityFilter(severity) : '';
@@ -157,7 +186,9 @@ export const connectToTailSocket = ({
     limit: String(limit),
   };
 
-  const url = `${LOKI_ENDPOINT}loki/api/v1/tail?${new URLSearchParams(params)}`;
+  const { endpoint } = getFetchConfig(config);
+
+  const url = `${endpoint}/loki/api/v1/tail?${new URLSearchParams(params)}`;
 
   return new WSFactory(url, {
     host: 'auto',
