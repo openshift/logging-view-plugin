@@ -20,6 +20,7 @@
     "lint": "eslint ./src --fix",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
+    "test": "run-p --race -l test:unit test:e2e",
     "test:unit": "jest --config jest.config.js",
     "test:e2e": "run-p --race -l start:standalone cypress:run",
     "test:unit:watch": "jest --config jest.config.js --watch",
