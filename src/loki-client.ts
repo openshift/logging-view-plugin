@@ -12,6 +12,7 @@ type QueryRangeParams = {
   severity?: Set<Severity>;
   limit?: number;
   config?: Config;
+  tenant: string;
 };
 
 type HistogramQuerParams = {
@@ -21,6 +22,7 @@ type HistogramQuerParams = {
   interval: number;
   severity?: Set<Severity>;
   config?: Config;
+  tenant: string;
 };
 
 const getSeverityFilter = (severity: Set<Severity>): string => {
@@ -82,20 +84,24 @@ const cancellableFetch = <T>(
   return { request, abort };
 };
 
-const getFetchConfig = (
-  config?: Config,
-): { requestInit?: RequestInitWithTimeout; endpoint: string } => {
-  if (config && config.useTenantInHeader) {
+const getFetchConfig = ({
+  config,
+  tenant,
+}: {
+  config?: Config;
+  tenant: string;
+}): { requestInit?: RequestInitWithTimeout; endpoint: string } => {
+  if (config && config.useTenantInHeader === true) {
     return {
       requestInit: {
-        headers: { 'X-Scope-OrgID': 'application' },
+        headers: { 'X-Scope-OrgID': tenant },
       },
       endpoint: LOKI_ENDPOINT,
     };
   }
 
   return {
-    endpoint: `${LOKI_ENDPOINT}/api/logs/v1/application`,
+    endpoint: `${LOKI_ENDPOINT}/api/logs/v1/${tenant}`,
   };
 };
 
@@ -106,6 +112,7 @@ export const executeQueryRange = ({
   severity,
   config,
   limit = 100,
+  tenant,
 }: QueryRangeParams): CancellableFetch<QueryRangeResponse> => {
   const severityFilterExpression =
     severity.size > 0 ? getSeverityFilter(severity) : '';
@@ -122,7 +129,7 @@ export const executeQueryRange = ({
     limit: String(limit),
   };
 
-  const { endpoint, requestInit } = getFetchConfig(config);
+  const { endpoint, requestInit } = getFetchConfig({ config, tenant });
 
   return cancellableFetch<QueryRangeResponse>(
     `${endpoint}/loki/api/v1/query_range?${new URLSearchParams(params)}`,
@@ -137,6 +144,7 @@ export const executeHistogramQuery = ({
   interval,
   severity,
   config,
+  tenant,
 }: HistogramQuerParams): CancellableFetch<QueryRangeResponse> => {
   const intervalString = durationFromTimestamp(interval);
   const severityFilterExpression =
@@ -157,7 +165,7 @@ export const executeHistogramQuery = ({
     step: intervalString,
   };
 
-  const { endpoint, requestInit } = getFetchConfig(config);
+  const { endpoint, requestInit } = getFetchConfig({ config, tenant });
 
   return cancellableFetch<QueryRangeResponse>(
     `${endpoint}/loki/api/v1/query_range?${new URLSearchParams(params)}`,
@@ -171,6 +179,7 @@ export const connectToTailSocket = ({
   severity,
   limit = 200,
   config,
+  tenant,
 }: Omit<QueryRangeParams, 'end'>) => {
   const severityFilterExpression =
     severity.size > 0 ? getSeverityFilter(severity) : '';
@@ -186,7 +195,7 @@ export const connectToTailSocket = ({
     limit: String(limit),
   };
 
-  const { endpoint } = getFetchConfig(config);
+  const { endpoint } = getFetchConfig({ config, tenant });
 
   const url = `${endpoint}/loki/api/v1/tail?${new URLSearchParams(params)}`;
 

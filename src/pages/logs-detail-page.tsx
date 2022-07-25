@@ -1,10 +1,10 @@
 import { Grid, PageSection } from '@patternfly/react-core';
 import * as React from 'react';
 import { useParams } from 'react-router';
-import { Severity } from '../severity';
-import { LogsQueryInput } from '../components/logs-query-input';
 import { LogsTable } from '../components/logs-table';
+import { LogsToolbar } from '../components/logs-toolbar';
 import { useLogs } from '../hooks/useLogs';
+import { Severity } from '../severity';
 
 const LogsDetailPage: React.FunctionComponent = () => {
   const { name: podname } = useParams<{ name: string }>();
@@ -13,6 +13,7 @@ const LogsDetailPage: React.FunctionComponent = () => {
   const [severityFilter, setSeverityFilter] = React.useState<Set<Severity>>(
     new Set(),
   );
+  const [showResources, setShowResources] = React.useState(false);
 
   const {
     isLoadingLogsData,
@@ -50,17 +51,24 @@ const LogsDetailPage: React.FunctionComponent = () => {
         <LogsTable
           logsData={logsData}
           isStreaming={isStreaming}
-          severityFilter={severityFilter}
-          onStreamingToggle={handleToggleStreaming}
-          onSeverityChange={setSeverityFilter}
           onLoadMore={handleLoadMoreData}
           isLoading={isLoadingLogsData}
           isLoadingMore={isLoadingMoreLogsData}
           hasMoreLogsData={hasMoreLogsData}
           error={logsError}
-          showStreaming
         >
-          <LogsQueryInput value={query} onRun={runQuery} onChange={setQuery} />
+          <LogsToolbar
+            query={query}
+            onQueryChange={setQuery}
+            onQueryRun={runQuery}
+            severityFilter={severityFilter}
+            onSeverityChange={setSeverityFilter}
+            isStreaming={isStreaming}
+            onStreamingToggle={handleToggleStreaming}
+            showResources={showResources}
+            onShowResourcesToggle={setShowResources}
+            enableStreaming
+          />
         </LogsTable>
       </Grid>
     </PageSection>

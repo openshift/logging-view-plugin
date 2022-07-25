@@ -19,7 +19,7 @@ Make sure you have loki running on `http://localhost:3100`
 In one terminal window, run:
 
 1. `npm install`
-2. `npm run start`
+2. `npm run dev`
 
 In another terminal window, run:
 
