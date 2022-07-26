@@ -1,2 +1,7 @@
-# FROM cypress/included:10.3.0
-FROM quay.io/gbernal/cypress-included:10.3.0
+FROM cypress/included:10.3.0
+
+ADD . /usr/src/app
+WORKDIR /usr/src/app
+
+RUN npm ci
+RUN npm run build:standalone
