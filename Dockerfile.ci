@@ -18,9 +18,13 @@ RUN INSTALL_PKGS="nodejs nodejs-nodemon npm findutils tar" && \
     microdnf clean all && \
     rm -rf /mnt/rootfs/var/cache/* /mnt/rootfs/var/log/dnf* /mnt/rootfs/var/log/yum.*
 
-ADD . ${HOME}
 WORKDIR ${HOME}
-RUN npm install && npm run build
+
+COPY package*.json .
+RUN npm ci && npm cache clean --force
+
+COPY . ${HOME}
+RUN npm run build
 
 FROM registry.redhat.io/ubi8/nginx-120:1-44
 
