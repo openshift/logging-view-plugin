@@ -1,8 +1,12 @@
-FROM docker.io/library/node:16 AS build
+FROM docker.io/library/node:16.14.2 AS build
 
-ADD . /usr/src/app
 WORKDIR /usr/src/app
-RUN npm install && npm run build
+
+COPY package*.json .
+RUN npm ci && npm cache clean --force
+
+COPY . /usr/src/app
+RUN npm run build
 
 FROM docker.io/library/nginx:stable
 
