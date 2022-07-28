@@ -13,8 +13,8 @@ import {
 import { SyncAltIcon } from '@patternfly/react-icons';
 import * as React from 'react';
 import { useHistory, useLocation } from 'react-router';
+import { LogsToolbar } from '../components/logs-toolbar';
 import { LogsHistogram } from '../components/logs-histogram';
-import { LogsQueryInput } from '../components/logs-query-input';
 import { LogsTable } from '../components/logs-table';
 import { useLogs } from '../hooks/useLogs';
 import { useQueryParams } from '../hooks/useQueryParams';
@@ -160,8 +160,10 @@ const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
 };
 
 const QUERY_PARAM_KEY = 'q';
+const TENANT_PARAM_KEY = 'tenant';
 const SEVERITY_FILTER_PARAM_KEY = 'severity';
 const DEFAULT_QUERY = '{ kubernetes_host =~ ".+" }';
+const DEFAULT_TENANT = 'application';
 
 const severityFiltersFromParams = (params: string | null): Set<Severity> => {
   const severityFilters: Array<Severity> =
@@ -179,11 +181,14 @@ const LogsPage: React.FunctionComponent = () => {
   const location = useLocation();
 
   const initialQuery = queryParams.get(QUERY_PARAM_KEY) ?? DEFAULT_QUERY;
+  const initialTenant = queryParams.get(TENANT_PARAM_KEY) ?? DEFAULT_TENANT;
   const initialSeverity = severityFiltersFromParams(
     queryParams.get(SEVERITY_FILTER_PARAM_KEY),
   );
   const [query, setQuery] = React.useState(initialQuery);
+  const [showResources, setShowResources] = React.useState(false);
   const [severityFilter, setSeverityFilter] = React.useState(initialSeverity);
+  const [tenant, setTenant] = React.useState(initialTenant);
 
   const {
     histogramData,
@@ -235,14 +240,17 @@ const LogsPage: React.FunctionComponent = () => {
   const runQuery = (
     queryToRun?: string,
     severityToConsider?: Set<Severity>,
+    tenantToConsider?: string,
   ) => {
     getLogs({
       query: queryToRun ?? query,
       severityFilter: severityToConsider ?? severityFilter,
+      tenant: tenantToConsider ?? tenant,
     });
     getHistogram({
       query: queryToRun ?? query,
       severityFilter: severityToConsider ?? severityFilter,
+      tenant: tenantToConsider ?? tenant,
     });
   };
 
@@ -254,18 +262,27 @@ const LogsPage: React.FunctionComponent = () => {
     return history.listen((location) => {
       const urlParams = new URLSearchParams(location.search);
       const newQuery = urlParams.get(QUERY_PARAM_KEY) ?? DEFAULT_QUERY;
+      const newTenant = urlParams.get(TENANT_PARAM_KEY) ?? DEFAULT_TENANT;
       const newSeverityFilter = severityFiltersFromParams(
         urlParams.get(SEVERITY_FILTER_PARAM_KEY),
       );
+
       setQuery(newQuery);
+      setTenant(newTenant);
       setSeverityFilter(newSeverityFilter);
-      runQuery(newQuery, newSeverityFilter);
+
+      runQuery(newQuery, newSeverityFilter, newTenant);
     });
   }, [history]);
 
   React.useEffect(() => {
     runQuery();
   }, []);
+
+  const setTenantInURL = (tenant: string) => {
+    queryParams.set(TENANT_PARAM_KEY, tenant);
+    history.push(`${location.pathname}?${queryParams.toString()}`);
+  };
 
   return (
     <PageSection>
@@ -303,21 +320,27 @@ const LogsPage: React.FunctionComponent = () => {
 
         <LogsTable
           logsData={logsData}
-          isStreaming={isStreaming}
-          severityFilter={severityFilter}
-          onStreamingToggle={handleToggleStreaming}
-          onSeverityChange={setSeverityInURL}
           onLoadMore={handleLoadMoreData}
           isLoading={isLoadingLogsData}
           isLoadingMore={isLoadingMoreLogsData}
           hasMoreLogsData={hasMoreLogsData}
+          showResources={showResources}
+          isStreaming={isStreaming}
           error={logsError}
-          showStreaming={config.isStreamingEnabledInDefaultPage}
         >
-          <LogsQueryInput
-            value={query}
-            onRun={setQueryInURL}
-            onChange={setQuery}
+          <LogsToolbar
+            query={query}
+            onQueryChange={setQuery}
+            onQueryRun={setQueryInURL}
+            onTenantSelect={setTenantInURL}
+            tenant={tenant}
+            severityFilter={severityFilter}
+            onSeverityChange={setSeverityInURL}
+            isStreaming={isStreaming}
+            onStreamingToggle={handleToggleStreaming}
+            enableStreaming={config.isStreamingEnabledInDefaultPage}
+            showResources={showResources}
+            onShowResourcesToggle={setShowResources}
           />
         </LogsTable>
       </Grid>

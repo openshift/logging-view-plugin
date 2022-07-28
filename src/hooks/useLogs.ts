@@ -23,7 +23,7 @@ const STREAMING_MAX_LOGS_LIMIT = 1e3;
 type RawConfig = { data: { config: string } };
 
 const defaultConfig: Config = {
-  isStreamingEnabledInDefaultPage: true,
+  isStreamingEnabledInDefaultPage: false,
 };
 
 const isRawConfig = (obj: unknown): obj is RawConfig =>
@@ -250,16 +250,23 @@ const defaultTimeSpan = (): number => {
   return defaultSpan;
 };
 
-type UseLogOptions = { initialTimeSpan?: number } | undefined;
+type UseLogOptions =
+  | { initialTimeSpan?: number; initialTenant?: string }
+  | undefined;
 
 export const useLogs = (
-  { initialTimeSpan = defaultTimeSpan() }: UseLogOptions = {
+  {
+    initialTimeSpan = defaultTimeSpan(),
+    initialTenant = 'application',
+  }: UseLogOptions = {
     initialTimeSpan: defaultTimeSpan(),
+    initialTenant: 'application',
   },
 ) => {
   const currentQuery = React.useRef<string | undefined>();
   const currentSeverityFilter = React.useRef<Set<Severity> | undefined>();
   const currentConfig = React.useRef<Config>(defaultConfig);
+  const currentTenant = React.useRef<string>(initialTenant);
   const [localTimeSpan, setTimeSpan] = React.useState<number>(initialTimeSpan);
   const logsAbort = React.useRef<() => void | undefined>();
   const histogramAbort = React.useRef<() => void | undefined>();
@@ -338,6 +345,7 @@ export const useLogs = (
         severity: severityFilter,
         limit: QUERY_LOGS_LIMIT,
         config: currentConfig.current,
+        tenant: currentTenant.current,
       });
 
       logsAbort.current = abort;
@@ -358,13 +366,16 @@ export const useLogs = (
   const getLogs = async ({
     query,
     severityFilter,
+    tenant,
   }: {
     query: string;
     severityFilter: Set<Severity>;
+    tenant?: string;
   }) => {
     try {
       currentQuery.current = query;
       currentSeverityFilter.current = severityFilter;
+      currentTenant.current = tenant ?? currentTenant.current;
 
       const { start, end } = timeRangeFromSpan(localTimeSpan);
 
@@ -381,6 +392,7 @@ export const useLogs = (
         severity: severityFilter,
         limit: QUERY_LOGS_LIMIT,
         config: currentConfig.current,
+        tenant: currentTenant.current,
       });
 
       logsAbort.current = abort;
@@ -406,12 +418,15 @@ export const useLogs = (
   const startTailLog = ({
     query,
     severityFilter,
+    tenant,
   }: {
     query: string;
     severityFilter: Set<Severity>;
+    tenant?: string;
   }) => {
     currentQuery.current = query;
     currentSeverityFilter.current = severityFilter;
+    currentTenant.current = tenant ?? currentTenant.current;
 
     const { start } = timeRangeFromSpan(localTimeSpan);
 
@@ -425,6 +440,7 @@ export const useLogs = (
       query,
       start,
       severity: severityFilter,
+      tenant: currentTenant.current,
     });
 
     ws.current.onerror((error) => {
@@ -455,30 +471,36 @@ export const useLogs = (
   const toggleStreaming = ({
     query,
     severityFilter,
+    tenant,
   }: {
     query: string;
     severityFilter: Set<Severity>;
+    tenant?: string;
   }) => {
     currentQuery.current = query;
     currentSeverityFilter.current = severityFilter;
+    currentTenant.current = tenant ?? currentTenant.current;
 
     if (isStreaming) {
       pauseTailLog();
     } else {
-      startTailLog({ query, severityFilter });
+      startTailLog({ query, severityFilter, tenant });
     }
   };
 
   const getHistogram = async ({
     query,
     severityFilter,
+    tenant,
   }: {
     query: string;
     severityFilter: Set<Severity>;
+    tenant?: string;
   }) => {
     try {
       currentQuery.current = query;
       currentSeverityFilter.current = severityFilter;
+      currentTenant.current = tenant ?? currentTenant.current;
 
       // TODO split on multiple/parallel queries for long timespans and concat results
       const { start, end } = timeRangeFromSpan(localTimeSpan);
@@ -496,6 +518,7 @@ export const useLogs = (
         severity: severityFilter,
         interval: intervalFromSpan(localTimeSpan),
         config: currentConfig.current,
+        tenant: currentTenant.current,
       });
 
       histogramAbort.current = abort;

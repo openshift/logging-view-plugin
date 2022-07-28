@@ -6,4 +6,5 @@ export enum TestIds {
   LogsTable = 'LogsTable',
   LogsQueryInput = 'LogsQueryInput',
   ExecuteQueryButton = 'ExecuteQueryButton',
+  TenantDropdown = 'TenantDropdown',
 }

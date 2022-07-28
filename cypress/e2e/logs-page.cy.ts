@@ -11,6 +11,10 @@ const QUERY_RANGE_STREAMS_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/query_range?query=%7B*';
 const QUERY_RANGE_MATRIX_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/query_range?query=sum*';
+const QUERY_RANGE_STREAMS_INFRASTRUCTURE_URL_MATCH =
+  '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/infrastructure/loki/api/v1/query_range?query=%7B*';
+const QUERY_RANGE_MATRIX_INFRASTRUCTURE_URL_MATCH =
+  '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/infrastructure/loki/api/v1/query_range?query=sum*';
 const TEST_MESSAGE = "loki_1 | level=info msg='test log'";
 
 describe('Logs Page', () => {
@@ -150,11 +154,58 @@ describe('Logs Page', () => {
     cy.getByTestId(TestIds.LogsQueryInput).within(() => {
       cy.get('input')
         .type('{selectAll}')
-        .type('{ job = "some_job" }', { parseSpecialCharSequences: false })
+        .type('{ job = "some_job" }', {
+          parseSpecialCharSequences: false,
+          delay: 1,
+        })
         .type('{enter}');
     });
 
     cy.get('@queryRangeStreams.all').should('have.length', 2);
     cy.get('@queryRangeMatrix.all').should('have.length', 2);
+  });
+
+  it('executes a query with the selected tenant when "run query" is pressed', () => {
+    cy.intercept(
+      QUERY_RANGE_STREAMS_URL_MATCH,
+      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+    ).as('queryRangeStreams');
+    cy.intercept(
+      QUERY_RANGE_MATRIX_URL_MATCH,
+      queryRangeMatrixValidResponse(),
+    ).as('queryRangeMatrix');
+
+    cy.intercept(
+      QUERY_RANGE_STREAMS_INFRASTRUCTURE_URL_MATCH,
+      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+    ).as('queryRangeStreamsInfrastructure');
+    cy.intercept(
+      QUERY_RANGE_MATRIX_INFRASTRUCTURE_URL_MATCH,
+      queryRangeMatrixValidResponse(),
+    ).as('queryRangeMatrixInfrastructure');
+
+    cy.visit(LOGS_PAGE_URL);
+
+    cy.getByTestId(TestIds.LogsTable)
+      .should('exist')
+      .within(() => {
+        cy.contains(TEST_MESSAGE);
+      });
+
+    cy.getByTestId(TestIds.LogsHistogram)
+      .should('exist')
+      .within(() => {
+        cy.get('svg g > path').should('have.length.above', 0);
+      });
+
+    cy.getByTestId(TestIds.TenantDropdown).click();
+    cy.contains('infrastructure').click();
+
+    cy.getByTestId(TestIds.ExecuteQueryButton).click();
+
+    cy.get('@queryRangeStreams.all').should('have.length', 1);
+    cy.get('@queryRangeMatrix.all').should('have.length', 1);
+    cy.get('@queryRangeStreamsInfrastructure.all').should('have.length', 2);
+    cy.get('@queryRangeMatrixInfrastructure.all').should('have.length', 2);
   });
 });

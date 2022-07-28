@@ -1,0 +1,9 @@
+.co-logs-toolbar {
+  display: flex;
+  gap: var(--pf-global--spacer--md);
+  width: 100%;
+}
+
+.co-logs-severity-filter {
+  margin: 0;
+}
