@@ -4,6 +4,7 @@ import { BrowserRouter, Link, Route } from 'react-router-dom';
 import LogsDetailPage from './pages/logs-detail-page';
 import LogsPage from './pages/logs-page';
 import '@patternfly/patternfly/patternfly.css';
+import LogsDevPage from './pages/logs-dev-page';
 
 const App = () => {
   return (
@@ -26,6 +27,14 @@ const App = () => {
                   </Link>
                 </li>
                 <li className="pf-c-nav__item">
+                  <Link
+                    className="pf-c-nav__link"
+                    to="/dev-monitoring/ns/my-namespace/logs"
+                  >
+                    Dev Logs
+                  </Link>
+                </li>
+                <li className="pf-c-nav__item">
                   <Link className="pf-c-nav__link" to="/monitoring/logs">
                     Logs
                   </Link>
@@ -38,6 +47,9 @@ const App = () => {
         <main className="pf-c-page__main" tabIndex={-1}>
           <Route path="/monitoring/logs">
             <LogsPage />
+          </Route>
+          <Route path="/dev-monitoring/ns/:ns/logs">
+            <LogsDevPage />
           </Route>
           <Route path="/k8s/ns/:namespace/pods/:name">
             <LogsDetailPage />

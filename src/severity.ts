@@ -64,3 +64,15 @@ export const getSeverityColor = (severity: Severity): string => {
       return chartGrayColor.value;
   }
 };
+
+export const severityFiltersFromParams = (
+  params: string | null,
+): Set<Severity> => {
+  const severityFilters: Array<Severity> =
+    params
+      ?.split(',')
+      .map((s) => s.trim())
+      .filter(isSeverity) ?? [];
+
+  return severityFilters.length > 0 ? new Set(severityFilters) : new Set();
+};

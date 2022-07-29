@@ -53,7 +53,7 @@ describe('Logs Detail Page', () => {
     cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
   });
 
-  it('executes a query with the severity is changed', () => {
+  it('executes a query when severity is changed', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
       queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),

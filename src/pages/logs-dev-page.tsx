@@ -8,7 +8,7 @@ import {
 } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
 import * as React from 'react';
-import { useHistory, useLocation } from 'react-router';
+import { useHistory, useLocation, useParams } from 'react-router';
 import { LogsHistogram } from '../components/logs-histogram';
 import { LogsTable } from '../components/logs-table';
 import { LogsToolbar } from '../components/logs-toolbar';
@@ -20,25 +20,22 @@ import { Severity, severityFiltersFromParams } from '../severity';
 import { TestIds } from '../test-ids';
 
 const QUERY_PARAM_KEY = 'q';
-const TENANT_PARAM_KEY = 'tenant';
 const SEVERITY_FILTER_PARAM_KEY = 'severity';
 const DEFAULT_QUERY = '{ log_type =~ ".+" } | json';
-const DEFAULT_TENANT = 'application';
 
-const LogsPage: React.FunctionComponent = () => {
+const LogsDevPage: React.FunctionComponent = () => {
+  const { ns: namespace } = useParams<{ ns: string }>();
   const queryParams = useQueryParams();
   const history = useHistory();
   const location = useLocation();
 
   const initialQuery = queryParams.get(QUERY_PARAM_KEY) ?? DEFAULT_QUERY;
-  const initialTenant = queryParams.get(TENANT_PARAM_KEY) ?? DEFAULT_TENANT;
   const initialSeverity = severityFiltersFromParams(
     queryParams.get(SEVERITY_FILTER_PARAM_KEY),
   );
   const [query, setQuery] = React.useState(initialQuery);
   const [showResources, setShowResources] = React.useState(false);
   const [severityFilter, setSeverityFilter] = React.useState(initialSeverity);
-  const [tenant, setTenant] = React.useState(initialTenant);
 
   const {
     histogramData,
@@ -90,17 +87,16 @@ const LogsPage: React.FunctionComponent = () => {
   const runQuery = (
     queryToRun?: string,
     severityToConsider?: Set<Severity>,
-    tenantToConsider?: string,
   ) => {
     getLogs({
       query: queryToRun ?? query,
       severityFilter: severityToConsider ?? severityFilter,
-      tenant: tenantToConsider ?? tenant,
+      namespace,
     });
     getHistogram({
       query: queryToRun ?? query,
       severityFilter: severityToConsider ?? severityFilter,
-      tenant: tenantToConsider ?? tenant,
+      namespace,
     });
   };
 
@@ -112,27 +108,20 @@ const LogsPage: React.FunctionComponent = () => {
     return history.listen((location) => {
       const urlParams = new URLSearchParams(location.search);
       const newQuery = urlParams.get(QUERY_PARAM_KEY) ?? DEFAULT_QUERY;
-      const newTenant = urlParams.get(TENANT_PARAM_KEY) ?? DEFAULT_TENANT;
       const newSeverityFilter = severityFiltersFromParams(
         urlParams.get(SEVERITY_FILTER_PARAM_KEY),
       );
 
       setQuery(newQuery);
-      setTenant(newTenant);
       setSeverityFilter(newSeverityFilter);
 
-      runQuery(newQuery, newSeverityFilter, newTenant);
+      runQuery(newQuery, newSeverityFilter);
     });
   }, [history]);
 
   React.useEffect(() => {
     runQuery();
   }, []);
-
-  const setTenantInURL = (tenant: string) => {
-    queryParams.set(TENANT_PARAM_KEY, tenant);
-    history.push(`${location.pathname}?${queryParams.toString()}`);
-  };
 
   return (
     <PageSection>
@@ -179,8 +168,6 @@ const LogsPage: React.FunctionComponent = () => {
             query={query}
             onQueryChange={setQuery}
             onQueryRun={setQueryInURL}
-            onTenantSelect={setTenantInURL}
-            tenant={tenant}
             severityFilter={severityFilter}
             onSeverityChange={setSeverityInURL}
             isStreaming={isStreaming}
@@ -188,6 +175,7 @@ const LogsPage: React.FunctionComponent = () => {
             enableStreaming={config.isStreamingEnabledInDefaultPage}
             showResources={showResources}
             onShowResourcesToggle={setShowResources}
+            enableTenantDropdown={false}
           />
         </LogsTable>
       </Grid>
@@ -195,4 +183,4 @@ const LogsPage: React.FunctionComponent = () => {
   );
 };
 
-export default LogsPage;
+export default LogsDevPage;
