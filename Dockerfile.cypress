@@ -1,10 +1,27 @@
-FROM cypress/included:10.3.0
+FROM cypress/browsers:node14.15.0-chrome96-ff94
 
 WORKDIR /usr/src/app
 
 COPY package*.json .
-RUN npm ci && npm cache clean --force
+ENV CYPRESS_INSTALL_BINARY=0
+RUN npm ci -n
 
 COPY . /usr/src/app
 
+RUN chmod 775 -R /usr/src/app/node_modules
+
+RUN mkdir -p /.npm
+RUN chmod 775 -R /.npm
+
+RUN mkdir -p /.cache
+RUN chmod 775 -R /.cache
+
+RUN mkdir -p .husky
+RUN chmod 775 -R .husky
+
+RUN mkdir -p /.config
+RUN chmod 775 -R /.config
+
 RUN npm run build:standalone
+
+ENTRYPOINT ["scripts/run-cypress-tests.sh"]
