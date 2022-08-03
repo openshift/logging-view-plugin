@@ -1,10 +1,17 @@
-FROM cypress/included:10.3.0
+FROM cypress/included:9.6.0
 
 WORKDIR /usr/src/app
 
+ENV HUSKY=0
+
 COPY package*.json .
-RUN npm ci && npm cache clean --force
+RUN npm ci
 
 COPY . /usr/src/app
 
+RUN mkdir -p /.config
+RUN chmod 775 -R /.config
+
 RUN npm run build:standalone
+
+ENTRYPOINT ["npm", "run", "test:e2e"]

@@ -123,8 +123,8 @@ describe('Logs Page', () => {
 
     cy.getByTestId(TestIds.ExecuteQueryButton).click();
 
-    cy.get('@queryRangeStreams.all').should('have.length', 2);
-    cy.get('@queryRangeMatrix.all').should('have.length', 2);
+    cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
+    cy.get('@queryRangeMatrix.all').should('have.length.at.least', 1);
   });
 
   it('executes a query with a new value when "Enter" is pressed on the query input field', () => {
@@ -161,8 +161,8 @@ describe('Logs Page', () => {
         .type('{enter}');
     });
 
-    cy.get('@queryRangeStreams.all').should('have.length', 2);
-    cy.get('@queryRangeMatrix.all').should('have.length', 2);
+    cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
+    cy.get('@queryRangeMatrix.all').should('have.length.at.least', 1);
   });
 
   it('executes a query with the selected tenant when "run query" is pressed', () => {
@@ -203,9 +203,15 @@ describe('Logs Page', () => {
 
     cy.getByTestId(TestIds.ExecuteQueryButton).click();
 
-    cy.get('@queryRangeStreams.all').should('have.length', 1);
-    cy.get('@queryRangeMatrix.all').should('have.length', 1);
-    cy.get('@queryRangeStreamsInfrastructure.all').should('have.length', 2);
-    cy.get('@queryRangeMatrixInfrastructure.all').should('have.length', 2);
+    cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
+    cy.get('@queryRangeMatrix.all').should('have.length.at.least', 1);
+    cy.get('@queryRangeStreamsInfrastructure.all').should(
+      'have.length.at.least',
+      1,
+    );
+    cy.get('@queryRangeMatrixInfrastructure.all').should(
+      'have.length.at.least',
+      1,
+    );
   });
 });
