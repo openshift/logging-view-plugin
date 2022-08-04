@@ -60,6 +60,7 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
           variant="primary"
           data-test={TestIds.ExecuteQueryButton}
           onClick={handleRunQuery}
+          isDisabled={value === undefined || value.length === 0}
         >
           Run Query
         </Button>
