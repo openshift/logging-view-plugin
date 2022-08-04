@@ -10,7 +10,6 @@ import {
 } from '@patternfly/react-charts';
 import { Alert, Card, CardBody } from '@patternfly/react-core';
 import * as React from 'react';
-import { TestIds } from '../test-ids';
 import { DateFormat, dateToFormat } from '../date-utils';
 import {
   isMatrixResult,
@@ -19,6 +18,7 @@ import {
   TimeRange,
 } from '../logs.types';
 import { getSeverityColor, Severity, severityAbbreviations } from '../severity';
+import { TestIds } from '../test-ids';
 import { valueWithScalePrefix } from '../value-utils';
 import { CenteredContainer } from './centered-container';
 import './logs-histogram.css';
@@ -138,25 +138,35 @@ const tickCountFromTimeRange = (
 
 const HistogramTooltip: React.FC<ChartLegendTooltipProps> = ({ ...props }) => {
   const {
-    center: { x },
+    x: xProps,
+    y: yProps,
+    center: { x, y },
     height,
   } = props;
 
-  if (x === undefined && height === undefined) {
+  const xCoord = x ?? xProps;
+  const yCoord = y ?? yProps;
+
+  if (xCoord === undefined && yCoord === undefined && height === undefined) {
     return null;
   }
+
+  const fixedProps = {
+    ...props,
+    center: { x: xCoord, y: yCoord, ...props.center },
+  };
 
   return (
     <>
       <ChartLegendTooltip
-        {...props}
+        {...fixedProps}
         title={(datum: ChartData) => datum.time}
         constrainToVisibleArea
       />
       <line
         className="co-logs-histogram__tooltip-line"
-        x1={x}
-        x2={x}
+        x1={xCoord}
+        x2={xCoord}
         y1={TOP_PADDING}
         y2={height - BOTTOM_PADDING}
       />
