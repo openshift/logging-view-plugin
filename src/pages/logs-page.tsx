@@ -1,10 +1,6 @@
 import {
   Button,
-  Dropdown,
-  DropdownItem,
-  DropdownToggle,
   Flex,
-  FormGroup,
   Grid,
   PageSection,
   Title,
@@ -13,151 +9,15 @@ import {
 import { SyncAltIcon } from '@patternfly/react-icons';
 import * as React from 'react';
 import { useHistory, useLocation } from 'react-router';
-import { LogsToolbar } from '../components/logs-toolbar';
+import { TimeRangeDropdown } from '../components/time-range-dropdown';
 import { LogsHistogram } from '../components/logs-histogram';
 import { LogsTable } from '../components/logs-table';
+import { LogsToolbar } from '../components/logs-toolbar';
+import { RefreshIntervalDropdown } from '../components/refresh-interval-dropdown';
 import { useLogs } from '../hooks/useLogs';
 import { useQueryParams } from '../hooks/useQueryParams';
 import { isSeverity, Severity } from '../severity';
 import { TestIds } from '../test-ids';
-import { timeRangeOptions } from '../time-range-options';
-
-const DEFAULT_TIME_RANGE = '1h';
-
-const refreshIntervalOptions = [
-  { key: 'OFF_KEY', name: 'Refresh off', delay: 0 },
-  { key: '15s', name: '15 seconds', delay: 15 * 1000 },
-  { key: '30s', name: '30 seconds', delay: 30 * 1000 },
-  { key: '1m', name: '1 minute', delay: 60 * 1000 },
-  { key: '5m', name: '5 minutes', delay: 5 * 60 * 1000 },
-  { key: '15m', name: '15 minutes', delay: 15 * 60 * 1000 },
-  { key: '30m', name: '30 minutes', delay: 30 * 60 * 1000 },
-  { key: '1h', name: '1 hour', delay: 60 * 60 * 1000 },
-  { key: '2h', name: '2 hours', delay: 2 * 60 * 60 * 1000 },
-  { key: '1d', name: '1 day', delay: 24 * 60 * 60 * 1000 },
-];
-
-interface RefreshIntervalDropdownProps {
-  onRefresh?: () => void;
-}
-
-const RefreshIntervalDropdown: React.FC<RefreshIntervalDropdownProps> = ({
-  onRefresh,
-}) => {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [selectedIndex, setSelectedIndex] = React.useState<number>(0);
-  const [delay, setDelay] = React.useState<number>(0);
-  const timer = React.useRef<NodeJS.Timer | null>(null);
-
-  const clearTimer = () => {
-    if (timer) {
-      clearInterval(timer.current);
-    }
-  };
-
-  const handleSelectedValue = (index: number) => () => {
-    setIsOpen(false);
-    setSelectedIndex(index);
-    const selectedDelay = refreshIntervalOptions[index].delay;
-    setDelay(selectedDelay);
-  };
-
-  const restartTimer = (callRefreshImmediately = true) => {
-    clearTimer();
-
-    if (delay !== 0) {
-      if (callRefreshImmediately) {
-        onRefresh?.();
-      }
-      timer.current = setInterval(() => onRefresh?.(), delay);
-    }
-
-    return () => clearTimer();
-  };
-
-  React.useEffect(() => restartTimer(), [delay]);
-
-  // Avoid calling refresh immediately when onRefresh callback has changed
-  React.useEffect(() => restartTimer(false), [onRefresh]);
-
-  const toggleIsOpen = () => {
-    setIsOpen(!isOpen);
-  };
-
-  return (
-    <FormGroup
-      fieldId="logs-refresh-interval"
-      data-test={TestIds.RefreshIntervalDropdown}
-    >
-      <Dropdown
-        dropdownItems={refreshIntervalOptions.map(({ key, name }, index) => (
-          <DropdownItem
-            componentID={key}
-            onClick={handleSelectedValue(index)}
-            key={key}
-          >
-            {name}
-          </DropdownItem>
-        ))}
-        isOpen={isOpen}
-        toggle={
-          <DropdownToggle onToggle={toggleIsOpen}>
-            {refreshIntervalOptions[selectedIndex].name}
-          </DropdownToggle>
-        }
-      />
-    </FormGroup>
-  );
-};
-
-interface TimeRangeDropdownProps {
-  initialValue?: string;
-  onChange?: (offset: number) => void;
-}
-
-const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
-  onChange,
-  initialValue,
-}) => {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [selectedIndex, setSelectedIndex] = React.useState<number>(
-    timeRangeOptions.findIndex((option) => option.key === initialValue) ?? 1,
-  );
-
-  const handleSelectedValue = (index: number) => () => {
-    setIsOpen(false);
-    setSelectedIndex(index);
-
-    const span = timeRangeOptions[index].span;
-    onChange?.(span);
-  };
-
-  const toggleIsOpen = () => {
-    setIsOpen(!isOpen);
-  };
-
-  return (
-    <FormGroup fieldId="logs-time-range" data-test={TestIds.TimeRangeDropdown}>
-      <Dropdown
-        dropdownItems={timeRangeOptions.map(({ key, name }, index) => (
-          <DropdownItem
-            componentID={key}
-            onClick={handleSelectedValue(index)}
-            key={key}
-          >
-            {name}
-          </DropdownItem>
-        ))}
-        isOpen={isOpen}
-        toggle={
-          <DropdownToggle onToggle={toggleIsOpen}>
-            {timeRangeOptions[selectedIndex].name}
-          </DropdownToggle>
-        }
-      />
-    </FormGroup>
-  );
-};
 
 const QUERY_PARAM_KEY = 'q';
 const TENANT_PARAM_KEY = 'tenant';
@@ -292,10 +152,7 @@ const LogsPage: React.FunctionComponent = () => {
             Logs
           </Title>
           <Flex>
-            <TimeRangeDropdown
-              initialValue={DEFAULT_TIME_RANGE}
-              onChange={setTimeSpan}
-            />
+            <TimeRangeDropdown onChange={setTimeSpan} />
             <RefreshIntervalDropdown onRefresh={runQuery} />
             <Tooltip content={<div>Refresh</div>}>
               <Button
