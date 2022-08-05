@@ -37,13 +37,22 @@ const LogsDetailPage: React.FunctionComponent = () => {
     }
   };
 
-  const runQuery = () => {
-    getLogs({ query, severityFilter });
+  const runQuery = ({
+    severityFilterValue,
+  }: {
+    severityFilterValue?: Set<Severity>;
+  } = {}) => {
+    getLogs({ query, severityFilter: severityFilterValue ?? severityFilter });
   };
 
   React.useEffect(() => {
     runQuery();
   }, []);
+
+  const handleSeverityFilterChange = (severityFilterValue: Set<Severity>) => {
+    setSeverityFilter(severityFilterValue);
+    runQuery({ severityFilterValue });
+  };
 
   return (
     <PageSection>
@@ -62,12 +71,13 @@ const LogsDetailPage: React.FunctionComponent = () => {
             onQueryChange={setQuery}
             onQueryRun={runQuery}
             severityFilter={severityFilter}
-            onSeverityChange={setSeverityFilter}
+            onSeverityChange={handleSeverityFilterChange}
             isStreaming={isStreaming}
             onStreamingToggle={handleToggleStreaming}
             showResources={showResources}
             onShowResourcesToggle={setShowResources}
             enableStreaming
+            enableTenantDropdown={false}
           />
         </LogsTable>
       </Grid>

@@ -367,17 +367,19 @@ export const useLogs = (
     query,
     severityFilter,
     tenant,
+    timeSpan,
   }: {
     query: string;
     severityFilter: Set<Severity>;
     tenant?: string;
+    timeSpan?: number;
   }) => {
     try {
       currentQuery.current = query;
       currentSeverityFilter.current = severityFilter;
       currentTenant.current = tenant ?? currentTenant.current;
 
-      const { start, end } = timeRangeFromSpan(localTimeSpan);
+      const { start, end } = timeRangeFromSpan(timeSpan ?? localTimeSpan);
 
       dispatch({ type: 'logsRequest' });
 
@@ -492,10 +494,12 @@ export const useLogs = (
     query,
     severityFilter,
     tenant,
+    timeSpan,
   }: {
     query: string;
     severityFilter: Set<Severity>;
     tenant?: string;
+    timeSpan?: number;
   }) => {
     try {
       currentQuery.current = query;
@@ -503,7 +507,7 @@ export const useLogs = (
       currentTenant.current = tenant ?? currentTenant.current;
 
       // TODO split on multiple/parallel queries for long timespans and concat results
-      const { start, end } = timeRangeFromSpan(localTimeSpan);
+      const { start, end } = timeRangeFromSpan(timeSpan ?? localTimeSpan);
 
       dispatch({ type: 'histogramRequest' });
 
@@ -541,10 +545,12 @@ export const useLogs = (
       getLogs({
         query: currentQuery.current,
         severityFilter: currentSeverityFilter.current,
+        timeSpan: localTimeSpan,
       });
       getHistogram({
         query: currentQuery.current,
         severityFilter: currentSeverityFilter.current,
+        timeSpan: localTimeSpan,
       });
     }
 
