@@ -214,4 +214,39 @@ describe('Logs Page', () => {
       1,
     );
   });
+
+  it('stores selected values for time range and refresh interval', () => {
+    cy.intercept(
+      QUERY_RANGE_STREAMS_URL_MATCH,
+      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+    ).as('queryRangeStreams');
+    cy.intercept(
+      QUERY_RANGE_MATRIX_URL_MATCH,
+      queryRangeMatrixValidResponse(),
+    ).as('queryRangeMatrix');
+
+    cy.visit(LOGS_PAGE_URL);
+
+    cy.getByTestId(TestIds.RefreshIntervalDropdown)
+      .click()
+      .within(() => {
+        cy.contains('1 minute').click();
+      });
+
+    cy.getByTestId(TestIds.TimeRangeDropdown)
+      .click()
+      .within(() => {
+        cy.contains('Last 6 hours').click();
+      });
+
+    cy.reload();
+
+    cy.getByTestId(TestIds.RefreshIntervalDropdown).within(() => {
+      cy.contains('1 minute');
+    });
+
+    cy.getByTestId(TestIds.TimeRangeDropdown).within(() => {
+      cy.contains('Last 6 hours');
+    });
+  });
 });
