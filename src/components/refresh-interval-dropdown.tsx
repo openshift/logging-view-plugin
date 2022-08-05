@@ -5,7 +5,10 @@ import {
   FormGroup,
 } from '@patternfly/react-core';
 import React from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import { TestIds } from '../test-ids';
+
+const STORED_REFRESH_INTERVAL_KEY = 'logging-view-plugin.refresh-interval';
 
 const refreshIntervalOptions = [
   { key: 'OFF_KEY', name: 'Refresh off', delay: 0 },
@@ -27,8 +30,15 @@ interface RefreshIntervalDropdownProps {
 export const RefreshIntervalDropdown: React.FC<
   RefreshIntervalDropdownProps
 > = ({ onRefresh }) => {
+  const [storedRefreshInterval, setStoredRefreshInterval] = useLocalStorage(
+    STORED_REFRESH_INTERVAL_KEY,
+  );
   const [isOpen, setIsOpen] = React.useState(false);
-  const [selectedIndex, setSelectedIndex] = React.useState<number>(0);
+  const [selectedIndex, setSelectedIndex] = React.useState<number>(
+    !isNaN(parseInt(storedRefreshInterval, 10))
+      ? parseInt(storedRefreshInterval, 10)
+      : 0,
+  );
   const [delay, setDelay] = React.useState<number>(0);
   const timer = React.useRef<NodeJS.Timer | null>(null);
 
@@ -43,6 +53,7 @@ export const RefreshIntervalDropdown: React.FC<
     setSelectedIndex(index);
     const selectedDelay = refreshIntervalOptions[index].delay;
     setDelay(selectedDelay);
+    setStoredRefreshInterval(index.toString(10));
   };
 
   const restartTimer = (callRefreshImmediately = true) => {

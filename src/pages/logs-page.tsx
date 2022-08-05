@@ -1,10 +1,6 @@
 import {
   Button,
-  Dropdown,
-  DropdownItem,
-  DropdownToggle,
   Flex,
-  FormGroup,
   Grid,
   PageSection,
   Title,
@@ -13,66 +9,15 @@ import {
 import { SyncAltIcon } from '@patternfly/react-icons';
 import * as React from 'react';
 import { useHistory, useLocation } from 'react-router';
-import { LogsToolbar } from '../components/logs-toolbar';
+import { TimeRangeDropdown } from '../components/time-range-dropdown';
 import { LogsHistogram } from '../components/logs-histogram';
 import { LogsTable } from '../components/logs-table';
+import { LogsToolbar } from '../components/logs-toolbar';
+import { RefreshIntervalDropdown } from '../components/refresh-interval-dropdown';
 import { useLogs } from '../hooks/useLogs';
 import { useQueryParams } from '../hooks/useQueryParams';
 import { isSeverity, Severity } from '../severity';
 import { TestIds } from '../test-ids';
-import { timeRangeOptions } from '../time-range-options';
-import { RefreshIntervalDropdown } from '../components/refresh-interval-dropdown';
-
-const DEFAULT_TIME_RANGE = '1h';
-
-interface TimeRangeDropdownProps {
-  initialValue?: string;
-  onChange?: (offset: number) => void;
-}
-
-const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
-  onChange,
-  initialValue,
-}) => {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [selectedIndex, setSelectedIndex] = React.useState<number>(
-    timeRangeOptions.findIndex((option) => option.key === initialValue) ?? 1,
-  );
-
-  const handleSelectedValue = (index: number) => () => {
-    setIsOpen(false);
-    setSelectedIndex(index);
-
-    const span = timeRangeOptions[index].span;
-    onChange?.(span);
-  };
-
-  const toggleIsOpen = () => {
-    setIsOpen(!isOpen);
-  };
-
-  return (
-    <FormGroup fieldId="logs-time-range" data-test={TestIds.TimeRangeDropdown}>
-      <Dropdown
-        dropdownItems={timeRangeOptions.map(({ key, name }, index) => (
-          <DropdownItem
-            componentID={key}
-            onClick={handleSelectedValue(index)}
-            key={key}
-          >
-            {name}
-          </DropdownItem>
-        ))}
-        isOpen={isOpen}
-        toggle={
-          <DropdownToggle onToggle={toggleIsOpen}>
-            {timeRangeOptions[selectedIndex].name}
-          </DropdownToggle>
-        }
-      />
-    </FormGroup>
-  );
-};
 
 const QUERY_PARAM_KEY = 'q';
 const TENANT_PARAM_KEY = 'tenant';
@@ -207,10 +152,7 @@ const LogsPage: React.FunctionComponent = () => {
             Logs
           </Title>
           <Flex>
-            <TimeRangeDropdown
-              initialValue={DEFAULT_TIME_RANGE}
-              onChange={setTimeSpan}
-            />
+            <TimeRangeDropdown onChange={setTimeSpan} />
             <RefreshIntervalDropdown onRefresh={runQuery} />
             <Tooltip content={<div>Refresh</div>}>
               <Button
