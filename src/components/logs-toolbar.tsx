@@ -18,6 +18,7 @@ import { Spacer } from './spacer';
 import { TenantDropdown } from './tenant-dropdown';
 import { TogglePlay } from './toggle-play';
 import './logs-toolbar.css';
+import { TestIds } from '../test-ids';
 
 interface LogsToolbarProps {
   query: string;
@@ -111,6 +112,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
             deleteChipGroup={onDeleteSeverityGroup}
             categoryName="Severity"
             className="co-logs-severity-filter"
+            data-test={TestIds.SeverityDropdown}
           >
             <Select
               variant={SelectVariant.checkbox}
