@@ -162,7 +162,7 @@ const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
 const QUERY_PARAM_KEY = 'q';
 const TENANT_PARAM_KEY = 'tenant';
 const SEVERITY_FILTER_PARAM_KEY = 'severity';
-const DEFAULT_QUERY = '{ kubernetes_host =~ ".+" }';
+const DEFAULT_QUERY = '{ log_type =~ ".+" } | json';
 const DEFAULT_TENANT = 'application';
 
 const severityFiltersFromParams = (params: string | null): Set<Severity> => {

@@ -8,7 +8,7 @@ import { Severity } from '../severity';
 
 const LogsDetailPage: React.FunctionComponent = () => {
   const { name: podname } = useParams<{ name: string }>();
-  const initialQuery = `{ kubernetes_pod_name = "${podname}" }`;
+  const initialQuery = `{ kubernetes_pod_name = "${podname}" } | json`;
   const [query, setQuery] = React.useState(initialQuery);
   const [severityFilter, setSeverityFilter] = React.useState<Set<Severity>>(
     new Set(),
