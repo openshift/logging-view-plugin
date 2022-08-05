@@ -12,6 +12,7 @@ import {
   Tr,
 } from '@patternfly/react-table';
 import * as React from 'react';
+import { Link } from 'react-router-dom';
 import { DateFormat, dateToFormat } from '../date-utils';
 import {
   isStreamsResult,
@@ -59,6 +60,7 @@ type LogTableData = {
   timestamp: number;
   severity: string;
   namespace?: string;
+  podName?: string;
   resources?: Array<Resource>;
   message: string;
   data: Record<string, string>;
@@ -104,6 +106,7 @@ const streamToTableData = (stream: StreamLogData): Array<LogTableData> => {
       data: stream.stream,
       resources: parseResources(stream.stream),
       namespace: stream.stream['kubernetes_namespace_name'],
+      podName: stream.stream['kubernetes_pod_name'],
     };
   });
 };
@@ -168,15 +171,38 @@ const LogRow: React.FC<LogRowProps> = ({ data, title, showResources }) => {
           <div className="co-logs-table__message">{data.message}</div>
           {showResources && (
             <Split className="co-logs-table__resources" hasGutter>
-              {data.resources?.map((resource) => (
-                <SplitItem key={resource.name}>
-                  <ResourceLink
-                    kind={resource.kind}
-                    name={resource.name}
-                    namespace={data.namespace}
-                  />
-                </SplitItem>
-              ))}
+              {data.resources?.map((resource) => {
+                if (resource.kind === 'Container') {
+                  if (!data.podName) {
+                    return null;
+                  }
+
+                  return (
+                    <SplitItem key={resource.name}>
+                      <Link
+                        to={`/k8s/ns/${data.namespace}/pods/${data.podName}/containers/${resource.name}`}
+                      >
+                        <ResourceLink
+                          kind={resource.kind}
+                          name={resource.name}
+                          namespace={data.namespace}
+                          linkTo={false}
+                        />
+                      </Link>
+                    </SplitItem>
+                  );
+                }
+
+                return (
+                  <SplitItem key={resource.name}>
+                    <ResourceLink
+                      kind={resource.kind}
+                      name={resource.name}
+                      namespace={data.namespace}
+                    />
+                  </SplitItem>
+                );
+              })}
             </Split>
           )}
         </>
