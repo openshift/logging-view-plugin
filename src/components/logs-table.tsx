@@ -93,7 +93,7 @@ const streamToTableData = (stream: StreamLogData): Array<LogTableData> => {
   const values = stream.values;
 
   return values.map((value) => {
-    const message = String(value[1]);
+    const message = String(stream.stream['message'] || value[1]);
     const timestamp = parseFloat(String(value[0]));
     const time = timestamp / 1e6;
     const formattedTime = dateToFormat(time, DateFormat.Full);
