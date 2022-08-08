@@ -231,9 +231,12 @@ const reducer = (state: State, action: Action): State => {
   }
 };
 
-const timeRangeFromSpan = (span: number): TimeRange => ({
-  start: Date.now() - span,
-  end: Date.now(),
+const timeRangeFromSpan = (
+  span: number,
+  currentTime: number = Date.now(),
+): TimeRange => ({
+  start: currentTime - span,
+  end: currentTime,
 });
 
 const intervalFromSpan = (timeSpan: number): number => {
@@ -267,6 +270,7 @@ export const useLogs = (
   const currentSeverityFilter = React.useRef<Set<Severity> | undefined>();
   const currentConfig = React.useRef<Config>(defaultConfig);
   const currentTenant = React.useRef<string>(initialTenant);
+  const currentTime = React.useRef<number>(Date.now());
   const [localTimeSpan, setTimeSpan] = React.useState<number>(initialTimeSpan);
   const logsAbort = React.useRef<() => void | undefined>();
   const histogramAbort = React.useRef<() => void | undefined>();
@@ -329,6 +333,7 @@ export const useLogs = (
     try {
       currentQuery.current = query;
       currentSeverityFilter.current = severityFilter;
+      currentTime.current = Date.now();
 
       const { start } = timeRangeFromSpan(localTimeSpan);
 
@@ -378,6 +383,7 @@ export const useLogs = (
       currentQuery.current = query;
       currentSeverityFilter.current = severityFilter;
       currentTenant.current = tenant ?? currentTenant.current;
+      currentTime.current = Date.now();
 
       const { start, end } = timeRangeFromSpan(timeSpan ?? localTimeSpan);
 
@@ -429,6 +435,7 @@ export const useLogs = (
     currentQuery.current = query;
     currentSeverityFilter.current = severityFilter;
     currentTenant.current = tenant ?? currentTenant.current;
+    currentTime.current = Date.now();
 
     const { start } = timeRangeFromSpan(localTimeSpan);
 
@@ -505,6 +512,7 @@ export const useLogs = (
       currentQuery.current = query;
       currentSeverityFilter.current = severityFilter;
       currentTenant.current = tenant ?? currentTenant.current;
+      currentTime.current = Date.now();
 
       // TODO split on multiple/parallel queries for long timespans and concat results
       const { start, end } = timeRangeFromSpan(timeSpan ?? localTimeSpan);
@@ -582,7 +590,7 @@ export const useLogs = (
     histogramError,
     toggleStreaming,
     config,
-    timeRange: timeRangeFromSpan(timeSpan),
+    timeRange: timeRangeFromSpan(timeSpan, currentTime.current),
     interval: intervalFromSpan(timeSpan),
   };
 };
