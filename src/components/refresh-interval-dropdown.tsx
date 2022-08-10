@@ -25,11 +25,12 @@ const refreshIntervalOptions = [
 
 interface RefreshIntervalDropdownProps {
   onRefresh?: () => void;
+  isDisabled?: boolean;
 }
 
 export const RefreshIntervalDropdown: React.FC<
   RefreshIntervalDropdownProps
-> = ({ onRefresh }) => {
+> = ({ onRefresh, isDisabled = false }) => {
   const [storedRefreshInterval, setStoredRefreshInterval] = useLocalStorage(
     STORED_REFRESH_INTERVAL_KEY,
   );
@@ -84,6 +85,7 @@ export const RefreshIntervalDropdown: React.FC<
       data-test={TestIds.RefreshIntervalDropdown}
     >
       <Dropdown
+        disabled={isDisabled}
         dropdownItems={refreshIntervalOptions.map(({ key, name }, index) => (
           <DropdownItem
             componentID={key}
@@ -95,7 +97,7 @@ export const RefreshIntervalDropdown: React.FC<
         ))}
         isOpen={isOpen}
         toggle={
-          <DropdownToggle onToggle={toggleIsOpen}>
+          <DropdownToggle isDisabled={isDisabled} onToggle={toggleIsOpen}>
             {refreshIntervalOptions[selectedIndex].name}
           </DropdownToggle>
         }

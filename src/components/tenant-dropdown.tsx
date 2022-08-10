@@ -9,6 +9,7 @@ import { TestIds } from '../test-ids';
 interface TenantDropdownProps {
   selectedTenant?: string;
   onTenantSelected: (tenant: string) => void;
+  isDisabled?: boolean;
 }
 
 const tenants = ['application', 'infrastructure', 'audit'];
@@ -16,6 +17,7 @@ const tenants = ['application', 'infrastructure', 'audit'];
 export const TenantDropdown: React.FC<TenantDropdownProps> = ({
   selectedTenant,
   onTenantSelected,
+  isDisabled = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -30,6 +32,7 @@ export const TenantDropdown: React.FC<TenantDropdownProps> = ({
     <OptionsMenu
       id="logging-view-tenant-dropdown"
       data-test={TestIds.TenantDropdown}
+      disabled={isDisabled}
       menuItems={tenants.map((tenant) => (
         <OptionsMenuItem
           onSelect={onSelect}
@@ -43,6 +46,7 @@ export const TenantDropdown: React.FC<TenantDropdownProps> = ({
       isOpen={isOpen}
       toggle={
         <OptionsMenuToggle
+          isDisabled={isDisabled}
           onToggle={onToggle}
           toggleTemplate={selectedTenant ?? 'Select a tenant'}
         />

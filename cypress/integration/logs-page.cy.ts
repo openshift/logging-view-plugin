@@ -249,4 +249,41 @@ describe('Logs Page', () => {
       cy.contains('Last 6 hours');
     });
   });
+
+  it('disables query executors when the query is empty', () => {
+    cy.intercept(
+      QUERY_RANGE_STREAMS_URL_MATCH,
+      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+    ).as('queryRangeStreams');
+    cy.intercept(
+      QUERY_RANGE_MATRIX_URL_MATCH,
+      queryRangeMatrixValidResponse(),
+    ).as('queryRangeMatrix');
+
+    cy.visit(LOGS_PAGE_URL);
+
+    cy.getByTestId(TestIds.LogsQueryInput).within(() => {
+      cy.get('input').clear();
+    });
+
+    cy.getByTestId(TestIds.ExecuteQueryButton).should('be.disabled');
+
+    cy.getByTestId(TestIds.RefreshIntervalDropdown).within(() => {
+      cy.get('button').should('be.disabled');
+    });
+
+    cy.getByTestId(TestIds.TimeRangeDropdown).within(() => {
+      cy.get('button').should('be.disabled');
+    });
+
+    cy.getByTestId(TestIds.SyncButton).should('be.disabled');
+
+    cy.getByTestId(TestIds.SeverityDropdown).within(() => {
+      cy.get('button').should('be.disabled');
+    });
+
+    cy.getByTestId(TestIds.TenantDropdown).within(() => {
+      cy.get('button').should('be.disabled');
+    });
+  });
 });

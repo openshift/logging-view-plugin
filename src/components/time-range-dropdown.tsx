@@ -15,11 +15,13 @@ const STORED_TIME_RANGE_KEY = 'logging-view-plugin.time-range';
 interface TimeRangeDropdownProps {
   initialValue?: string;
   onChange?: (offset: number) => void;
+  isDisabled?: boolean;
 }
 
 export const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
   onChange,
   initialValue = DEFAULT_TIME_RANGE,
+  isDisabled = false,
 }) => {
   const [storedTimeRange, setStoredTimeRange] = useLocalStorage(
     STORED_TIME_RANGE_KEY,
@@ -49,6 +51,7 @@ export const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
   return (
     <FormGroup fieldId="logs-time-range" data-test={TestIds.TimeRangeDropdown}>
       <Dropdown
+        disabled={isDisabled}
         dropdownItems={timeRangeOptions.map(({ key, name }, index) => (
           <DropdownItem
             componentID={key}
@@ -60,7 +63,7 @@ export const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
         ))}
         isOpen={isOpen}
         toggle={
-          <DropdownToggle onToggle={toggleIsOpen}>
+          <DropdownToggle isDisabled={isDisabled} onToggle={toggleIsOpen}>
             {timeRangeOptions[selectedIndex].name}
           </DropdownToggle>
         }
