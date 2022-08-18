@@ -75,4 +75,25 @@ describe('Logs Detail Page', () => {
 
     cy.get('@queryRangeStreams.all').should('have.length.at.least', 2);
   });
+
+  it('disables query executors when the query is empty', () => {
+    cy.intercept(
+      QUERY_RANGE_STREAMS_URL_MATCH,
+      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+    ).as('queryRangeStreams');
+
+    cy.visit(LOGS_DETAIL_PAGE_URL);
+
+    cy.getByTestId(TestIds.LogsQueryInput).within(() => {
+      cy.get('input').clear();
+    });
+
+    cy.getByTestId(TestIds.ExecuteQueryButton).should('be.disabled');
+
+    cy.getByTestId(TestIds.ToogleStreamingButton).should('be.disabled');
+
+    cy.getByTestId(TestIds.SeverityDropdown).within(() => {
+      cy.get('button').should('be.disabled');
+    });
+  });
 });

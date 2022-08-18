@@ -8,4 +8,5 @@ export enum TestIds {
   ExecuteQueryButton = 'ExecuteQueryButton',
   TenantDropdown = 'TenantDropdown',
   SeverityDropdown = 'SeverityDropdown',
+  ToogleStreamingButton = 'ToogleStreamingButton',
 }

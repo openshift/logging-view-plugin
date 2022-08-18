@@ -54,6 +54,8 @@ const LogsDetailPage: React.FunctionComponent = () => {
     runQuery({ severityFilterValue });
   };
 
+  const isQueryEmpty = query === '';
+
   return (
     <PageSection>
       <Grid hasGutter>
@@ -78,6 +80,7 @@ const LogsDetailPage: React.FunctionComponent = () => {
             onShowResourcesToggle={setShowResources}
             enableStreaming
             enableTenantDropdown={false}
+            isDisabled={isQueryEmpty}
           />
         </LogsTable>
       </Grid>

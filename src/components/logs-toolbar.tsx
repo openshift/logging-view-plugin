@@ -37,6 +37,7 @@ interface LogsToolbarProps {
   ) => void;
   showResources?: boolean;
   enableTenantDropdown?: boolean;
+  isDisabled?: boolean;
 }
 
 const availableSeverityFilters: Array<Severity> = [
@@ -63,6 +64,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
   enableStreaming = false,
   isStreaming = false,
   enableTenantDropdown = true,
+  isDisabled = false,
 }) => {
   const [isSeverityExpanded, setIsSeverityExpanded] = React.useState(false);
 
@@ -122,6 +124,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
               selections={Array.from(severityFilter)}
               isOpen={isSeverityExpanded}
               placeholderText="Severity"
+              isDisabled={isDisabled}
             >
               {availableSeverityFilters.map((severity) => (
                 <SelectOption key={severity} value={severity} />
@@ -133,6 +136,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
             <TenantDropdown
               onTenantSelected={onTenantSelect}
               selectedTenant={tenant}
+              isDisabled={isDisabled}
             />
           )}
 
@@ -147,7 +151,11 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
           <Spacer />
 
           {enableStreaming && (
-            <TogglePlay active={isStreaming} onClick={onStreamingToggle} />
+            <TogglePlay
+              isDisabled={isDisabled}
+              active={isStreaming}
+              onClick={onStreamingToggle}
+            />
           )}
         </ToolbarGroup>
       </ToolbarContent>

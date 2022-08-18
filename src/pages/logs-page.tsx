@@ -144,6 +144,8 @@ const LogsPage: React.FunctionComponent = () => {
     history.push(`${location.pathname}?${queryParams.toString()}`);
   };
 
+  const isQueryEmpty = query === '';
+
   return (
     <PageSection>
       <Grid hasGutter>
@@ -152,14 +154,21 @@ const LogsPage: React.FunctionComponent = () => {
             Logs
           </Title>
           <Flex>
-            <TimeRangeDropdown onChange={setTimeSpan} />
-            <RefreshIntervalDropdown onRefresh={runQuery} />
+            <TimeRangeDropdown
+              onChange={setTimeSpan}
+              isDisabled={isQueryEmpty}
+            />
+            <RefreshIntervalDropdown
+              onRefresh={runQuery}
+              isDisabled={isQueryEmpty}
+            />
             <Tooltip content={<div>Refresh</div>}>
               <Button
                 onClick={handleRefreshClick}
                 aria-label="Refresh"
                 variant="primary"
                 data-test={TestIds.SyncButton}
+                isDisabled={isQueryEmpty}
               >
                 <SyncAltIcon />
               </Button>
@@ -198,6 +207,7 @@ const LogsPage: React.FunctionComponent = () => {
             enableStreaming={config.isStreamingEnabledInDefaultPage}
             showResources={showResources}
             onShowResourcesToggle={setShowResources}
+            isDisabled={isQueryEmpty}
           />
         </LogsTable>
       </Grid>
