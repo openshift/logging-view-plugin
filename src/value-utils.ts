@@ -46,3 +46,5 @@ export const durationFromTimestamp = (timestamp: number): string => {
   }
   return str.trim();
 };
+
+export const trim = (value: string): string => value.trim();

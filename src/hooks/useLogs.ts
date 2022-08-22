@@ -325,10 +325,12 @@ export const useLogs = (
     lastTimestamp,
     query,
     severityFilter,
+    namespace,
   }: {
     lastTimestamp: number;
     query: string;
     severityFilter: Set<Severity>;
+    namespace?: string;
   }) => {
     try {
       currentQuery.current = query;
@@ -351,6 +353,7 @@ export const useLogs = (
         limit: QUERY_LOGS_LIMIT,
         config: currentConfig.current,
         tenant: currentTenant.current,
+        namespace,
       });
 
       logsAbort.current = abort;
@@ -373,11 +376,13 @@ export const useLogs = (
     severityFilter,
     tenant,
     timeSpan,
+    namespace,
   }: {
     query: string;
     severityFilter: Set<Severity>;
     tenant?: string;
     timeSpan?: number;
+    namespace?: string;
   }) => {
     try {
       currentQuery.current = query;
@@ -401,6 +406,7 @@ export const useLogs = (
         limit: QUERY_LOGS_LIMIT,
         config: currentConfig.current,
         tenant: currentTenant.current,
+        namespace,
       });
 
       logsAbort.current = abort;
@@ -427,10 +433,12 @@ export const useLogs = (
     query,
     severityFilter,
     tenant,
+    namespace,
   }: {
     query: string;
     severityFilter: Set<Severity>;
     tenant?: string;
+    namespace?: string;
   }) => {
     currentQuery.current = query;
     currentSeverityFilter.current = severityFilter;
@@ -450,6 +458,7 @@ export const useLogs = (
       start,
       severity: severityFilter,
       tenant: currentTenant.current,
+      namespace,
     });
 
     ws.current.onerror((error) => {
@@ -502,11 +511,13 @@ export const useLogs = (
     severityFilter,
     tenant,
     timeSpan,
+    namespace,
   }: {
     query: string;
     severityFilter: Set<Severity>;
     tenant?: string;
     timeSpan?: number;
+    namespace?: string;
   }) => {
     try {
       currentQuery.current = query;
@@ -531,6 +542,7 @@ export const useLogs = (
         interval: intervalFromSpan(localTimeSpan),
         config: currentConfig.current,
         tenant: currentTenant.current,
+        namespace,
       });
 
       histogramAbort.current = abort;

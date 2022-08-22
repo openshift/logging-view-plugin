@@ -1,7 +1,8 @@
 import { WSFactory } from '@openshift-console/dynamic-plugin-sdk/lib/utils/k8s/ws-factory';
 import { Config, QueryRangeResponse } from './logs.types';
+import { LogQLQuery } from './logql-query';
 import { Severity, severityAbbreviations } from './severity';
-import { durationFromTimestamp, notEmptyString } from './value-utils';
+import { durationFromTimestamp } from './value-utils';
 
 const LOKI_ENDPOINT = '/api/proxy/plugin/logging-view-plugin/backend';
 
@@ -12,6 +13,7 @@ type QueryRangeParams = {
   severity?: Set<Severity>;
   limit?: number;
   config?: Config;
+  namespace?: string;
   tenant: string;
 };
 
@@ -22,10 +24,15 @@ type HistogramQuerParams = {
   interval: number;
   severity?: Set<Severity>;
   config?: Config;
+  namespace?: string;
   tenant: string;
 };
 
 const getSeverityFilter = (severity: Set<Severity>): string => {
+  if (severity.size === 0) {
+    return '';
+  }
+
   const severityFilters = Array.from(severity).map((group: Severity) => {
     if (group === 'unknown') {
       return '^$';
@@ -35,6 +42,14 @@ const getSeverityFilter = (severity: Set<Severity>): string => {
   });
 
   return `level=~"${severityFilters.join('|')}"`;
+};
+
+const getNamespaceStreamSelector = (namespace?: string): string => {
+  if (!namespace) {
+    return '';
+  }
+
+  return `kubernetes_namespace_name="${namespace}"`;
 };
 
 class TimeoutError extends Error {
@@ -113,17 +128,15 @@ export const executeQueryRange = ({
   config,
   limit = 100,
   tenant,
+  namespace,
 }: QueryRangeParams): CancellableFetch<QueryRangeResponse> => {
-  const severityFilterExpression =
-    severity.size > 0 ? getSeverityFilter(severity) : '';
-
-  const pipelineArray = [severityFilterExpression].filter(notEmptyString);
-  const pipeline =
-    pipelineArray.length > 0 ? `| ${pipelineArray.join(' | ')}` : '';
-  const queryWithFilters = `${query} ${pipeline}`;
+  const logQLQuery = new LogQLQuery(query);
+  logQLQuery
+    .appendSelector(getNamespaceStreamSelector(namespace))
+    .appendPipeline(getSeverityFilter(severity));
 
   const params = {
-    query: queryWithFilters,
+    query: logQLQuery.toString(),
     start: String(start * 1000000),
     end: String(end * 1000000),
     limit: String(limit),
@@ -145,18 +158,18 @@ export const executeHistogramQuery = ({
   severity,
   config,
   tenant,
+  namespace,
 }: HistogramQuerParams): CancellableFetch<QueryRangeResponse> => {
   const intervalString = durationFromTimestamp(interval);
-  const severityFilterExpression =
-    severity.size > 0 ? `${getSeverityFilter(severity)}` : '';
 
-  // TODO parse query to adjust intervals and clean pipeline
-  const pipelineArray = [severityFilterExpression].filter(notEmptyString);
+  const logQLQuery = new LogQLQuery(query);
+  logQLQuery
+    .appendSelector(getNamespaceStreamSelector(namespace))
+    .appendPipeline(getSeverityFilter(severity));
 
-  const pipeline =
-    pipelineArray.length > 0 ? `| ${pipelineArray.join(' | ')}` : '';
+  const extendedQuery = logQLQuery.toString();
 
-  const histogramQuery = `sum by (level) (count_over_time(${query} ${pipeline} [${intervalString}]))`;
+  const histogramQuery = `sum by (level) (count_over_time(${extendedQuery} [${intervalString}]))`;
 
   const params = {
     query: histogramQuery,
@@ -180,17 +193,15 @@ export const connectToTailSocket = ({
   limit = 200,
   config,
   tenant,
+  namespace,
 }: Omit<QueryRangeParams, 'end'>) => {
-  const severityFilterExpression =
-    severity.size > 0 ? getSeverityFilter(severity) : '';
-
-  const pipelineArray = [severityFilterExpression].filter(notEmptyString);
-  const pipeline =
-    pipelineArray.length > 0 ? `| ${pipelineArray.join(' | ')}` : '';
-  const queryWithFilters = `${query} ${pipeline}`;
+  const logQLQuery = new LogQLQuery(query);
+  logQLQuery
+    .appendSelector(getNamespaceStreamSelector(namespace))
+    .appendPipeline(getSeverityFilter(severity));
 
   const params = {
-    query: queryWithFilters,
+    query: logQLQuery.toString(),
     start: String(start * 1000000),
     limit: String(limit),
   };
