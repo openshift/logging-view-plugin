@@ -6,10 +6,23 @@ import { LogsToolbar } from '../components/logs-toolbar';
 import { useLogs } from '../hooks/useLogs';
 import { Severity } from '../severity';
 
+const DEFAULT_TENANT = 'application';
+
+const getInitialTenantFromNamespace = (namespace?: string): string => {
+  if (/^openshift-|^openshift$|^default$|^kube-/.test(namespace)) {
+    return 'infrastructure';
+  }
+
+  return DEFAULT_TENANT;
+};
+
 const LogsDetailPage: React.FunctionComponent = () => {
-  const { name: podname } = useParams<{ name: string }>();
+  const { name: podname, ns: namespace } =
+    useParams<{ name: string; ns: string }>();
   const initialQuery = `{ kubernetes_pod_name = "${podname}" } | json`;
+  const initialTenant = getInitialTenantFromNamespace(namespace);
   const [query, setQuery] = React.useState(initialQuery);
+  const tenant = React.useRef(initialTenant);
   const [severityFilter, setSeverityFilter] = React.useState<Set<Severity>>(
     new Set(),
   );
@@ -38,11 +51,15 @@ const LogsDetailPage: React.FunctionComponent = () => {
   };
 
   const runQuery = ({
-    severityFilterValue,
+    severityValue,
   }: {
-    severityFilterValue?: Set<Severity>;
+    severityValue?: Set<Severity>;
   } = {}) => {
-    getLogs({ query, severityFilter: severityFilterValue ?? severityFilter });
+    getLogs({
+      query,
+      severityFilter: severityValue ?? severityFilter,
+      tenant: tenant.current,
+    });
   };
 
   React.useEffect(() => {
@@ -51,7 +68,7 @@ const LogsDetailPage: React.FunctionComponent = () => {
 
   const handleSeverityFilterChange = (severityFilterValue: Set<Severity>) => {
     setSeverityFilter(severityFilterValue);
-    runQuery({ severityFilterValue });
+    runQuery({ severityValue: severityFilterValue });
   };
 
   const isQueryEmpty = query === '';
