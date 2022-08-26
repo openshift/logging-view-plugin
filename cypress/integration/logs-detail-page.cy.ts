@@ -1,9 +1,13 @@
 import { TestIds } from '../../src/test-ids';
 import { queryRangeStreamsvalidResponse } from '../fixtures/query-range-fixtures';
 
-const LOGS_DETAIL_PAGE_URL = '/k8s/ns/default/pods/test-pod-name';
+const LOGS_DETAIL_PAGE_URL = '/k8s/ns/my-namespace/pods/test-pod-name';
+const LOGS_DETAIL_PAGE_URL_OPENSHIFT_NS =
+  '/k8s/ns/openshift-api/pods/test-pod-name';
 const QUERY_RANGE_STREAMS_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/query_range?query=%7B*';
+const QUERY_RANGE_STREAMS_INFRASTRUCTURE_URL_MATCH =
+  '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/infrastructure/loki/api/v1/query_range?query=%7B*';
 const TEST_MESSAGE = "loki_1 | level=info msg='test log'";
 
 describe('Logs Detail Page', () => {
@@ -95,5 +99,42 @@ describe('Logs Detail Page', () => {
     cy.getByTestId(TestIds.SeverityDropdown).within(() => {
       cy.get('button').should('be.disabled');
     });
+  });
+
+  it('executes a query for the applications tenant based on the namespace', () => {
+    cy.intercept(
+      QUERY_RANGE_STREAMS_URL_MATCH,
+      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+    ).as('queryRangeStreams');
+
+    cy.visit(LOGS_DETAIL_PAGE_URL);
+
+    cy.getByTestId(TestIds.LogsTable)
+      .should('exist')
+      .within(() => {
+        cy.contains(TEST_MESSAGE);
+      });
+
+    cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
+  });
+
+  it('executes a query for the infrastructure tenant based on the namespace', () => {
+    cy.intercept(
+      QUERY_RANGE_STREAMS_INFRASTRUCTURE_URL_MATCH,
+      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+    ).as('queryRangeStreamsInfrastructure');
+
+    cy.visit(LOGS_DETAIL_PAGE_URL_OPENSHIFT_NS);
+
+    cy.getByTestId(TestIds.LogsTable)
+      .should('exist')
+      .within(() => {
+        cy.contains(TEST_MESSAGE);
+      });
+
+    cy.get('@queryRangeStreamsInfrastructure.all').should(
+      'have.length.at.least',
+      1,
+    );
   });
 });

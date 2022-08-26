@@ -51,7 +51,7 @@ const App = () => {
           <Route path="/dev-monitoring/ns/:ns/logs">
             <LogsDevPage />
           </Route>
-          <Route path="/k8s/ns/:namespace/pods/:name">
+          <Route path="/k8s/ns/:ns/pods/:name">
             <LogsDetailPage />
           </Route>
         </main>

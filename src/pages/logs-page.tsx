@@ -87,20 +87,24 @@ const LogsPage: React.FunctionComponent = () => {
     history.push(`${location.pathname}?${queryParams.toString()}`);
   };
 
-  const runQuery = (
-    queryToRun?: string,
-    severityToConsider?: Set<Severity>,
-    tenantToConsider?: string,
-  ) => {
+  const runQuery = ({
+    queryValue,
+    severityValue,
+    tenantValue,
+  }: {
+    queryValue?: string;
+    severityValue?: Set<Severity>;
+    tenantValue?: string;
+  } = {}) => {
     getLogs({
-      query: queryToRun ?? query,
-      severityFilter: severityToConsider ?? severityFilter,
-      tenant: tenantToConsider ?? tenant,
+      query: queryValue ?? query,
+      severityFilter: severityValue ?? severityFilter,
+      tenant: tenantValue ?? tenant,
     });
     getHistogram({
-      query: queryToRun ?? query,
-      severityFilter: severityToConsider ?? severityFilter,
-      tenant: tenantToConsider ?? tenant,
+      query: queryValue ?? query,
+      severityFilter: severityValue ?? severityFilter,
+      tenant: tenantValue ?? tenant,
     });
   };
 
@@ -111,17 +115,17 @@ const LogsPage: React.FunctionComponent = () => {
   React.useEffect(() => {
     return history.listen((location) => {
       const urlParams = new URLSearchParams(location.search);
-      const newQuery = urlParams.get(QUERY_PARAM_KEY) ?? DEFAULT_QUERY;
-      const newTenant = urlParams.get(TENANT_PARAM_KEY) ?? DEFAULT_TENANT;
-      const newSeverityFilter = severityFiltersFromParams(
+      const queryValue = urlParams.get(QUERY_PARAM_KEY) ?? DEFAULT_QUERY;
+      const tenantValue = urlParams.get(TENANT_PARAM_KEY) ?? DEFAULT_TENANT;
+      const severityValue = severityFiltersFromParams(
         urlParams.get(SEVERITY_FILTER_PARAM_KEY),
       );
 
-      setQuery(newQuery);
-      setTenant(newTenant);
-      setSeverityFilter(newSeverityFilter);
+      setQuery(queryValue);
+      setTenant(tenantValue);
+      setSeverityFilter(severityValue);
 
-      runQuery(newQuery, newSeverityFilter, newTenant);
+      runQuery({ queryValue, severityValue, tenantValue });
     });
   }, [history]);
 
