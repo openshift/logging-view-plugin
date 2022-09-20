@@ -2,7 +2,7 @@ import { WSFactory } from '@openshift-console/dynamic-plugin-sdk/lib/utils/k8s/w
 import { Config, QueryRangeResponse } from './logs.types';
 import { LogQLQuery } from './logql-query';
 import { Severity, severityAbbreviations } from './severity';
-import { durationFromTimestamp } from './value-utils';
+import { durationFromTimestamp, notEmptyString } from './value-utils';
 
 const LOKI_ENDPOINT = '/api/proxy/plugin/logging-view-plugin/backend';
 
@@ -33,15 +33,22 @@ const getSeverityFilter = (severity: Set<Severity>): string => {
     return '';
   }
 
-  const severityFilters = Array.from(severity).map((group: Severity) => {
-    if (group === 'unknown') {
-      return '^$';
+  const unknownFilter = severity.has('unknown')
+    ? 'level="unknown" or level=""'
+    : '';
+
+  const severityFilters = Array.from(severity).flatMap((group: Severity) => {
+    if (group !== 'unknown') {
+      return [severityAbbreviations[group].join('|')];
     }
 
-    return severityAbbreviations[group].join('|');
+    return [];
   });
 
-  return `level=~"${severityFilters.join('|')}"`;
+  const levelsfilter =
+    severityFilters.length > 0 ? `level=~"${severityFilters.join('|')}"` : '';
+
+  return [unknownFilter, levelsfilter].filter(notEmptyString).join(' or ');
 };
 
 const getNamespaceStreamSelector = (namespace?: string): string => {
