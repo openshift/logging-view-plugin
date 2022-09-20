@@ -22,7 +22,7 @@ export const severityAbbreviations: Record<Severity, Array<string>> = {
   info: ['inf', 'info', 'information', 'notice'],
   trace: ['trace'],
   warning: ['warn', 'warning'],
-  unknown: [],
+  unknown: ['unknown'],
 };
 
 export const severityFromString = (
