@@ -13,6 +13,7 @@ import {
 } from '@patternfly/react-table';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
+import { notUndefined } from '../value-utils';
 import { DateFormat, dateToFormat } from '../date-utils';
 import {
   isStreamsResult,
@@ -73,20 +74,26 @@ type LogRowProps = {
 };
 
 const parseResources = (data: Record<string, string>): Array<Resource> => {
-  const container = {
-    kind: 'Container',
-    name: data['kubernetes_container_name'],
-  };
-  const namespace = {
-    kind: 'Namespace',
-    name: data['kubernetes_namespace_name'],
-  };
-  const pod = {
-    kind: 'Pod',
-    name: data['kubernetes_pod_name'],
-  };
+  const container = data['kubernetes_container_name']
+    ? {
+        kind: 'Container',
+        name: data['kubernetes_container_name'],
+      }
+    : undefined;
+  const namespace = data['kubernetes_namespace_name']
+    ? {
+        kind: 'Namespace',
+        name: data['kubernetes_namespace_name'],
+      }
+    : undefined;
+  const pod = data['kubernetes_pod_name']
+    ? {
+        kind: 'Pod',
+        name: data['kubernetes_pod_name'],
+      }
+    : undefined;
 
-  return [namespace, pod, container];
+  return [namespace, pod, container].filter(notUndefined);
 };
 
 const streamToTableData = (stream: StreamLogData): Array<LogTableData> => {

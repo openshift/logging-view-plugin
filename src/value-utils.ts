@@ -20,6 +20,9 @@ export const valueWithScalePrefix = (value: number): string => {
 export const notEmptyString = (value: string): value is string =>
   value.length > 0;
 
+export const notUndefined = <T>(value: T | undefined): value is T =>
+  value !== undefined;
+
 const s = 1000;
 const m = s * 60;
 const h = m * 60;
