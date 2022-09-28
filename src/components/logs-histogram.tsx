@@ -17,7 +17,12 @@ import {
   QueryRangeResponse,
   TimeRange,
 } from '../logs.types';
-import { getSeverityColor, Severity, severityAbbreviations } from '../severity';
+import {
+  getSeverityColor,
+  Severity,
+  severityAbbreviations,
+  severityFromString,
+} from '../severity';
 import { TestIds } from '../test-ids';
 import { valueWithScalePrefix } from '../value-utils';
 import { CenteredContainer } from './centered-container';
@@ -60,7 +65,7 @@ interface LogHistogramProps {
 const resultHasAbreviation = (
   result: Record<string, string>,
   abbreviation: Array<string>,
-): boolean => result.level && abbreviation.includes(result.level);
+): boolean => !!result.level && abbreviation.includes(result.level);
 
 const aggregateMetricsLogData = (
   response?: QueryRangeResponse,
@@ -73,10 +78,13 @@ const aggregateMetricsLogData = (
     debug: [],
     trace: [],
     unknown: [],
+    other: [],
   };
 
-  if (isMatrixResult(response?.data)) {
-    for (const logData of response.data.result) {
+  const data = response?.data;
+
+  if (isMatrixResult(data)) {
+    for (const logData of data.result) {
       let logDataIngroup = false;
       for (const [group, abbreviations] of Object.entries(
         severityAbbreviations,
@@ -124,8 +132,13 @@ const getChartsData = (
 ): HistogramChartData => {
   const charts: HistogramChartData = {} as HistogramChartData;
 
-  Object.keys(data).forEach((group: Severity) => {
-    charts[group] = metricValueToChartData(group, data[group], interval);
+  Object.keys(data).forEach((group) => {
+    const severityGroup = severityFromString(group) ?? 'other';
+    charts[severityGroup] = metricValueToChartData(
+      severityGroup,
+      data[severityGroup],
+      interval,
+    );
   });
 
   return charts;
@@ -137,17 +150,18 @@ const tickCountFromTimeRange = (
 ): number => Math.ceil((timeRange.end - timeRange.start) / interval);
 
 const HistogramTooltip: React.FC<ChartLegendTooltipProps> = ({ ...props }) => {
-  const {
-    x: xProps,
-    y: yProps,
-    center: { x, y },
-    height,
-  } = props;
+  const { x: xProps, y: yProps, center, height } = props;
+
+  if (!center) {
+    return null;
+  }
+
+  const { x, y } = center;
 
   const xCoord = x ?? xProps;
   const yCoord = y ?? yProps;
 
-  if (xCoord === undefined && yCoord === undefined && height === undefined) {
+  if (xCoord === undefined || yCoord === undefined || height === undefined) {
     return null;
   }
 

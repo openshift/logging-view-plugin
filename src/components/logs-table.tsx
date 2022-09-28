@@ -109,7 +109,7 @@ const streamToTableData = (stream: StreamLogData): Array<LogTableData> => {
       time: formattedTime,
       timestamp,
       message,
-      severity: severityFromString(stream.stream.level),
+      severity: severityFromString(stream.stream.level) ?? 'other',
       data: stream.stream,
       resources: parseResources(stream.stream),
       namespace: stream.stream['kubernetes_namespace_name'],
@@ -123,8 +123,10 @@ const aggregateStreamLogData = (
 ): Array<LogTableData> => {
   // TODO check timestamp aggregation for streams
   // TODO check if display matrix data is required
-  if (isStreamsResult(response?.data)) {
-    return response.data.result.flatMap(streamToTableData);
+
+  const data = response?.data;
+  if (isStreamsResult(data)) {
+    return data.result.flatMap(streamToTableData);
   }
 
   return [];
@@ -217,7 +219,7 @@ const LogRow: React.FC<LogRowProps> = ({ data, title, showResources }) => {
     case 'Resources':
       return (
         <>
-          {data.resources.map((resource) => (
+          {data.resources?.map((resource) => (
             <ResourceLink
               key={resource.name}
               kind={resource.kind}
@@ -244,7 +246,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   isLoadingMore,
   onLoadMore,
   hasMoreLogsData,
-  showResources,
+  showResources = false,
   isStreaming,
   children,
   error,

@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "esModuleInterop": true,
-    "baseUrl": ".",
     "module": "esnext",
     "moduleResolution": "node",
     "target": "es2020",
@@ -11,7 +10,9 @@
     "noImplicitAny": true,
     "noUnusedLocals": true,
     "skipLibCheck": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "strict": true,
+    "outDir": "./dist"
   },
-  "include": ["src"]
+  "include": ["src/**/*"]
 }

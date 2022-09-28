@@ -58,12 +58,12 @@ const LogsDevPage: React.FunctionComponent = () => {
   } = useLogs();
 
   const handleToggleStreaming = () => {
-    toggleStreaming({ query, severityFilter });
+    toggleStreaming({ query, severityFilter, namespace });
   };
 
   const handleLoadMoreData = (lastTimestamp: number) => {
     if (!isLoadingMoreLogsData) {
-      getMoreLogs({ lastTimestamp, query, severityFilter });
+      getMoreLogs({ lastTimestamp, query, severityFilter, namespace });
     }
   };
 

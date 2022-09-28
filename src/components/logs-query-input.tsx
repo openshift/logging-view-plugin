@@ -5,9 +5,9 @@ import { ExecuteQueryButton } from './execute-query-button';
 import './logs-query-input.css';
 
 interface LogsQueryInputProps {
-  value?: string;
-  onChange?: (expression: string | undefined) => void;
-  onRun?: (expression: string | undefined) => void;
+  value: string;
+  onChange?: (expression: string) => void;
+  onRun?: (expression: string) => void;
 }
 
 export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({

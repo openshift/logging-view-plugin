@@ -9,7 +9,7 @@ import { Severity } from '../severity';
 const DEFAULT_TENANT = 'application';
 
 const getInitialTenantFromNamespace = (namespace?: string): string => {
-  if (/^openshift-|^openshift$|^default$|^kube-/.test(namespace)) {
+  if (namespace && /^openshift-|^openshift$|^default$|^kube-/.test(namespace)) {
     return 'infrastructure';
   }
 

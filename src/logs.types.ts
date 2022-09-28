@@ -8,14 +8,14 @@ export type MetricValue = Array<number | string>;
 export type TimeRange = { start: number; end: number };
 
 export const isStreamsResult = (
-  result: MatrixResult | StreamsResult,
+  result: MatrixResult | StreamsResult | undefined,
 ): result is StreamsResult =>
-  result && (result as StreamsResult).resultType === 'streams';
+  result !== undefined && (result as StreamsResult).resultType === 'streams';
 
 export const isMatrixResult = (
-  result: MatrixResult | StreamsResult,
+  result: MatrixResult | StreamsResult | undefined,
 ): result is MatrixResult =>
-  result && (result as MatrixResult).resultType === 'matrix';
+  result !== undefined && (result as MatrixResult).resultType === 'matrix';
 
 export interface MetricLogData {
   metric: Record<string, string>;
