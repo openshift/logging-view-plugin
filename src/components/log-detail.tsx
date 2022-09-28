@@ -4,7 +4,7 @@ import {
   DescriptionListGroup,
   DescriptionListTerm,
 } from '@patternfly/react-core';
-import * as React from 'react';
+import React from 'react';
 import './log-detail.css';
 
 interface LogDetailProps {

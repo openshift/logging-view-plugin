@@ -1,5 +1,5 @@
 import { Button, SearchInput } from '@patternfly/react-core';
-import * as React from 'react';
+import React from 'react';
 import { TestIds } from '../test-ids';
 import './logs-query-input.css';
 

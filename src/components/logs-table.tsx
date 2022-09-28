@@ -11,7 +11,7 @@ import {
   ThProps,
   Tr,
 } from '@patternfly/react-table';
-import * as React from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { notUndefined } from '../value-utils';
 import { DateFormat, dateToFormat } from '../date-utils';

@@ -9,7 +9,7 @@ import {
   getResizeObserver,
 } from '@patternfly/react-charts';
 import { Alert, Card, CardBody } from '@patternfly/react-core';
-import * as React from 'react';
+import React from 'react';
 import { DateFormat, dateToFormat } from '../date-utils';
 import {
   isMatrixResult,

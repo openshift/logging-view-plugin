@@ -1,5 +1,5 @@
 import { Grid, PageSection } from '@patternfly/react-core';
-import * as React from 'react';
+import React from 'react';
 import { useParams } from 'react-router';
 import { LogsTable } from '../components/logs-table';
 import { LogsToolbar } from '../components/logs-toolbar';
