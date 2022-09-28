@@ -3,7 +3,7 @@ import {
   OptionsMenuItem,
   OptionsMenuToggle,
 } from '@patternfly/react-core';
-import React, { useState } from 'react';
+import React from 'react';
 import { TestIds } from '../test-ids';
 
 interface TenantDropdownProps {
@@ -19,7 +19,7 @@ export const TenantDropdown: React.FC<TenantDropdownProps> = ({
   onTenantSelected,
   isDisabled = false,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = React.useState(false);
 
   const onToggle = () => setIsOpen(!isOpen);
   const onSelect = (e?: React.MouseEvent | React.KeyboardEvent) => {

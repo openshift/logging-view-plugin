@@ -1,6 +1,6 @@
 import { Button } from '@patternfly/react-core';
 import { PauseIcon, PlayIcon } from '@patternfly/react-icons';
-import * as React from 'react';
+import React from 'react';
 import { TestIds } from '../test-ids';
 import './toggle-play.css';
 

@@ -1,6 +1,6 @@
 import { useK8sWatchResource } from '@openshift-console/dynamic-plugin-sdk';
 import { WSFactory } from '@openshift-console/dynamic-plugin-sdk/lib/utils/k8s/ws-factory';
-import * as React from 'react';
+import React from 'react';
 import {
   Config,
   isMatrixResult,

@@ -7,7 +7,7 @@ import {
   Tooltip,
 } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
-import * as React from 'react';
+import React from 'react';
 import { useHistory, useLocation, useParams } from 'react-router';
 import { LogsHistogram } from '../components/logs-histogram';
 import { LogsTable } from '../components/logs-table';
