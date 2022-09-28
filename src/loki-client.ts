@@ -1,13 +1,13 @@
 import { WSFactory } from '@openshift-console/dynamic-plugin-sdk/lib/utils/k8s/ws-factory';
-import { Config, QueryRangeResponse } from './logs.types';
-import { LogQLQuery } from './logql-query';
-import { Severity, severityAbbreviations } from './severity';
-import { durationFromTimestamp, notEmptyString } from './value-utils';
 import {
   cancellableFetch,
   CancellableFetch,
   RequestInitWithTimeout,
 } from './cancellable-fetch';
+import { LabelMatcher, LogQLQuery, PipelineStage } from './logql-query';
+import { Config, QueryRangeResponse } from './logs.types';
+import { Severity, severityAbbreviations } from './severity';
+import { durationFromTimestamp, notEmptyString } from './value-utils';
 
 const LOKI_ENDPOINT = '/api/proxy/plugin/logging-view-plugin/backend';
 
@@ -15,7 +15,7 @@ type QueryRangeParams = {
   query: string;
   start: number;
   end: number;
-  severity?: Set<Severity>;
+  severityFilter?: Set<Severity>;
   limit?: number;
   config?: Config;
   namespace?: string;
@@ -27,43 +27,55 @@ type HistogramQuerParams = {
   start: number;
   end: number;
   interval: number;
-  severity?: Set<Severity>;
+  severityFilter?: Set<Severity>;
   config?: Config;
   namespace?: string;
   tenant: string;
 };
 
-const getSeverityFilter = (severity?: Set<Severity>): string => {
-  if (severity === undefined || severity.size === 0) {
-    return '';
+const getSeverityFilter = (
+  severityFilter?: Set<Severity>,
+): PipelineStage | undefined => {
+  if (!severityFilter || severityFilter.size === 0) {
+    return undefined;
   }
 
-  const unknownFilter = severity.has('unknown')
+  const unknownFilter = severityFilter.has('unknown')
     ? 'level="unknown" or level=""'
     : '';
 
-  const severityFilters = Array.from(severity).flatMap(
-    (group: Severity | undefined) => {
-      if (group === 'unknown' || group == undefined) {
+  const severityFilters = Array.from(severityFilter).flatMap(
+    (group: string | undefined) => {
+      if (group === 'unknown' || group === undefined) {
         return [];
       }
 
-      return [severityAbbreviations[group].join('|')];
+      return [severityAbbreviations[group as Severity]];
     },
   );
 
   const levelsfilter =
     severityFilters.length > 0 ? `level=~"${severityFilters.join('|')}"` : '';
 
-  return [unknownFilter, levelsfilter].filter(notEmptyString).join(' or ');
+  const filters = [unknownFilter, levelsfilter].filter(notEmptyString);
+
+  return filters.length > 0
+    ? { operator: '|', value: filters.join(' or ') }
+    : undefined;
 };
 
-const getNamespaceStreamSelector = (namespace?: string): string => {
+const getNamespaceSelectorMatcher = (
+  namespace?: string,
+): LabelMatcher | undefined => {
   if (!namespace) {
-    return '';
+    return undefined;
   }
 
-  return `kubernetes_namespace_name="${namespace}"`;
+  return {
+    label: 'kubernetes_namespace_name',
+    operator: '=',
+    value: `"${namespace}"`,
+  };
 };
 
 const getFetchConfig = ({
@@ -91,7 +103,7 @@ export const executeQueryRange = ({
   query,
   start,
   end,
-  severity,
+  severityFilter,
   config,
   limit = 100,
   tenant,
@@ -99,8 +111,8 @@ export const executeQueryRange = ({
 }: QueryRangeParams): CancellableFetch<QueryRangeResponse> => {
   const logQLQuery = new LogQLQuery(query);
   logQLQuery
-    .appendSelector(getNamespaceStreamSelector(namespace))
-    .appendPipeline(getSeverityFilter(severity));
+    .addSelectorMatcher(getNamespaceSelectorMatcher(namespace))
+    .addPipelineStage(getSeverityFilter(severityFilter));
 
   const params = {
     query: logQLQuery.toString(),
@@ -122,7 +134,7 @@ export const executeHistogramQuery = ({
   start,
   end,
   interval,
-  severity,
+  severityFilter,
   config,
   tenant,
   namespace,
@@ -131,8 +143,8 @@ export const executeHistogramQuery = ({
 
   const logQLQuery = new LogQLQuery(query);
   logQLQuery
-    .appendSelector(getNamespaceStreamSelector(namespace))
-    .appendPipeline(getSeverityFilter(severity));
+    .addSelectorMatcher(getNamespaceSelectorMatcher(namespace))
+    .addPipelineStage(getSeverityFilter(severityFilter));
 
   const extendedQuery = logQLQuery.toString();
 
@@ -156,7 +168,7 @@ export const executeHistogramQuery = ({
 export const connectToTailSocket = ({
   query,
   start,
-  severity,
+  severityFilter,
   limit = 200,
   config,
   tenant,
@@ -164,8 +176,8 @@ export const connectToTailSocket = ({
 }: Omit<QueryRangeParams, 'end'>) => {
   const logQLQuery = new LogQLQuery(query);
   logQLQuery
-    .appendSelector(getNamespaceStreamSelector(namespace))
-    .appendPipeline(getSeverityFilter(severity));
+    .addSelectorMatcher(getNamespaceSelectorMatcher(namespace))
+    .addPipelineStage(getSeverityFilter(severityFilter));
 
   const params = {
     query: logQLQuery.toString(),
