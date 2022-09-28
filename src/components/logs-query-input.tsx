@@ -1,6 +1,7 @@
-import { Button, SearchInput } from '@patternfly/react-core';
+import { SearchInput } from '@patternfly/react-core';
 import React from 'react';
 import { TestIds } from '../test-ids';
+import { ExecuteQueryButton } from './execute-query-button';
 import './logs-query-input.css';
 
 interface LogsQueryInputProps {
@@ -56,14 +57,10 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
         onKeyDown={handleKeyDown}
       />
       {onRun && (
-        <Button
-          variant="primary"
-          data-test={TestIds.ExecuteQueryButton}
+        <ExecuteQueryButton
           onClick={handleRunQuery}
           isDisabled={value === undefined || value.length === 0}
-        >
-          Run Query
-        </Button>
+        />
       )}
     </div>
   );
