@@ -32,8 +32,8 @@
   "devDependencies": {
     "@cypress/code-coverage": "^3.10.0",
     "@jsdevtools/coverage-istanbul-loader": "^3.0.5",
-    "@openshift-console/dynamic-plugin-sdk": "^0.0.8",
-    "@openshift-console/dynamic-plugin-sdk-webpack": "^0.0.6",
+    "@openshift-console/dynamic-plugin-sdk": "^0.0.12",
+    "@openshift-console/dynamic-plugin-sdk-webpack": "^0.0.7",
     "@patternfly/react-core": "4.175.4",
     "@types/jest": "^28.1.4",
     "@types/node": "^17.0.21",
