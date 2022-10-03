@@ -33,8 +33,8 @@ type HistogramQuerParams = {
   tenant: string;
 };
 
-const getSeverityFilter = (severity: Set<Severity>): string => {
-  if (severity.size === 0) {
+const getSeverityFilter = (severity?: Set<Severity>): string => {
+  if (severity === undefined || severity.size === 0) {
     return '';
   }
 
@@ -42,13 +42,15 @@ const getSeverityFilter = (severity: Set<Severity>): string => {
     ? 'level="unknown" or level=""'
     : '';
 
-  const severityFilters = Array.from(severity).flatMap((group: Severity) => {
-    if (group !== 'unknown') {
-      return [severityAbbreviations[group].join('|')];
-    }
+  const severityFilters = Array.from(severity).flatMap(
+    (group: Severity | undefined) => {
+      if (group === 'unknown' || group == undefined) {
+        return [];
+      }
 
-    return [];
-  });
+      return [severityAbbreviations[group].join('|')];
+    },
+  );
 
   const levelsfilter =
     severityFilters.length > 0 ? `level=~"${severityFilters.join('|')}"` : '';

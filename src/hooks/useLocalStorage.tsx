@@ -2,7 +2,7 @@ import React from 'react';
 
 export const useLocalStorage = (
   key: string,
-): [string, React.Dispatch<string>] => {
+): [string | null, React.Dispatch<string>] => {
   const value = React.useRef(window.localStorage.getItem(key));
 
   const callback = React.useCallback(

@@ -31,6 +31,9 @@ const isRawConfig = (obj: unknown): obj is RawConfig =>
   (obj as RawConfig).data &&
   typeof (obj as RawConfig).data.config === 'string';
 
+const isAbortError = (error: unknown): boolean =>
+  error instanceof Error && error.name === 'AbortError';
+
 type State = {
   timeSpan: number;
   isLoadingHistogramData: boolean;
@@ -109,7 +112,7 @@ const appendData = (
   response?: QueryRangeResponse,
   nextResponse?: QueryRangeResponse,
   limit?: number,
-): QueryRangeResponse => {
+): QueryRangeResponse | undefined => {
   if (
     response &&
     nextResponse &&
@@ -241,7 +244,7 @@ const timeRangeFromSpan = (
 
 const intervalFromSpan = (timeSpan: number): number => {
   return (
-    timeRangeOptions.find((option) => option.span === timeSpan).interval ??
+    timeRangeOptions.find((option) => option.span === timeSpan)?.interval ??
     60 * 1000
   );
 };
@@ -249,8 +252,8 @@ const intervalFromSpan = (timeSpan: number): number => {
 const defaultTimeSpan = (): number => {
   const defaultSpan = timeRangeOptions.find(
     (item) => item.key === DEFAULT_TIME_RANGE,
-  ).span;
-  return defaultSpan;
+  )?.span;
+  return defaultSpan ?? 60 * 60 * 1000;
 };
 
 type UseLogOptions =
@@ -365,7 +368,7 @@ export const useLogs = (
         payload: { logsData: queryResponse },
       });
     } catch (error) {
-      if (error.name !== 'AbortError') {
+      if (!isAbortError(error)) {
         dispatch({ type: 'logsError', payload: { error } });
       }
     }
@@ -379,7 +382,7 @@ export const useLogs = (
     namespace,
   }: {
     query: string;
-    severityFilter: Set<Severity>;
+    severityFilter?: Set<Severity>;
     tenant?: string;
     timeSpan?: number;
     namespace?: string;
@@ -415,7 +418,7 @@ export const useLogs = (
 
       dispatch({ type: 'logsResponse', payload: { logsData: queryResponse } });
     } catch (error) {
-      if (error.name !== 'AbortError') {
+      if (!isAbortError(error)) {
         dispatch({ type: 'logsError', payload: { error } });
       }
     }
@@ -490,10 +493,12 @@ export const useLogs = (
     query,
     severityFilter,
     tenant,
+    namespace,
   }: {
     query: string;
     severityFilter: Set<Severity>;
     tenant?: string;
+    namespace?: string;
   }) => {
     currentQuery.current = query;
     currentSeverityFilter.current = severityFilter;
@@ -502,7 +507,7 @@ export const useLogs = (
     if (isStreaming) {
       pauseTailLog();
     } else {
-      startTailLog({ query, severityFilter, tenant });
+      startTailLog({ query, severityFilter, tenant, namespace });
     }
   };
 
@@ -514,7 +519,7 @@ export const useLogs = (
     namespace,
   }: {
     query: string;
-    severityFilter: Set<Severity>;
+    severityFilter?: Set<Severity>;
     tenant?: string;
     timeSpan?: number;
     namespace?: string;
@@ -554,7 +559,7 @@ export const useLogs = (
         payload: { histogramData: histogramResponse, timeSpan: localTimeSpan },
       });
     } catch (error) {
-      if (error.name !== 'AbortError') {
+      if (!isAbortError(error)) {
         dispatch({ type: 'histogramError', payload: { error } });
       }
     }
@@ -563,12 +568,12 @@ export const useLogs = (
   React.useEffect(() => {
     if (currentQuery && currentSeverityFilter) {
       getLogs({
-        query: currentQuery.current,
+        query: currentQuery.current ?? '',
         severityFilter: currentSeverityFilter.current,
         timeSpan: localTimeSpan,
       });
       getHistogram({
-        query: currentQuery.current,
+        query: currentQuery.current ?? '',
         severityFilter: currentSeverityFilter.current,
         timeSpan: localTimeSpan,
       });

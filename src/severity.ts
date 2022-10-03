@@ -13,28 +13,30 @@ export type Severity =
   | 'info'
   | 'debug'
   | 'trace'
-  | 'unknown';
+  | 'unknown'
+  | 'other';
 
 export const severityAbbreviations: Record<Severity, Array<string>> = {
-  critical: ['emerg', 'fatal', 'alert', 'crit', 'critical'],
-  error: ['err', 'error', 'eror'],
+  critical: ['critical', 'emerg', 'fatal', 'alert', 'crit'],
+  error: ['error', 'err', 'eror'],
   debug: ['debug', 'dbug'],
-  info: ['inf', 'info', 'information', 'notice'],
+  info: ['info', 'inf', 'information', 'notice'],
   trace: ['trace'],
   warning: ['warn', 'warning'],
   unknown: ['unknown'],
+  other: [''],
 };
 
 export const severityFromString = (
   severityText: string | undefined | null,
-): Severity => {
+): Severity | undefined => {
   for (const [group, abbreviations] of Object.entries(severityAbbreviations)) {
-    if (abbreviations.includes(severityText)) {
+    if (severityText && abbreviations.includes(severityText)) {
       return group as Severity;
     }
   }
 
-  return 'unknown';
+  return undefined;
 };
 
 export const isSeverity = (value: string): value is Severity =>

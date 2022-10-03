@@ -36,7 +36,7 @@ export const RefreshIntervalDropdown: React.FC<
   );
   const [isOpen, setIsOpen] = React.useState(false);
   const [selectedIndex, setSelectedIndex] = React.useState<number>(
-    !isNaN(parseInt(storedRefreshInterval, 10))
+    storedRefreshInterval && !isNaN(parseInt(storedRefreshInterval, 10))
       ? parseInt(storedRefreshInterval, 10)
       : 0,
   );
@@ -44,7 +44,7 @@ export const RefreshIntervalDropdown: React.FC<
   const timer = React.useRef<NodeJS.Timer | null>(null);
 
   const clearTimer = () => {
-    if (timer) {
+    if (timer.current) {
       clearInterval(timer.current);
     }
   };

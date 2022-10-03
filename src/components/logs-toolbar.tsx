@@ -13,12 +13,12 @@ import {
 } from '@patternfly/react-core';
 import React from 'react';
 import { Severity } from '../severity';
+import { TestIds } from '../test-ids';
 import { LogsQueryInput } from './logs-query-input';
+import './logs-toolbar.css';
 import { Spacer } from './spacer';
 import { TenantDropdown } from './tenant-dropdown';
 import { TogglePlay } from './toggle-play';
-import './logs-toolbar.css';
-import { TestIds } from '../test-ids';
 
 interface LogsToolbarProps {
   query: string;
@@ -56,7 +56,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
   onQueryRun,
   tenant = 'application',
   onTenantSelect,
-  severityFilter,
+  severityFilter = new Set(),
   onSeverityChange,
   onStreamingToggle,
   onShowResourcesToggle,
@@ -77,7 +77,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
   };
 
   const onDeleteSeverityGroup = () => {
-    onSeverityChange(new Set());
+    onSeverityChange?.(new Set());
   };
 
   const onSeverityToggle = () => {
@@ -89,6 +89,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
     value: string | SelectOptionObject,
   ) => {
     const severityValue = value.toString() as Severity;
+
     if (severityFilter.has(severityValue)) {
       severityFilter.delete(severityValue);
     } else {
@@ -97,6 +98,8 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
 
     onSeverityChange?.(new Set(severityFilter));
   };
+
+  const severityFilterArray = Array.from(severityFilter);
 
   return (
     <Toolbar isSticky clearAllFilters={onDeleteSeverityGroup}>
@@ -109,7 +112,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
           />
 
           <ToolbarFilter
-            chips={Array.from(severityFilter)}
+            chips={severityFilterArray}
             deleteChip={onDeleteSeverityFilter}
             deleteChipGroup={onDeleteSeverityGroup}
             categoryName="Severity"
@@ -121,7 +124,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
               aria-label="Severity"
               onToggle={onSeverityToggle}
               onSelect={onSeveritySelect}
-              selections={Array.from(severityFilter)}
+              selections={severityFilterArray}
               isOpen={isSeverityExpanded}
               placeholderText="Severity"
               isDisabled={isDisabled}

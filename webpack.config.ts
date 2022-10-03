@@ -80,10 +80,19 @@ const config: Configuration = {
 
 if (process.env.NODE_ENV === 'production') {
   config.mode = 'production';
-  config.output.filename = '[name]-bundle-[hash].min.js';
-  config.output.chunkFilename = '[name]-chunk-[chunkhash].min.js';
-  config.optimization.chunkIds = 'deterministic';
-  config.optimization.minimize = true;
+
+  if (config.output?.filename) {
+    config.output.filename = '[name]-bundle-[hash].min.js';
+  }
+  if (config.output?.chunkFilename) {
+    config.output.chunkFilename = '[name]-chunk-[chunkhash].min.js';
+  }
+  if (config.optimization?.chunkIds) {
+    config.optimization.chunkIds = 'deterministic';
+  }
+  if (config.optimization?.minimize) {
+    config.optimization.minimize = true;
+  }
 }
 
 export default config;

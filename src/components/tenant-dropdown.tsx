@@ -8,7 +8,7 @@ import { TestIds } from '../test-ids';
 
 interface TenantDropdownProps {
   selectedTenant?: string;
-  onTenantSelected: (tenant: string) => void;
+  onTenantSelected?: (tenant: string) => void;
   isDisabled?: boolean;
 }
 
@@ -23,9 +23,11 @@ export const TenantDropdown: React.FC<TenantDropdownProps> = ({
 
   const onToggle = () => setIsOpen(!isOpen);
   const onSelect = (e?: React.MouseEvent | React.KeyboardEvent) => {
-    const tenant = e.currentTarget.id;
+    const tenant = e?.currentTarget.id;
     setIsOpen(false);
-    onTenantSelected(tenant);
+    if (tenant) {
+      onTenantSelected?.(tenant);
+    }
   };
 
   return (
