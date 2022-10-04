@@ -10,4 +10,5 @@ export default defineConfig({
     },
   },
   video: false,
+  viewportWidth: 1400,
 });

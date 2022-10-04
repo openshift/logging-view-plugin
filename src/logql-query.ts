@@ -1,10 +1,14 @@
 import { SyntaxNodeRef, Tree } from '@lezer/common';
 import { parser } from '@grafana/lezer-logql';
 
-export type LabelMatcher = { label: string; operator: string; value: string };
+export type LabelMatcher = {
+  label?: string;
+  operator?: string;
+  value?: string;
+};
 export type PipelineStage = {
-  operator: string;
-  value: string;
+  operator?: string;
+  value?: string;
   labelsInFilter?: Array<LabelMatcher>;
 };
 

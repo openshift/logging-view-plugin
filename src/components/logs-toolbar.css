@@ -1,9 +1,12 @@
 .co-logs-toolbar {
-  display: flex;
   gap: var(--pf-global--spacer--md);
-  width: 100%;
 }
 
 .co-logs-severity-filter {
   margin: 0;
+}
+
+.co-logs-toolbar .co-logs-expression-input {
+  padding-right: var(--pf-c-toolbar__content--PaddingRight);
+  padding-left: var(--pf-c-toolbar__content--PaddingLeft);
 }

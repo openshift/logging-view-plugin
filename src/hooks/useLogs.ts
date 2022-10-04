@@ -13,11 +13,10 @@ import {
   executeHistogramQuery,
   executeQueryRange,
 } from '../loki-client';
-import { Severity } from '../severity';
 import { timeRangeOptions } from '../time-range-options';
 
 const DEFAULT_TIME_RANGE = '1h';
-const QUERY_LOGS_LIMIT = 200;
+const QUERY_LOGS_LIMIT = 100;
 const STREAMING_MAX_LOGS_LIMIT = 1e3;
 
 type RawConfig = { data: { config: string } };
@@ -270,7 +269,6 @@ export const useLogs = (
   },
 ) => {
   const currentQuery = React.useRef<string | undefined>();
-  const currentSeverityFilter = React.useRef<Set<Severity> | undefined>();
   const currentConfig = React.useRef<Config>(defaultConfig);
   const currentTenant = React.useRef<string>(initialTenant);
   const currentTime = React.useRef<number>(Date.now());
@@ -319,7 +317,7 @@ export const useLogs = (
           currentConfig.current = mergedConfig;
         }
       } catch (e) {
-        console.error('Error parsing configuration from ConfigMap', e);
+        console.warn('Error parsing configuration from ConfigMap', e);
       }
     }
   }, [configLoaded, configError, configData]);
@@ -327,17 +325,14 @@ export const useLogs = (
   const getMoreLogs = async ({
     lastTimestamp,
     query,
-    severityFilter,
     namespace,
   }: {
     lastTimestamp: number;
     query: string;
-    severityFilter: Set<Severity>;
     namespace?: string;
   }) => {
     try {
       currentQuery.current = query;
-      currentSeverityFilter.current = severityFilter;
       currentTime.current = Date.now();
 
       const { start } = timeRangeFromSpan(localTimeSpan);
@@ -352,7 +347,6 @@ export const useLogs = (
         query,
         start,
         end: lastTimestamp,
-        severityFilter: severityFilter,
         limit: QUERY_LOGS_LIMIT,
         config: currentConfig.current,
         tenant: currentTenant.current,
@@ -376,20 +370,17 @@ export const useLogs = (
 
   const getLogs = async ({
     query,
-    severityFilter,
     tenant,
     timeSpan,
     namespace,
   }: {
     query: string;
-    severityFilter?: Set<Severity>;
     tenant?: string;
     timeSpan?: number;
     namespace?: string;
   }) => {
     try {
       currentQuery.current = query;
-      currentSeverityFilter.current = severityFilter;
       currentTenant.current = tenant ?? currentTenant.current;
       currentTime.current = Date.now();
 
@@ -405,7 +396,6 @@ export const useLogs = (
         query,
         start,
         end,
-        severityFilter: severityFilter,
         limit: QUERY_LOGS_LIMIT,
         config: currentConfig.current,
         tenant: currentTenant.current,
@@ -434,17 +424,14 @@ export const useLogs = (
 
   const startTailLog = ({
     query,
-    severityFilter,
     tenant,
     namespace,
   }: {
     query: string;
-    severityFilter: Set<Severity>;
     tenant?: string;
     namespace?: string;
   }) => {
     currentQuery.current = query;
-    currentSeverityFilter.current = severityFilter;
     currentTenant.current = tenant ?? currentTenant.current;
     currentTime.current = Date.now();
 
@@ -459,7 +446,6 @@ export const useLogs = (
     ws.current = connectToTailSocket({
       query,
       start,
-      severityFilter: severityFilter,
       tenant: currentTenant.current,
       namespace,
     });
@@ -491,42 +477,36 @@ export const useLogs = (
 
   const toggleStreaming = ({
     query,
-    severityFilter,
     tenant,
     namespace,
   }: {
     query: string;
-    severityFilter: Set<Severity>;
     tenant?: string;
     namespace?: string;
   }) => {
     currentQuery.current = query;
-    currentSeverityFilter.current = severityFilter;
     currentTenant.current = tenant ?? currentTenant.current;
 
     if (isStreaming) {
       pauseTailLog();
     } else {
-      startTailLog({ query, severityFilter, tenant, namespace });
+      startTailLog({ query, tenant, namespace });
     }
   };
 
   const getHistogram = async ({
     query,
-    severityFilter,
     tenant,
     timeSpan,
     namespace,
   }: {
     query: string;
-    severityFilter?: Set<Severity>;
     tenant?: string;
     timeSpan?: number;
     namespace?: string;
   }) => {
     try {
       currentQuery.current = query;
-      currentSeverityFilter.current = severityFilter;
       currentTenant.current = tenant ?? currentTenant.current;
       currentTime.current = Date.now();
 
@@ -543,7 +523,6 @@ export const useLogs = (
         query,
         start,
         end,
-        severityFilter: severityFilter,
         interval: intervalFromSpan(localTimeSpan),
         config: currentConfig.current,
         tenant: currentTenant.current,
@@ -566,15 +545,13 @@ export const useLogs = (
   };
 
   React.useEffect(() => {
-    if (currentQuery && currentSeverityFilter) {
+    if (currentQuery?.current) {
       getLogs({
-        query: currentQuery.current ?? '',
-        severityFilter: currentSeverityFilter.current,
+        query: currentQuery.current,
         timeSpan: localTimeSpan,
       });
       getHistogram({
-        query: currentQuery.current ?? '',
-        severityFilter: currentSeverityFilter.current,
+        query: currentQuery.current,
         timeSpan: localTimeSpan,
       });
     }

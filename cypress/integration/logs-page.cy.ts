@@ -5,6 +5,7 @@ import {
   queryRangeStreamsInvalidResponse,
   queryRangeStreamsvalidResponse,
 } from '../fixtures/query-range-fixtures';
+import { namespaceListResponse } from '../fixtures/resource-api-fixtures';
 
 const LOGS_PAGE_URL = '/monitoring/logs';
 const QUERY_RANGE_STREAMS_URL_MATCH =
@@ -15,6 +16,7 @@ const QUERY_RANGE_STREAMS_INFRASTRUCTURE_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/infrastructure/loki/api/v1/query_range?query=%7B*';
 const QUERY_RANGE_MATRIX_INFRASTRUCTURE_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/infrastructure/loki/api/v1/query_range?query=sum*';
+const RESOURCE_URL_MATCH = '/api/kubernetes/api/v1/*';
 const TEST_MESSAGE = "loki_1 | level=info msg='test log'";
 
 describe('Logs Page', () => {
@@ -30,6 +32,9 @@ describe('Logs Page', () => {
     cy.getByTestId(TestIds.RefreshIntervalDropdown).should('exist');
     cy.getByTestId(TestIds.TimeRangeDropdown).should('exist');
     cy.getByTestId(TestIds.SyncButton).should('exist');
+    cy.getByTestId(TestIds.LogsQueryInput).should('not.exist');
+
+    cy.getByTestId(TestIds.ShowQueryToggle).click();
     cy.getByTestId(TestIds.LogsQueryInput).should('exist');
 
     cy.getByTestId(TestIds.LogsTable)
@@ -151,8 +156,10 @@ describe('Logs Page', () => {
         cy.get('svg g > path').should('have.length.above', 0);
       });
 
+    cy.getByTestId(TestIds.ShowQueryToggle).click();
+
     cy.getByTestId(TestIds.LogsQueryInput).within(() => {
-      cy.get('input')
+      cy.get('textarea')
         .type('{selectAll}')
         .type('{ job = "some_job" }', {
           parseSpecialCharSequences: false,
@@ -262,8 +269,10 @@ describe('Logs Page', () => {
 
     cy.visit(LOGS_PAGE_URL);
 
+    cy.getByTestId(TestIds.ShowQueryToggle).click();
+
     cy.getByTestId(TestIds.LogsQueryInput).within(() => {
-      cy.get('input').clear();
+      cy.get('textarea').clear();
     });
 
     cy.getByTestId(TestIds.ExecuteQueryButton).should('be.disabled');
@@ -285,5 +294,87 @@ describe('Logs Page', () => {
     cy.getByTestId(TestIds.TenantDropdown).within(() => {
       cy.get('button').should('be.disabled');
     });
+  });
+
+  it.only('updates the query when selecting filters', () => {
+    cy.intercept(
+      QUERY_RANGE_STREAMS_URL_MATCH,
+      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+    ).as('queryRangeStreams');
+    cy.intercept(
+      QUERY_RANGE_MATRIX_URL_MATCH,
+      queryRangeMatrixValidResponse(),
+    ).as('queryRangeMatrix');
+
+    cy.intercept(RESOURCE_URL_MATCH, namespaceListResponse).as('resourceQuery');
+
+    cy.visit(LOGS_PAGE_URL);
+
+    cy.getByTestId(TestIds.ShowQueryToggle).click();
+
+    cy.getByTestId(TestIds.SeverityDropdown)
+      .click()
+      .within(() => {
+        cy.contains('error').click();
+        cy.contains('info').click();
+      });
+
+    cy.getByTestId(TestIds.LogsQueryInput).within(() => {
+      cy.get('textarea')
+        .invoke('val')
+        .should(
+          'equal',
+          '{ log_type=~".+" } | json | level=~"error|err|eror|info|inf|information|notice"',
+        );
+    });
+
+    cy.getByTestId(TestIds.AttributeFilters).within(() => {
+      cy.get(`[aria-label="Options menu"]`)
+        .first()
+        .click({ force: true })
+        .parent()
+        .within(() => {
+          cy.contains('Content').click({ force: true });
+        });
+    });
+
+    cy.getByTestId(TestIds.AttributeFilters).within(() => {
+      cy.get('input').type('line filter');
+    });
+
+    cy.getByTestId(TestIds.LogsQueryInput).within(() => {
+      cy.get('textarea')
+        .invoke('val')
+        .should(
+          'equal',
+          '{ log_type=~".+" } |= "line filter" | json | level=~"error|err|eror|info|inf|information|notice"',
+        );
+    });
+
+    cy.getByTestId(TestIds.AttributeFilters).within(() => {
+      cy.get(`[aria-label="Options menu"]`)
+        .first()
+        .click({ force: true })
+        .parent()
+        .within(() => {
+          cy.contains('Namespaces').click({ force: true });
+        });
+    });
+
+    cy.getByTestId(TestIds.AttributeFilters).within(() => {
+      cy.contains('Filter by Namespaces').click({ force: true });
+      cy.contains('gitops').click({ force: true });
+    });
+
+    cy.getByTestId(TestIds.LogsQueryInput).within(() => {
+      cy.get('textarea')
+        .invoke('val')
+        .should(
+          'equal',
+          '{ log_type=~".+", kubernetes_namespace_name="gitops" } |= "line filter" | json | level=~"error|err|eror|info|inf|information|notice"',
+        );
+    });
+
+    cy.get('@resourceQuery.all').should('have.length.at.least', 1);
   });
 });

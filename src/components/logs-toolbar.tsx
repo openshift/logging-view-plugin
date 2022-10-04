@@ -12,8 +12,12 @@ import {
   ToolbarGroup,
 } from '@patternfly/react-core';
 import React from 'react';
-import { Severity } from '../severity';
+import { Severity, severityFromString } from '../severity';
 import { TestIds } from '../test-ids';
+import { notUndefined } from '../value-utils';
+import { ExecuteQueryButton } from './execute-query-button';
+import { AttributeFilter } from './filters/attribute-filter';
+import { AttributeList, Filters } from './filters/filter.types';
 import { LogsQueryInput } from './logs-query-input';
 import './logs-toolbar.css';
 import { Spacer } from './spacer';
@@ -38,6 +42,9 @@ interface LogsToolbarProps {
   showResources?: boolean;
   enableTenantDropdown?: boolean;
   isDisabled?: boolean;
+  onFiltersChange?: (filters: Filters) => void;
+  filters?: Filters;
+  attributeList?: AttributeList;
 }
 
 const availableSeverityFilters: Array<Severity> = [
@@ -56,8 +63,6 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
   onQueryRun,
   tenant = 'application',
   onTenantSelect,
-  severityFilter = new Set(),
-  onSeverityChange,
   onStreamingToggle,
   onShowResourcesToggle,
   showResources = false,
@@ -65,19 +70,35 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
   isStreaming = false,
   enableTenantDropdown = true,
   isDisabled = false,
+  filters,
+  onFiltersChange,
+  attributeList,
 }) => {
   const [isSeverityExpanded, setIsSeverityExpanded] = React.useState(false);
+  const [isQueryShown, setIsQueryShown] = React.useState(false);
+  const severityFilter: Set<Severity> = filters?.severity
+    ? new Set(
+        Array.from(filters?.severity)
+          .map(severityFromString)
+          .filter(notUndefined),
+      )
+    : new Set();
 
   const onDeleteSeverityFilter = (
     _category: string | ToolbarChipGroup,
     chip: string | ToolbarChip,
   ) => {
     severityFilter.delete(chip.toString() as Severity);
-    onSeverityChange?.(new Set(severityFilter));
+    const newFilters = { ...(filters ?? {}), severity: severityFilter };
+    onFiltersChange?.(newFilters);
+  };
+
+  const handleClearAllFilters = () => {
+    onFiltersChange?.({});
   };
 
   const onDeleteSeverityGroup = () => {
-    onSeverityChange?.(new Set());
+    onFiltersChange?.({ ...(filters ?? {}), severity: undefined });
   };
 
   const onSeverityToggle = () => {
@@ -96,21 +117,29 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
       severityFilter.add(severityValue);
     }
 
-    onSeverityChange?.(new Set(severityFilter));
+    onFiltersChange?.({
+      ...(filters ?? {}),
+      severity: new Set(severityFilter),
+    });
   };
 
   const severityFilterArray = Array.from(severityFilter);
 
   return (
-    <Toolbar isSticky clearAllFilters={onDeleteSeverityGroup}>
+    <Toolbar
+      isSticky
+      clearAllFilters={handleClearAllFilters}
+      className="co-logs-toolbar"
+    >
       <ToolbarContent>
-        <ToolbarGroup className="co-logs-toolbar">
-          <LogsQueryInput
-            value={query}
-            onRun={onQueryRun}
-            onChange={onQueryChange}
+        {attributeList && (
+          <AttributeFilter
+            attributeList={attributeList}
+            filters={filters}
+            onFiltersChange={onFiltersChange}
           />
-
+        )}
+        <ToolbarGroup>
           <ToolbarFilter
             chips={severityFilterArray}
             deleteChip={onDeleteSeverityFilter}
@@ -134,15 +163,19 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
               ))}
             </Select>
           </ToolbarFilter>
+        </ToolbarGroup>
 
-          {enableTenantDropdown && (
+        {enableTenantDropdown && (
+          <ToolbarGroup>
             <TenantDropdown
               onTenantSelected={onTenantSelect}
               selectedTenant={tenant}
               isDisabled={isDisabled}
             />
-          )}
+          </ToolbarGroup>
+        )}
 
+        <ToolbarGroup>
           <Checkbox
             label="Show Resources"
             isChecked={showResources}
@@ -150,18 +183,45 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
             aria-label="checkbox for showing resources names"
             id="showResourcesCheckbox"
           />
+        </ToolbarGroup>
 
-          <Spacer />
+        {!isQueryShown && (
+          <ToolbarGroup>
+            <ExecuteQueryButton onClick={onQueryRun} isDisabled={isDisabled} />
+          </ToolbarGroup>
+        )}
 
-          {enableStreaming && (
+        <Spacer />
+
+        <ToolbarGroup>
+          <Checkbox
+            label="Show Query"
+            isChecked={isQueryShown}
+            onChange={setIsQueryShown}
+            aria-label="checkbox for showing the query"
+            id="showQueryCheckbox"
+            data-test={TestIds.ShowQueryToggle}
+          />
+        </ToolbarGroup>
+
+        {enableStreaming && (
+          <ToolbarGroup>
             <TogglePlay
               isDisabled={isDisabled}
               active={isStreaming}
               onClick={onStreamingToggle}
             />
-          )}
-        </ToolbarGroup>
+          </ToolbarGroup>
+        )}
       </ToolbarContent>
+
+      {isQueryShown && (
+        <LogsQueryInput
+          value={query}
+          onRun={onQueryRun}
+          onChange={onQueryChange}
+        />
+      )}
     </Toolbar>
   );
 };

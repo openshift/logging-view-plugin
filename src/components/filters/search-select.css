@@ -1,0 +1,4 @@
+.co-logs__search-select .pf-c-form__fieldset {
+  max-height: 50vh;
+  overflow: auto;
+}

@@ -5,16 +5,17 @@ import LogsDetailPage from './pages/logs-detail-page';
 import LogsPage from './pages/logs-page';
 import '@patternfly/patternfly/patternfly.css';
 import LogsDevPage from './pages/logs-dev-page';
+import './index.css';
 
 const App = () => {
   return (
-    <div className="pf-c-page" style={{ height: '100vh' }}>
+    <div className="pf-c-page co-logs-standalone__page">
       <BrowserRouter>
         <header className="pf-c-masthead">
           <div className="pf-c-masthead__main"></div>
         </header>
 
-        <div className="pf-c-page__sidebar">
+        <div className="pf-c-page__sidebar co-logs-standalone__side-menu">
           <div className="pf-c-page__sidebar-body">
             <nav className="pf-c-nav" aria-label="Global">
               <ul className="pf-c-nav__list">
