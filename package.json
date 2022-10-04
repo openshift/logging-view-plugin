@@ -88,6 +88,7 @@
     }
   },
   "dependencies": {
+    "@grafana/lezer-logql": "^0.1.1",
     "@patternfly/patternfly": "^4.202.1",
     "@patternfly/react-charts": "^6.55.16",
     "@patternfly/react-icons": "^4.57.2",

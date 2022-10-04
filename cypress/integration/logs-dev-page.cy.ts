@@ -145,7 +145,7 @@ describe('Logs Dev Page', () => {
       const url = new URL(request.url);
       const query = url.searchParams.get('query');
       expect(query).to.equal(
-        '{ log_type =~ ".+", kubernetes_namespace_name="my-namespace" } | json',
+        '{ log_type=~".+", kubernetes_namespace_name="my-namespace" } | json',
       );
     });
   });
