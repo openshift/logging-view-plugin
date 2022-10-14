@@ -5,7 +5,14 @@ export type Config = {
 
 export type MetricValue = Array<number | string>;
 
-export type TimeRange = { start: number; end: number };
+export type TimeRangeText = { start: string; end: string };
+export type TimeRangeNumber = { start: number; end: number };
+export type TimeRange = TimeRangeText | TimeRangeNumber;
+
+export const timeRangeIsText = (value: TimeRange): value is TimeRangeText =>
+  typeof value.end === 'string' && typeof value.start === 'string';
+export const timeRangeIsNumber = (value: TimeRange): value is TimeRangeNumber =>
+  typeof value.end === 'number' && typeof value.start === 'number';
 
 export const isStreamsResult = (
   result: MatrixResult | StreamsResult | undefined,

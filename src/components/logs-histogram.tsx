@@ -5,16 +5,23 @@ import {
   ChartLegendTooltip,
   ChartLegendTooltipProps,
   ChartStack,
-  ChartVoronoiContainer,
+  createContainer,
   getResizeObserver,
 } from '@patternfly/react-charts';
 import { Alert, Card, CardBody } from '@patternfly/react-core';
 import React from 'react';
 import { DateFormat, dateToFormat } from '../date-utils';
-import { isMatrixResult, MetricValue, QueryRangeResponse, TimeRange } from '../logs.types';
+import {
+  isMatrixResult,
+  MetricValue,
+  QueryRangeResponse,
+  TimeRange,
+  TimeRangeNumber,
+} from '../logs.types';
 import { getSeverityColor, Severity, severityAbbreviations, severityFromString } from '../severity';
 import { TestIds } from '../test-ids';
-import { valueWithScalePrefix } from '../value-utils';
+import { intervalFromTimeRange, numericTimeRange } from '../time-range';
+import { formatTime, valueWithScalePrefix } from '../value-utils';
 import { CenteredContainer } from './centered-container';
 import './logs-histogram.css';
 
@@ -46,7 +53,8 @@ type HistogramData = Record<Severity, Array<MetricValue>>;
 
 interface LogHistogramProps {
   histogramData?: QueryRangeResponse;
-  timeRange: TimeRange;
+  timeRange?: TimeRange;
+  onChangeTimeRange?: (timeRange: TimeRange) => void;
   interval?: number;
   isLoading?: boolean;
   error?: unknown;
@@ -123,7 +131,7 @@ const getChartsData = (data: HistogramData, interval: number): HistogramChartDat
   return charts;
 };
 
-const tickCountFromTimeRange = (timeRange: TimeRange, interval: number): number =>
+const tickCountFromTimeRange = (timeRange: TimeRangeNumber, interval: number): number =>
   Math.ceil((timeRange.end - timeRange.start) / interval);
 
 const HistogramTooltip: React.FC<ChartLegendTooltipProps> = ({ ...props }) => {
@@ -151,7 +159,7 @@ const HistogramTooltip: React.FC<ChartLegendTooltipProps> = ({ ...props }) => {
     <>
       <ChartLegendTooltip
         {...fixedProps}
-        title={(datum: ChartData) => datum.time}
+        title={(datum: ChartData) => formatTime(datum.x, true)}
         constrainToVisibleArea
       />
       <line
@@ -165,15 +173,52 @@ const HistogramTooltip: React.FC<ChartLegendTooltipProps> = ({ ...props }) => {
   );
 };
 
+interface SelectionComponentProps {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+}
+
+const BrushHandleComponent: React.FC<SelectionComponentProps> = ({ x, y, width, height }) => {
+  if (x === undefined || y === undefined || width === undefined || height === undefined) {
+    return null;
+  }
+
+  const triangleSize = 6;
+
+  return (
+    <g>
+      <line
+        x1={x}
+        x2={x}
+        y1={y}
+        y2={height + y}
+        style={{ stroke: 'var(--pf-chart-color-blue-300)', strokeDasharray: '5 3' }}
+      />
+      <polygon
+        points={`${x},${y} ${x - triangleSize},${y - triangleSize} ${x + triangleSize},${
+          y - triangleSize
+        }`}
+        style={{ fill: 'var(--pf-chart-color-blue-300)' }}
+      />
+    </g>
+  );
+};
+
+const SelectVoronoiContainer = createContainer('brush', 'voronoi');
+
 export const LogsHistogram: React.FC<LogHistogramProps> = ({
   histogramData,
   timeRange,
   isLoading,
   error,
-  interval = 60 * 1000,
+  onChangeTimeRange,
+  interval,
 }) => {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = React.useState<number>(0);
+  const [timeRangeValue, setTimeRangeValue] = React.useState(numericTimeRange(timeRange));
 
   const handleResize = () => {
     if (containerRef.current?.clientWidth) {
@@ -188,15 +233,21 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
     return () => observer?.();
   }, []);
 
+  React.useEffect(() => {
+    setTimeRangeValue(numericTimeRange(timeRange));
+  }, [timeRange, interval]);
+
+  const intervalValue = interval ?? intervalFromTimeRange(timeRangeValue);
+
   const groupsCharts = React.useMemo(() => {
     if (!histogramData || histogramData.data.result.length === 0) {
       return { ticks: [], charts: null, availableGroups: [] };
     }
 
     const data = aggregateMetricsLogData(histogramData);
-    const chartsData = getChartsData(data, interval);
+    const chartsData = getChartsData(data, intervalValue);
 
-    const tickCount = tickCountFromTimeRange(timeRange, interval);
+    const tickCount = tickCountFromTimeRange(timeRangeValue, intervalValue);
 
     const availableGroups = SORTED_CHART_GROUPS.filter(
       (group: Severity) => chartsData && chartsData[group] && chartsData[group].length > 0,
@@ -217,7 +268,7 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
       charts,
       availableGroups,
     };
-  }, [histogramData, timeRange, interval, width]);
+  }, [histogramData, timeRangeValue, interval, width]);
 
   const legendData = React.useMemo(
     () =>
@@ -230,6 +281,19 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
   );
 
   const dataIsEmpty = histogramData?.data.result.length === 0;
+
+  const handleTimeRangeSelection = (domain?: { x?: Array<Date | number> }) => {
+    if (
+      domain?.x &&
+      domain.x.length > 1 &&
+      typeof domain.x[0] === 'object' &&
+      typeof domain.x[1] === 'object'
+    ) {
+      const start = domain.x[0];
+      const end = domain.x[1];
+      onChangeTimeRange?.({ start: start.getTime(), end: end.getTime() });
+    }
+  };
 
   return (
     <Card data-test={TestIds.LogsHistogram}>
@@ -260,11 +324,11 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
                 right: 20,
               }}
               domain={{
-                x: [timeRange.start, timeRange.end],
+                x: [timeRangeValue.start, timeRangeValue.end],
               }}
               scale={{ x: 'time', y: 'linear' }}
               containerComponent={
-                <ChartVoronoiContainer
+                <SelectVoronoiContainer
                   activateData={false}
                   labels={({ datum }: { datum: ChartData }) =>
                     `${datum.y !== null ? datum.y : 'no data'}`
@@ -272,6 +336,13 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
                   labelComponent={<HistogramTooltip legendData={legendData} />}
                   voronoiDimension="x"
                   voronoiPadding={0}
+                  brushDimension="x"
+                  onBrushDomainChangeEnd={handleTimeRangeSelection}
+                  handleComponent={<BrushHandleComponent />}
+                  defaultBrushArea="none"
+                  handleWidth={1}
+                  allowDrag={false}
+                  brushDomain={{ x: [0, 0], y: [0, 0] }}
                 />
               }
               width={width}
@@ -283,7 +354,7 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
                 tickFormat={(tick: number) =>
                   dateToFormat(
                     tick,
-                    interval < 60 * 1000 ? DateFormat.TimeMed : DateFormat.TimeShort,
+                    intervalValue < 60 * 1000 ? DateFormat.TimeMed : DateFormat.TimeShort,
                   )
                 }
               />

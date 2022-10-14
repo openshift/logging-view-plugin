@@ -23,6 +23,9 @@ const LogsPage: React.FC = () => {
     setShowResourcesInURL,
     filters,
     setFilters,
+    setTimeRangeInURL,
+    timeRange,
+    interval,
   } = useURLState({ attributes: availableAttributes });
 
   const {
@@ -38,9 +41,6 @@ const LogsPage: React.FC = () => {
     getMoreLogs,
     hasMoreLogsData,
     getHistogram,
-    setTimeSpan,
-    timeRange,
-    interval,
     toggleStreaming,
     config,
   } = useLogs();
@@ -62,8 +62,8 @@ const LogsPage: React.FC = () => {
   }: {
     tenantToConsider?: string;
   } = {}) => {
-    getLogs({ query, tenant: tenantToConsider ?? tenant });
-    getHistogram({ query, tenant: tenantToConsider ?? tenant });
+    getLogs({ query, tenant: tenantToConsider ?? tenant, timeRange });
+    getHistogram({ query, tenant: tenantToConsider ?? tenant, timeRange });
   };
 
   const handleRefreshClick = () => {
@@ -100,7 +100,7 @@ const LogsPage: React.FC = () => {
 
   React.useEffect(() => {
     runQuery();
-  }, [debouncedInputQuery]);
+  }, [debouncedInputQuery, timeRange]);
 
   const isQueryEmpty = query === '';
 
@@ -112,7 +112,11 @@ const LogsPage: React.FC = () => {
             Logs
           </Title>
           <Flex>
-            <TimeRangeDropdown onChange={setTimeSpan} isDisabled={isQueryEmpty} />
+            <TimeRangeDropdown
+              value={timeRange}
+              onChange={setTimeRangeInURL}
+              isDisabled={isQueryEmpty}
+            />
             <RefreshIntervalDropdown onRefresh={runQuery} isDisabled={isQueryEmpty} />
             <Tooltip content={<div>Refresh</div>}>
               <Button
@@ -134,6 +138,7 @@ const LogsPage: React.FC = () => {
           interval={interval}
           isLoading={isLoadingHistogramData}
           error={histogramError}
+          onChangeTimeRange={setTimeRangeInURL}
         />
 
         <LogsTable

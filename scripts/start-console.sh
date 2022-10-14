@@ -1,16 +1,18 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+set -eou pipefail
 
 PREFER_PODMAN=0
 CREATE_ENV=0
 USE_LOCAL_PROXY=1
+LOKI_HOST=0
 
-while getopts ":epc" flag; do
+while getopts "epcl:" flag; do
     case $flag in
         e) CREATE_ENV=1;;
         p) PREFER_PODMAN=1;;
         c) USE_LOCAL_PROXY=0;;
+        l) LOKI_HOST=$OPTARG;;
         \?) echo "Invalid option: -$flag" 
             exit;;
     esac
@@ -24,6 +26,10 @@ if [[ -x "$(command -v podman)" && $PREFER_PODMAN == 1 ]]; then
     fi
 else
     INTERNAL_HOST="http://host.docker.internal"
+fi
+
+if [[ $LOKI_HOST == 0 ]]; then
+    LOKI_HOST="$INTERNAL_HOST:3100"
 fi
 
 CONSOLE_IMAGE=${CONSOLE_IMAGE:="quay.io/openshift/origin-console:latest"}
@@ -61,7 +67,7 @@ function createEnvironment(){
     BRIDGE_USER_SETTINGS_LOCATION="localstorage"
     echo BRIDGE_USER_SETTINGS_LOCATION=$BRIDGE_USER_SETTINGS_LOCATION >> scripts/env.list
 
-    BRIDGE_PLUGIN_PROXY="{\"services\": [{\"consoleAPIPath\": \"/api/proxy/plugin/logging-view-plugin/backend/\",\"endpoint\": \"${INTERNAL_HOST}:3100\"}]}"
+    BRIDGE_PLUGIN_PROXY="{\"services\": [{\"consoleAPIPath\": \"/api/proxy/plugin/logging-view-plugin/backend/\", \"authorize\": true, \"endpoint\": \"${LOKI_HOST}\"}]}"
     if [[ $USE_LOCAL_PROXY == 1 ]]; then
         echo "Using local proxy"
         echo BRIDGE_PLUGIN_PROXY=$BRIDGE_PLUGIN_PROXY >> scripts/env.list

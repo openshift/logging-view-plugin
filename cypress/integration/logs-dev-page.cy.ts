@@ -1,7 +1,7 @@
 import { TestIds } from '../../src/test-ids';
 import {
   queryRangeMatrixValidResponse,
-  queryRangeStreamsvalidResponse,
+  queryRangeStreamsValidResponse,
 } from '../fixtures/query-range-fixtures';
 
 const LOGS_DEV_PAGE_URL = '/dev-monitoring/ns/my-namespace/logs';
@@ -15,7 +15,7 @@ describe('Logs Dev Page', () => {
   it('renders correctly with an expected response', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     );
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse());
 
@@ -45,7 +45,7 @@ describe('Logs Dev Page', () => {
   it('executes a query when "run query" is pressed', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
       'queryRangeMatrix',
@@ -68,7 +68,7 @@ describe('Logs Dev Page', () => {
   it('executes a query with a new value when "Enter" is pressed on the query input field', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
       'queryRangeMatrix',
@@ -101,7 +101,7 @@ describe('Logs Dev Page', () => {
   it('executes a query when severity is changed', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
       'queryRangeMatrix',
@@ -128,7 +128,7 @@ describe('Logs Dev Page', () => {
   it('executes a query including the current namespace', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
       'queryRangeMatrix',

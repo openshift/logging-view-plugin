@@ -3,7 +3,7 @@ import {
   queryRangeMatrixInvalidResponse,
   queryRangeMatrixValidResponse,
   queryRangeStreamsInvalidResponse,
-  queryRangeStreamsvalidResponse,
+  queryRangeStreamsValidResponse,
 } from '../fixtures/query-range-fixtures';
 import { namespaceListResponse } from '../fixtures/resource-api-fixtures';
 
@@ -23,7 +23,7 @@ describe('Logs Page', () => {
   it('renders correctly with an expected response', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     );
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse());
 
@@ -95,7 +95,7 @@ describe('Logs Page', () => {
   it('executes a query when "run query" is pressed', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
       'queryRangeMatrix',
@@ -124,7 +124,7 @@ describe('Logs Page', () => {
   it('executes a query with a new value when "Enter" is pressed on the query input field', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
       'queryRangeMatrix',
@@ -163,7 +163,7 @@ describe('Logs Page', () => {
   it('executes a query with the selected tenant when "run query" is pressed', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
       'queryRangeMatrix',
@@ -171,7 +171,7 @@ describe('Logs Page', () => {
 
     cy.intercept(
       QUERY_RANGE_STREAMS_INFRASTRUCTURE_URL_MATCH,
-      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreamsInfrastructure');
     cy.intercept(QUERY_RANGE_MATRIX_INFRASTRUCTURE_URL_MATCH, queryRangeMatrixValidResponse()).as(
       'queryRangeMatrixInfrastructure',
@@ -205,7 +205,7 @@ describe('Logs Page', () => {
   it('stores selected values for time range and refresh interval', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
       'queryRangeMatrix',
@@ -239,7 +239,7 @@ describe('Logs Page', () => {
   it('disables query executors when the query is empty', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
       'queryRangeMatrix',
@@ -277,7 +277,7 @@ describe('Logs Page', () => {
   it('updates the query when selecting filters', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
       'queryRangeMatrix',
@@ -353,5 +353,51 @@ describe('Logs Page', () => {
     });
 
     cy.get('@resourceQuery.all').should('have.length.at.least', 1);
+  });
+
+  it('updates the url with the proper parameters when selecting a custom range', () => {
+    cy.intercept(
+      QUERY_RANGE_STREAMS_URL_MATCH,
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
+    ).as('queryRangeStreams');
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrix',
+    );
+
+    cy.visit(LOGS_PAGE_URL);
+
+    cy.getByTestId(TestIds.TimeRangeDropdown)
+      .click()
+      .within(() => {
+        cy.contains('Last 2 hours').click();
+      });
+
+    cy.url().should('match', /start=now-2h&end=now/);
+
+    cy.getByTestId(TestIds.TimeRangeDropdown)
+      .click()
+      .within(() => {
+        cy.contains('Custom time range').click();
+      });
+
+    cy.getByTestId(TestIds.TimeRangeSelectModal).within(() => {
+      cy.get('input[aria-label="Date picker"]').first().clear().type('2022-10-17').blur();
+      cy.get('input[aria-label="Date picker"]').last().clear().type('2022-10-17').blur();
+
+      cy.get('input[aria-label="Time picker"]').first().clear().type('14:50{enter}');
+      cy.get('input[aria-label="Time picker"]').last().clear().type('15:55{enter}');
+    });
+
+    cy.getByTestId(TestIds.TimeRangeDropdownSaveButton).click();
+
+    const startTime = new Date('2022-10-17T14:50:00').getTime();
+    const endTime = new Date('2022-10-17T15:55:00').getTime();
+
+    cy.url().should('match', new RegExp(`start=${startTime}&end=${endTime}`));
+
+    cy.contains('2022-10-17 14:50 - 2022-10-17 15:55');
+
+    cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
+    cy.get('@queryRangeMatrix.all').should('have.length.at.least', 1);
   });
 });
