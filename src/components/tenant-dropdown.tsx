@@ -1,8 +1,4 @@
-import {
-  OptionsMenu,
-  OptionsMenuItem,
-  OptionsMenuToggle,
-} from '@patternfly/react-core';
+import { OptionsMenu, OptionsMenuItem, OptionsMenuToggle } from '@patternfly/react-core';
 import React from 'react';
 import { TestIds } from '../test-ids';
 

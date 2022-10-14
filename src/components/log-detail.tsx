@@ -26,9 +26,7 @@ export const LogDetail: React.FC<LogDetailProps> = ({ data }) => (
       .sort()
       .map((key) => (
         <DescriptionListGroup key={key}>
-          <DescriptionListTerm className="co-logs-detail__list-term">
-            {key}
-          </DescriptionListTerm>
+          <DescriptionListTerm className="co-logs-detail__list-term">{key}</DescriptionListTerm>
           <DescriptionListDescription>{data[key]}</DescriptionListDescription>
         </DescriptionListGroup>
       ))}

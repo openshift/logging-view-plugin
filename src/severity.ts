@@ -67,9 +67,7 @@ export const getSeverityColor = (severity: Severity): string => {
   }
 };
 
-export const severityFiltersFromParams = (
-  params: string | null,
-): Set<Severity> => {
+export const severityFiltersFromParams = (params: string | null): Set<Severity> => {
   const severityFilters: Array<Severity> =
     params
       ?.split(',')

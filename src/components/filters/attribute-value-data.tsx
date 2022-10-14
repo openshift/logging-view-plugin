@@ -6,9 +6,7 @@ type UseAttributeValueDataHookResult = [
   data: Array<Option> | undefined,
 ];
 
-export const useAttributeValueData = (
-  attribute: Attribute,
-): UseAttributeValueDataHookResult => {
+export const useAttributeValueData = (attribute: Attribute): UseAttributeValueDataHookResult => {
   const [data, setData] = React.useState<Array<Option> | undefined>();
 
   const fetchData = React.useCallback(

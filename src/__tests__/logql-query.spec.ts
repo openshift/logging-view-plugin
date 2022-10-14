@@ -125,9 +125,7 @@ describe('LogQL query', () => {
         query:
           'sum by (level) (count_over_time({ log_type =~ ".+" } | json | level="unknown" or level="" or level=~"emerg|fatal|alert|crit|critical|err|error|eror|warn|warning|inf|info|information|notice" [1m]))',
         expected: {
-          selectorMatchers: [
-            { label: 'log_type', operator: '=~', value: '".+"' },
-          ],
+          selectorMatchers: [{ label: 'log_type', operator: '=~', value: '".+"' }],
           pipeline: [
             { operator: '|', value: 'json', labelsInFilter: undefined },
             {
@@ -175,9 +173,7 @@ describe('LogQL query', () => {
       {
         query: '{ log_type =~ ".+" } | json | line_format "{{.message}}"',
         expected: {
-          selectorMatchers: [
-            { label: 'log_type', operator: '=~', value: '".+"' },
-          ],
+          selectorMatchers: [{ label: 'log_type', operator: '=~', value: '".+"' }],
           pipeline: [
             {
               operator: '|',
@@ -191,12 +187,9 @@ describe('LogQL query', () => {
         },
       },
       {
-        query:
-          '{ log_type =~ ".+" } | json | pattern `<_>:"<mytimestamp>",<_>`',
+        query: '{ log_type =~ ".+" } | json | pattern `<_>:"<mytimestamp>",<_>`',
         expected: {
-          selectorMatchers: [
-            { label: 'log_type', operator: '=~', value: '".+"' },
-          ],
+          selectorMatchers: [{ label: 'log_type', operator: '=~', value: '".+"' }],
           pipeline: [
             {
               operator: '|',
@@ -245,9 +238,7 @@ describe('LogQL query', () => {
       },
     ].forEach(({ query, selectorMatcher, expected }) => {
       const logql = new LogQLQuery(query);
-      expect(logql.addSelectorMatcher(selectorMatcher).toString()).toEqual(
-        expected,
-      );
+      expect(logql.addSelectorMatcher(selectorMatcher).toString()).toEqual(expected);
     });
   });
 
@@ -270,9 +261,7 @@ describe('LogQL query', () => {
       },
     ].forEach(({ query, selectorMatcher, expected }) => {
       const logql = new LogQLQuery(query);
-      expect(logql.removeSelectorMatcher(selectorMatcher).toString()).toEqual(
-        expected,
-      );
+      expect(logql.removeSelectorMatcher(selectorMatcher).toString()).toEqual(expected);
     });
   });
 
@@ -295,9 +284,7 @@ describe('LogQL query', () => {
       },
     ].forEach(({ query, pipeline, expected }) => {
       const logql = new LogQLQuery(query);
-      expect(
-        logql.addPipelineStage(pipeline, { placement: 'end' }).toString(),
-      ).toEqual(expected);
+      expect(logql.addPipelineStage(pipeline, { placement: 'end' }).toString()).toEqual(expected);
     });
   });
 
@@ -324,14 +311,11 @@ describe('LogQL query', () => {
           { operator: '|=', value: '"match this text"' },
           { operator: '|', value: 'level="err|error"' },
         ],
-        expected:
-          '{ foo="var" } |= "match this text" | level="err|error" | json',
+        expected: '{ foo="var" } |= "match this text" | level="err|error" | json',
       },
     ].forEach(({ query, pipeline, expected }) => {
       const logql = new LogQLQuery(query);
-      expect(
-        logql.addPipelineStage(pipeline, { placement: 'start' }).toString(),
-      ).toEqual(expected);
+      expect(logql.addPipelineStage(pipeline, { placement: 'start' }).toString()).toEqual(expected);
     });
   });
 
@@ -382,9 +366,7 @@ describe('LogQL query', () => {
       },
     ].forEach(({ query, pipeline, expected, matchOptions }) => {
       const logql = new LogQLQuery(query);
-      expect(
-        logql.removePipelineStage(pipeline, matchOptions).toString(),
-      ).toEqual(expected);
+      expect(logql.removePipelineStage(pipeline, matchOptions).toString()).toEqual(expected);
     });
   });
 });

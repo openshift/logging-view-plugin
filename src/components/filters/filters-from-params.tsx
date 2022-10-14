@@ -17,5 +17,4 @@ export const filtersFromParams = (
 };
 
 export const isOption = (option: unknown): option is Option =>
-  (option as Option).value !== undefined &&
-  (option as Option).option !== undefined;
+  (option as Option).value !== undefined && (option as Option).option !== undefined;

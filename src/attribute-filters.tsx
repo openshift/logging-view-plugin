@@ -1,17 +1,9 @@
 import { K8sResourceCommon } from '@openshift-console/dynamic-plugin-sdk';
 import { notEmptyString, notUndefined } from './value-utils';
 import { cancellableFetch } from './cancellable-fetch';
-import {
-  AttributeList,
-  Filters,
-  Option,
-} from './components/filters/filter.types';
+import { AttributeList, Filters, Option } from './components/filters/filter.types';
 import { LogQLQuery, LabelMatcher, PipelineStage } from './logql-query';
-import {
-  Severity,
-  severityAbbreviations,
-  severityFromString,
-} from './severity';
+import { Severity, severityAbbreviations, severityFromString } from './severity';
 
 const RESOURCES_ENDPOINT = '/api/kubernetes/api/v1';
 
@@ -72,9 +64,7 @@ const resourceDataSource =
         break;
     }
 
-    return listItems
-      .flatMap(mapper)
-      .filter(({ value }) => notEmptyString(value));
+    return listItems.flatMap(mapper).filter(({ value }) => notEmptyString(value));
   };
 
 export const availableAttributes: AttributeList = [
@@ -113,10 +103,7 @@ export const availableAttributes: AttributeList = [
   },
 ];
 
-export const availablePodAttributes = (
-  namespace: string,
-  podId: string,
-): AttributeList => [
+export const availablePodAttributes = (namespace: string, podId: string): AttributeList => [
   {
     name: 'Content',
     id: 'content',
@@ -156,11 +143,9 @@ export const queryFromFilters = ({
   const contentPipelineStage = getContentPipelineStage(filters);
 
   if (contentPipelineStage) {
-    query
-      .removePipelineStage({ operator: '|=' })
-      .addPipelineStage(contentPipelineStage, {
-        placement: 'start',
-      });
+    query.removePipelineStage({ operator: '|=' }).addPipelineStage(contentPipelineStage, {
+      placement: 'start',
+    });
   }
 
   if (filters?.content === undefined || filters.content.size === 0) {
@@ -170,11 +155,9 @@ export const queryFromFilters = ({
   const severityPipelineStage = getSeverityFilterPipelineStage(filters);
 
   if (severityPipelineStage) {
-    query
-      .removePipelineStage({}, { matchLabel: 'level' })
-      .addPipelineStage(severityPipelineStage, {
-        placement: 'end',
-      });
+    query.removePipelineStage({}, { matchLabel: 'level' }).addPipelineStage(severityPipelineStage, {
+      placement: 'end',
+    });
   }
 
   if (filters?.severity === undefined || filters.severity.size === 0) {
@@ -237,9 +220,7 @@ export const filtersFromQuery = ({
   return filters;
 };
 
-export const getNamespaceMatcher = (
-  namespace?: string,
-): LabelMatcher | undefined => {
+export const getNamespaceMatcher = (namespace?: string): LabelMatcher | undefined => {
   if (namespace === undefined) {
     return undefined;
   }
@@ -251,13 +232,7 @@ export const getNamespaceMatcher = (
   };
 };
 
-export const queryWithNamespace = ({
-  query,
-  namespace,
-}: {
-  query: string;
-  namespace?: string;
-}) => {
+export const queryWithNamespace = ({ query, namespace }: { query: string; namespace?: string }) => {
   const logQLQuery = new LogQLQuery(query ?? '');
 
   logQLQuery.addSelectorMatcher(getNamespaceMatcher(namespace));
@@ -265,10 +240,7 @@ export const queryWithNamespace = ({
   return logQLQuery.toString();
 };
 
-export const getMatcherFromSet = (
-  label: string,
-  values: Set<string>,
-): LabelMatcher | undefined => {
+export const getMatcherFromSet = (label: string, values: Set<string>): LabelMatcher | undefined => {
   const valuesArray = Array.from(values);
   if (valuesArray.length === 0) {
     return undefined;
@@ -289,9 +261,7 @@ export const getMatcherFromSet = (
   };
 };
 
-export const getMatchersFromFilters = (
-  filters?: Filters,
-): Array<LabelMatcher> => {
+export const getMatchersFromFilters = (filters?: Filters): Array<LabelMatcher> => {
   if (!filters) {
     return [];
   }
@@ -318,9 +288,7 @@ export const getMatchersFromFilters = (
   return matchers.filter(notUndefined);
 };
 
-export const getContentPipelineStage = (
-  filters?: Filters,
-): PipelineStage | undefined => {
+export const getContentPipelineStage = (filters?: Filters): PipelineStage | undefined => {
   if (!filters) {
     return undefined;
   }
@@ -340,9 +308,7 @@ export const getContentPipelineStage = (
   return { operator: '|=', value: `"${textValue}"` };
 };
 
-export const getSeverityFilterPipelineStage = (
-  filters?: Filters,
-): PipelineStage | undefined => {
+export const getSeverityFilterPipelineStage = (filters?: Filters): PipelineStage | undefined => {
   if (!filters) {
     return undefined;
   }
@@ -353,26 +319,19 @@ export const getSeverityFilterPipelineStage = (
     return undefined;
   }
 
-  const unknownFilter = severity.has('unknown')
-    ? 'level="unknown" or level=""'
-    : '';
+  const unknownFilter = severity.has('unknown') ? 'level="unknown" or level=""' : '';
 
-  const severityFilters = Array.from(severity).flatMap(
-    (group: string | undefined) => {
-      if (group === 'unknown' || group === undefined) {
-        return [];
-      }
+  const severityFilters = Array.from(severity).flatMap((group: string | undefined) => {
+    if (group === 'unknown' || group === undefined) {
+      return [];
+    }
 
-      return severityAbbreviations[group as Severity];
-    },
-  );
+    return severityAbbreviations[group as Severity];
+  });
 
-  const levelsfilter =
-    severityFilters.length > 0 ? `level=~"${severityFilters.join('|')}"` : '';
+  const levelsfilter = severityFilters.length > 0 ? `level=~"${severityFilters.join('|')}"` : '';
 
   const allFilters = [unknownFilter, levelsfilter].filter(notEmptyString);
 
-  return allFilters.length > 0
-    ? { operator: '|', value: allFilters.join(' or ') }
-    : undefined;
+  return allFilters.length > 0 ? { operator: '|', value: allFilters.join(' or ') } : undefined;
 };

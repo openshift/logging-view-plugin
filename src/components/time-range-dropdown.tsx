@@ -1,9 +1,4 @@
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownToggle,
-  FormGroup,
-} from '@patternfly/react-core';
+import { Dropdown, DropdownItem, DropdownToggle, FormGroup } from '@patternfly/react-core';
 import React from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { TestIds } from '../test-ids';
@@ -23,9 +18,7 @@ export const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
   initialValue = DEFAULT_TIME_RANGE,
   isDisabled = false,
 }) => {
-  const [storedTimeRange, setStoredTimeRange] = useLocalStorage(
-    STORED_TIME_RANGE_KEY,
-  );
+  const [storedTimeRange, setStoredTimeRange] = useLocalStorage(STORED_TIME_RANGE_KEY);
   const [isOpen, setIsOpen] = React.useState(false);
   const [selectedIndex, setSelectedIndex] = React.useState<number>(
     [
@@ -53,11 +46,7 @@ export const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
       <Dropdown
         disabled={isDisabled}
         dropdownItems={timeRangeOptions.map(({ key, name }, index) => (
-          <DropdownItem
-            componentID={key}
-            onClick={handleSelectedValue(index)}
-            key={key}
-          >
+          <DropdownItem componentID={key} onClick={handleSelectedValue(index)} key={key}>
             {name}
           </DropdownItem>
         ))}

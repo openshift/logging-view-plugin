@@ -1,8 +1,6 @@
 import React from 'react';
 
-export const useLocalStorage = (
-  key: string,
-): [string | null, React.Dispatch<string>] => {
+export const useLocalStorage = (key: string): [string | null, React.Dispatch<string>] => {
   const value = React.useRef(window.localStorage.getItem(key));
 
   const callback = React.useCallback(
@@ -21,10 +19,7 @@ export const useLocalStorage = (
     };
   }, [callback]);
 
-  const updateValue = React.useCallback(
-    (val) => window.localStorage.setItem(key, val),
-    [key],
-  );
+  const updateValue = React.useCallback((val) => window.localStorage.setItem(key, val), [key]);
 
   return [value.current, updateValue];
 };

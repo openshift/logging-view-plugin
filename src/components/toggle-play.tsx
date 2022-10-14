@@ -10,16 +10,10 @@ interface TogglePlayProps {
   isDisabled?: boolean;
 }
 
-export const TogglePlay: React.FC<TogglePlayProps> = ({
-  onClick,
-  active,
-  isDisabled = false,
-}) => (
+export const TogglePlay: React.FC<TogglePlayProps> = ({ onClick, active, isDisabled = false }) => (
   <Button
     variant="plain"
-    className={`co-logs-toggle-play ${
-      active ? 'co-logs-toggle-play--active' : ''
-    }`}
+    className={`co-logs-toggle-play ${active ? 'co-logs-toggle-play--active' : ''}`}
     onClick={onClick}
     aria-label={active ? 'Pause streaming' : 'Start streaming'}
     isDisabled={isDisabled}

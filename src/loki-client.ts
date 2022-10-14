@@ -1,9 +1,5 @@
 import { WSFactory } from '@openshift-console/dynamic-plugin-sdk/lib/utils/k8s/ws-factory';
-import {
-  CancellableFetch,
-  cancellableFetch,
-  RequestInitWithTimeout,
-} from './cancellable-fetch';
+import { CancellableFetch, cancellableFetch, RequestInitWithTimeout } from './cancellable-fetch';
 import { queryWithNamespace } from './attribute-filters';
 import { Config, QueryRangeResponse } from './logs.types';
 import { durationFromTimestamp } from './value-utils';

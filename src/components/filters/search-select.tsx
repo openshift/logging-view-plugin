@@ -35,9 +35,7 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
     _e: React.MouseEvent | React.ChangeEvent,
     selectedOption: string | SelectOptionObject,
   ) => {
-    const selectedValue = isOption(selectedOption)
-      ? selectedOption.value
-      : String(selectedOption);
+    const selectedValue = isOption(selectedOption) ? selectedOption.value : String(selectedOption);
 
     if (selectedValue) {
       if (variant === SelectVariant.single || variant === undefined) {

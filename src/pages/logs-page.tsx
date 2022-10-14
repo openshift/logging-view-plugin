@@ -1,18 +1,7 @@
-import {
-  Button,
-  Flex,
-  Grid,
-  PageSection,
-  Title,
-  Tooltip,
-} from '@patternfly/react-core';
+import { Button, Flex, Grid, PageSection, Title, Tooltip } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
 import React from 'react';
-import {
-  availableAttributes,
-  filtersFromQuery,
-  queryFromFilters,
-} from '../attribute-filters';
+import { availableAttributes, filtersFromQuery, queryFromFilters } from '../attribute-filters';
 import { Filters } from '../components/filters/filter.types';
 import { LogsHistogram } from '../components/logs-histogram';
 import { LogsTable } from '../components/logs-table';
@@ -123,14 +112,8 @@ const LogsPage: React.FC = () => {
             Logs
           </Title>
           <Flex>
-            <TimeRangeDropdown
-              onChange={setTimeSpan}
-              isDisabled={isQueryEmpty}
-            />
-            <RefreshIntervalDropdown
-              onRefresh={runQuery}
-              isDisabled={isQueryEmpty}
-            />
+            <TimeRangeDropdown onChange={setTimeSpan} isDisabled={isQueryEmpty} />
+            <RefreshIntervalDropdown onRefresh={runQuery} isDisabled={isQueryEmpty} />
             <Tooltip content={<div>Refresh</div>}>
               <Button
                 onClick={handleRefreshClick}

@@ -20,18 +20,12 @@ const App = () => {
             <nav className="pf-c-nav" aria-label="Global">
               <ul className="pf-c-nav__list">
                 <li className="pf-c-nav__item">
-                  <Link
-                    className="pf-c-nav__link"
-                    to="/k8s/ns/default/pods/test-pod-name"
-                  >
+                  <Link className="pf-c-nav__link" to="/k8s/ns/default/pods/test-pod-name">
                     Pods Logs
                   </Link>
                 </li>
                 <li className="pf-c-nav__item">
-                  <Link
-                    className="pf-c-nav__link"
-                    to="/dev-monitoring/ns/my-namespace/logs"
-                  >
+                  <Link className="pf-c-nav__link" to="/dev-monitoring/ns/my-namespace/logs">
                     Dev Logs
                   </Link>
                 </li>
