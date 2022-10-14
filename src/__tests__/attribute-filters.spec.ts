@@ -360,8 +360,7 @@ describe('Attribute filters', () => {
         filters: {
           namespace: new Set(['namespace-3']),
         },
-        expectedQuery:
-          '{ kubernetes_namespace_name="namespace-3", label="test" } | other="filter"',
+        expectedQuery: '{ kubernetes_namespace_name="namespace-3", label="test" } | other="filter"',
       },
       {
         initialQuery:

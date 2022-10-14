@@ -8,11 +8,7 @@ import {
   QueryRangeResponse,
   TimeRange,
 } from '../logs.types';
-import {
-  connectToTailSocket,
-  executeHistogramQuery,
-  executeQueryRange,
-} from '../loki-client';
+import { connectToTailSocket, executeHistogramQuery, executeQueryRange } from '../loki-client';
 import { timeRangeOptions } from '../time-range-options';
 
 const DEFAULT_TIME_RANGE = '1h';
@@ -26,9 +22,7 @@ const defaultConfig: Config = {
 };
 
 const isRawConfig = (obj: unknown): obj is RawConfig =>
-  obj !== null &&
-  (obj as RawConfig).data &&
-  typeof (obj as RawConfig).data.config === 'string';
+  obj !== null && (obj as RawConfig).data && typeof (obj as RawConfig).data.config === 'string';
 
 const isAbortError = (error: unknown): boolean =>
   error instanceof Error && error.name === 'AbortError';
@@ -182,11 +176,7 @@ const reducer = (state: State, action: Action): State => {
     case 'streamingResponse':
       return {
         ...state,
-        logsData: appendData(
-          state.logsData,
-          action.payload.logsData,
-          STREAMING_MAX_LOGS_LIMIT,
-        ),
+        logsData: appendData(state.logsData, action.payload.logsData, STREAMING_MAX_LOGS_LIMIT),
         hasMoreLogsData: false,
       };
     case 'moreLogsRequest':
@@ -233,37 +223,24 @@ const reducer = (state: State, action: Action): State => {
   }
 };
 
-const timeRangeFromSpan = (
-  span: number,
-  currentTime: number = Date.now(),
-): TimeRange => ({
+const timeRangeFromSpan = (span: number, currentTime: number = Date.now()): TimeRange => ({
   start: currentTime - span,
   end: currentTime,
 });
 
 const intervalFromSpan = (timeSpan: number): number => {
-  return (
-    timeRangeOptions.find((option) => option.span === timeSpan)?.interval ??
-    60 * 1000
-  );
+  return timeRangeOptions.find((option) => option.span === timeSpan)?.interval ?? 60 * 1000;
 };
 
 const defaultTimeSpan = (): number => {
-  const defaultSpan = timeRangeOptions.find(
-    (item) => item.key === DEFAULT_TIME_RANGE,
-  )?.span;
+  const defaultSpan = timeRangeOptions.find((item) => item.key === DEFAULT_TIME_RANGE)?.span;
   return defaultSpan ?? 60 * 60 * 1000;
 };
 
-type UseLogOptions =
-  | { initialTimeSpan?: number; initialTenant?: string }
-  | undefined;
+type UseLogOptions = { initialTimeSpan?: number; initialTenant?: string } | undefined;
 
 export const useLogs = (
-  {
-    initialTimeSpan = defaultTimeSpan(),
-    initialTenant = 'application',
-  }: UseLogOptions = {
+  { initialTimeSpan = defaultTimeSpan(), initialTenant = 'application' }: UseLogOptions = {
     initialTimeSpan: defaultTimeSpan(),
     initialTenant: 'application',
   },

@@ -35,10 +35,7 @@ interface LogsToolbarProps {
   severityFilter?: Set<Severity>;
   onStreamingToggle?: (e: React.MouseEvent) => void;
   onSeverityChange?: (severityFilter: Set<Severity>) => void;
-  onShowResourcesToggle?: (
-    showResources: boolean,
-    e: React.FormEvent<HTMLInputElement>,
-  ) => void;
+  onShowResourcesToggle?: (showResources: boolean, e: React.FormEvent<HTMLInputElement>) => void;
   showResources?: boolean;
   enableTenantDropdown?: boolean;
   isDisabled?: boolean;
@@ -77,11 +74,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
   const [isSeverityExpanded, setIsSeverityExpanded] = React.useState(false);
   const [isQueryShown, setIsQueryShown] = React.useState(false);
   const severityFilter: Set<Severity> = filters?.severity
-    ? new Set(
-        Array.from(filters?.severity)
-          .map(severityFromString)
-          .filter(notUndefined),
-      )
+    ? new Set(Array.from(filters?.severity).map(severityFromString).filter(notUndefined))
     : new Set();
 
   const onDeleteSeverityFilter = (
@@ -126,11 +119,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
   const severityFilterArray = Array.from(severityFilter);
 
   return (
-    <Toolbar
-      isSticky
-      clearAllFilters={handleClearAllFilters}
-      className="co-logs-toolbar"
-    >
+    <Toolbar isSticky clearAllFilters={handleClearAllFilters} className="co-logs-toolbar">
       <ToolbarContent>
         {attributeList && (
           <AttributeFilter
@@ -206,22 +195,12 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
 
         {enableStreaming && (
           <ToolbarGroup>
-            <TogglePlay
-              isDisabled={isDisabled}
-              active={isStreaming}
-              onClick={onStreamingToggle}
-            />
+            <TogglePlay isDisabled={isDisabled} active={isStreaming} onClick={onStreamingToggle} />
           </ToolbarGroup>
         )}
       </ToolbarContent>
 
-      {isQueryShown && (
-        <LogsQueryInput
-          value={query}
-          onRun={onQueryRun}
-          onChange={onQueryChange}
-        />
-      )}
+      {isQueryShown && <LogsQueryInput value={query} onRun={onQueryRun} onChange={onQueryChange} />}
     </Toolbar>
   );
 };

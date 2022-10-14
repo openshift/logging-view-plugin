@@ -54,9 +54,7 @@ const parsePipelineStages = (
   query: string,
 ): Array<PipelineStage> => {
   const pipelineStages: Array<PipelineStage> = [];
-  let operator: string,
-    value: string,
-    labelsInFilter: Array<LabelMatcher> | undefined;
+  let operator: string, value: string, labelsInFilter: Array<LabelMatcher> | undefined;
 
   syntaxTree.iterate({
     from: node.from,
@@ -66,9 +64,7 @@ const parsePipelineStages = (
         operator = query.slice(selectorsNode.from, selectorsNode.to);
 
         return false;
-      } else if (
-        ['PipeExact', 'PipeMatch', 'Nre', 'Neq'].includes(selectorsNode.name)
-      ) {
+      } else if (['PipeExact', 'PipeMatch', 'Nre', 'Neq'].includes(selectorsNode.name)) {
         operator = query.slice(selectorsNode.from, selectorsNode.to);
 
         return false;
@@ -117,10 +113,7 @@ export class LogQLQuery {
           parsedMatchers = parseMatchers(syntaxTree, node, query);
 
           return false;
-        } else if (
-          node.name === 'PipelineExpr' &&
-          parsedPipeline.length === 0
-        ) {
+        } else if (node.name === 'PipelineExpr' && parsedPipeline.length === 0) {
           parsedPipeline = parsePipelineStages(syntaxTree, node, query);
 
           return false;
@@ -134,8 +127,7 @@ export class LogQLQuery {
 
   removeSelectorMatcher = (matcherToRemove: Partial<LabelMatcher>) => {
     this.streamSelector = this.streamSelector.filter(
-      (matcher) =>
-        !matcherToRemove.label || matcher.label !== matcherToRemove.label,
+      (matcher) => !matcherToRemove.label || matcher.label !== matcherToRemove.label,
     );
 
     return this;
@@ -175,18 +167,13 @@ export class LogQLQuery {
         return false;
       }
 
-      if (
-        pipelineStageToRemove.value &&
-        existingStage.value === pipelineStageToRemove.value
-      ) {
+      if (pipelineStageToRemove.value && existingStage.value === pipelineStageToRemove.value) {
         return false;
       }
 
       if (
         matchOptions?.matchLabel &&
-        existingStage.labelsInFilter?.every(
-          (label) => label.label === matchOptions.matchLabel,
-        )
+        existingStage.labelsInFilter?.every((label) => label.label === matchOptions.matchLabel)
       ) {
         return false;
       }
@@ -207,9 +194,7 @@ export class LogQLQuery {
       return this;
     }
 
-    const stagesArray = Array.isArray(newPipelineStage)
-      ? newPipelineStage
-      : [newPipelineStage];
+    const stagesArray = Array.isArray(newPipelineStage) ? newPipelineStage : [newPipelineStage];
 
     if (placement === 'start') {
       this.pipeline.unshift(...stagesArray);
@@ -221,8 +206,7 @@ export class LogQLQuery {
       (stage, index) =>
         this.pipeline.findIndex(
           (existingStage) =>
-            stage.operator === existingStage.operator &&
-            stage.value === existingStage.value,
+            stage.operator === existingStage.operator && stage.value === existingStage.value,
         ) === index,
     );
 

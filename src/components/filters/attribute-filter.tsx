@@ -34,9 +34,9 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
   const changeFromInput = React.useRef(false);
   const [textInputValue, setTextInputValue] = React.useState('');
   const debouncedInputValue = useDebounce(textInputValue);
-  const [selectedAttributeId, setSelectedAttributeId] = React.useState<
-    string | undefined
-  >(attributeList[0]?.id);
+  const [selectedAttributeId, setSelectedAttributeId] = React.useState<string | undefined>(
+    attributeList[0]?.id,
+  );
 
   const handleAttributeToggle = () => {
     setIsAttributeExpanded(!isAttributeExpanded);
@@ -93,8 +93,7 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
   };
 
   const handleDeleteAttributeValue =
-    (attribute: string) =>
-    (_category: string | ToolbarChipGroup, chip: string | ToolbarChip) => {
+    (attribute: string) => (_category: string | ToolbarChipGroup, chip: string | ToolbarChip) => {
       filters?.[attribute]?.delete(chip as string);
       onFiltersChange?.({
         ...filters,
@@ -175,8 +174,7 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
             categoryName={attribute.name}
             data-test={'test'}
           >
-            {selectedAttributeId === attribute.id &&
-              renderAttributeValueComponent(attribute)}
+            {selectedAttributeId === attribute.id && renderAttributeValueComponent(attribute)}
           </ToolbarFilter>
         ))}
       </ToolbarGroup>

@@ -1,9 +1,4 @@
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownToggle,
-  FormGroup,
-} from '@patternfly/react-core';
+import { Dropdown, DropdownItem, DropdownToggle, FormGroup } from '@patternfly/react-core';
 import React from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { TestIds } from '../test-ids';
@@ -28,9 +23,10 @@ interface RefreshIntervalDropdownProps {
   isDisabled?: boolean;
 }
 
-export const RefreshIntervalDropdown: React.FC<
-  RefreshIntervalDropdownProps
-> = ({ onRefresh, isDisabled = false }) => {
+export const RefreshIntervalDropdown: React.FC<RefreshIntervalDropdownProps> = ({
+  onRefresh,
+  isDisabled = false,
+}) => {
   const [storedRefreshInterval, setStoredRefreshInterval] = useLocalStorage(
     STORED_REFRESH_INTERVAL_KEY,
   );
@@ -80,18 +76,11 @@ export const RefreshIntervalDropdown: React.FC<
   };
 
   return (
-    <FormGroup
-      fieldId="logs-refresh-interval"
-      data-test={TestIds.RefreshIntervalDropdown}
-    >
+    <FormGroup fieldId="logs-refresh-interval" data-test={TestIds.RefreshIntervalDropdown}>
       <Dropdown
         disabled={isDisabled}
         dropdownItems={refreshIntervalOptions.map(({ key, name }, index) => (
-          <DropdownItem
-            componentID={key}
-            onClick={handleSelectedValue(index)}
-            key={key}
-          >
+          <DropdownItem componentID={key} onClick={handleSelectedValue(index)} key={key}>
             {name}
           </DropdownItem>
         ))}

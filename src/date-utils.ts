@@ -24,10 +24,7 @@ export const timeMedFormatter = new Intl.DateTimeFormat(undefined, {
   second: 'numeric',
 });
 
-export const dateToFormat = (
-  date: Date | number,
-  format: DateFormat,
-): string => {
+export const dateToFormat = (date: Date | number, format: DateFormat): string => {
   switch (format) {
     case DateFormat.TimeShort:
       return timeShortFormatter.format(date);
@@ -38,9 +35,7 @@ export const dateToFormat = (
     case DateFormat.Full:
       {
         const fractionalSeconds =
-          typeof date === 'number'
-            ? Math.floor(date % 1000)
-            : date.getMilliseconds();
+          typeof date === 'number' ? Math.floor(date % 1000) : date.getMilliseconds();
         return `${dateTimeFormatter.format(date)}.${fractionalSeconds}`;
       }
       break;

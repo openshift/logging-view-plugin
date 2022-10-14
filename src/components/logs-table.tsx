@@ -15,11 +15,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { notUndefined } from '../value-utils';
 import { DateFormat, dateToFormat } from '../date-utils';
-import {
-  isStreamsResult,
-  QueryRangeResponse,
-  StreamLogData,
-} from '../logs.types';
+import { isStreamsResult, QueryRangeResponse, StreamLogData } from '../logs.types';
 import { severityFromString } from '../severity';
 import { TestIds } from '../test-ids';
 import { CenteredContainer } from './centered-container';
@@ -48,11 +44,7 @@ type LogsTableColumn = {
   title: string;
   isDisabled?: boolean;
   isSelected?: boolean;
-  sort?: <T extends TableCellValue>(
-    a: T,
-    b: T,
-    directionMultiplier: number,
-  ) => number;
+  sort?: <T extends TableCellValue>(a: T, b: T, directionMultiplier: number) => number;
   value: (row: LogTableData) => TableCellValue;
 };
 
@@ -118,9 +110,7 @@ const streamToTableData = (stream: StreamLogData): Array<LogTableData> => {
   });
 };
 
-const aggregateStreamLogData = (
-  response?: QueryRangeResponse,
-): Array<LogTableData> => {
+const aggregateStreamLogData = (response?: QueryRangeResponse): Array<LogTableData> => {
   // TODO check timestamp aggregation for streams
   // TODO check if display matrix data is required
 
@@ -170,6 +160,36 @@ const getRowClassName = (index: number): string => {
   return '';
 };
 
+const ResourceLinkList: React.FC<{
+  resource: Resource;
+  data: LogTableData;
+}> = ({ resource, data }) => {
+  if (resource.kind === 'Container') {
+    if (!data.podName) {
+      return null;
+    }
+
+    return (
+      <SplitItem>
+        <Link to={`/k8s/ns/${data.namespace}/pods/${data.podName}/containers/${resource.name}`}>
+          <ResourceLink
+            kind={resource.kind}
+            name={resource.name}
+            namespace={data.namespace}
+            linkTo={false}
+          />
+        </Link>
+      </SplitItem>
+    );
+  }
+
+  return (
+    <SplitItem>
+      <ResourceLink kind={resource.kind} name={resource.name} namespace={data.namespace} />
+    </SplitItem>
+  );
+};
+
 const LogRow: React.FC<LogRowProps> = ({ data, title, showResources }) => {
   switch (title) {
     case 'Date':
@@ -180,38 +200,9 @@ const LogRow: React.FC<LogRowProps> = ({ data, title, showResources }) => {
           <div className="co-logs-table__message">{data.message}</div>
           {showResources && (
             <Split className="co-logs-table__resources" hasGutter>
-              {data.resources?.map((resource) => {
-                if (resource.kind === 'Container') {
-                  if (!data.podName) {
-                    return null;
-                  }
-
-                  return (
-                    <SplitItem key={resource.name}>
-                      <Link
-                        to={`/k8s/ns/${data.namespace}/pods/${data.podName}/containers/${resource.name}`}
-                      >
-                        <ResourceLink
-                          kind={resource.kind}
-                          name={resource.name}
-                          namespace={data.namespace}
-                          linkTo={false}
-                        />
-                      </Link>
-                    </SplitItem>
-                  );
-                }
-
-                return (
-                  <SplitItem key={resource.name}>
-                    <ResourceLink
-                      kind={resource.kind}
-                      name={resource.name}
-                      namespace={data.namespace}
-                    />
-                  </SplitItem>
-                );
-              })}
+              {data.resources?.map((resource) => (
+                <ResourceLinkList key={resource.kind} resource={resource} data={data} />
+              ))}
             </Split>
           )}
         </>
@@ -231,9 +222,7 @@ const LogRow: React.FC<LogRowProps> = ({ data, title, showResources }) => {
       );
     case 'Namespace': {
       const namespace = data.namespace;
-      return namespace ? (
-        <ResourceLink key={namespace} kind="Namespace" name={namespace} />
-      ) : null;
+      return namespace ? <ResourceLink key={namespace} kind="Namespace" name={namespace} /> : null;
     }
   }
 
@@ -251,17 +240,12 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   children,
   error,
 }) => {
-  const [expandedItems, setExpandedItems] = React.useState<Set<number>>(
-    new Set(),
-  );
+  const [expandedItems, setExpandedItems] = React.useState<Set<number>>(new Set());
   const [sortBy, setSortBy] = React.useState<ISortBy>({
     index: 0,
     direction: 'desc',
   });
-  const tableData = React.useMemo(
-    () => aggregateStreamLogData(logsData),
-    [logsData],
-  );
+  const tableData = React.useMemo(() => aggregateStreamLogData(logsData), [logsData]);
 
   const handleRowToggle = (_event: React.MouseEvent, rowIndex: number) => {
     if (expandedItems.has(rowIndex)) {
@@ -293,9 +277,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
 
     setExpandedItems(new Set());
 
-    return tableData.sort((a, b) =>
-      numericComparator(a.timestamp, b.timestamp, -1),
-    );
+    return tableData.sort((a, b) => numericComparator(a.timestamp, b.timestamp, -1));
   }, [tableData, columns, sortBy]);
 
   const dataIsEmpty = sortedData.length === 0;
@@ -321,10 +303,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
             <Th></Th>
             <Th></Th>
             {columns.map((column, index) => (
-              <Th
-                sort={column.sort ? getSortParams(index) : undefined}
-                key={column.title}
-              >
+              <Th sort={column.sort ? getSortParams(index) : undefined} key={column.title}>
                 {column.title}
               </Th>
             ))}
@@ -351,12 +330,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
             <Tr className="co-logs-table__row-info">
               <Td colSpan={columns.length + 2} key="streaming-row">
                 <div className="co-logs-table__row-streaming">
-                  <Alert
-                    variant="info"
-                    isInline
-                    isPlain
-                    title="Streaming Logs..."
-                  />
+                  <Alert variant="info" isInline isPlain title="Streaming Logs..." />
                 </div>
               </Td>
             </Tr>
@@ -375,12 +349,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
               <Tr className="co-logs-table__row-info">
                 <Td colSpan={columns.length + 2} key="data-empty-row">
                   <CenteredContainer>
-                    <Alert
-                      variant="warning"
-                      isInline
-                      isPlain
-                      title="No datapoints found"
-                    />
+                    <Alert variant="warning" isInline isPlain title="No datapoints found" />
                   </CenteredContainer>
                 </Td>
               </Tr>
@@ -400,24 +369,15 @@ export const LogsTable: React.FC<LogsTableProps> = ({
                   isExpanded ? 'co-logs-table__row-parent-expanded' : ''
                 }`}
               >
-                <Td
-                  expand={{ isExpanded, onToggle: handleRowToggle, rowIndex }}
-                />
+                <Td expand={{ isExpanded, onToggle: handleRowToggle, rowIndex }} />
 
                 {columns.map((column, index) => {
                   const content = (
-                    <LogRow
-                      data={value}
-                      title={column.title}
-                      showResources={showResources}
-                    />
+                    <LogRow data={value} title={column.title} showResources={showResources} />
                   );
 
                   return content ? (
-                    <Td
-                      key={`col-${column.title}-row-${index}`}
-                      className={getRowClassName(index)}
-                    >
+                    <Td key={`col-${column.title}-row-${index}`} className={getRowClassName(index)}>
                       {content}
                     </Td>
                   ) : null;
@@ -457,8 +417,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
               onClick={handleLoadMore}
             >
               <Td colSpan={columns.length + 2} key="more-data-row">
-                More data available,{' '}
-                {isLoadingMore ? 'loading...' : 'click to load'}
+                More data available, {isLoadingMore ? 'loading...' : 'click to load'}
               </Td>
             </Tr>
           </Tbody>

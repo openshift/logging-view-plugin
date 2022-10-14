@@ -10,11 +10,7 @@ interface LogsQueryInputProps {
   onRun?: () => void;
 }
 
-export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
-  value = '',
-  onChange,
-  onRun,
-}) => {
+export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({ value = '', onChange, onRun }) => {
   const [internalValue, setInternalValue] = React.useState(value);
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -32,10 +28,7 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
   };
 
   return (
-    <div
-      className="co-logs-expression-input"
-      data-test={TestIds.LogsQueryInput}
-    >
+    <div className="co-logs-expression-input" data-test={TestIds.LogsQueryInput}>
       <TextArea
         className="co-logs-expression-input__searchInput"
         placeholder="LogQL Query"

@@ -11,18 +11,8 @@ import {
 import { Alert, Card, CardBody } from '@patternfly/react-core';
 import React from 'react';
 import { DateFormat, dateToFormat } from '../date-utils';
-import {
-  isMatrixResult,
-  MetricValue,
-  QueryRangeResponse,
-  TimeRange,
-} from '../logs.types';
-import {
-  getSeverityColor,
-  Severity,
-  severityAbbreviations,
-  severityFromString,
-} from '../severity';
+import { isMatrixResult, MetricValue, QueryRangeResponse, TimeRange } from '../logs.types';
+import { getSeverityColor, Severity, severityAbbreviations, severityFromString } from '../severity';
 import { TestIds } from '../test-ids';
 import { valueWithScalePrefix } from '../value-utils';
 import { CenteredContainer } from './centered-container';
@@ -67,9 +57,7 @@ const resultHasAbreviation = (
   abbreviation: Array<string>,
 ): boolean => !!result.level && abbreviation.includes(result.level);
 
-const aggregateMetricsLogData = (
-  response?: QueryRangeResponse,
-): HistogramData => {
+const aggregateMetricsLogData = (response?: QueryRangeResponse): HistogramData => {
   const histogramData: HistogramData = {
     critical: [],
     error: [],
@@ -86,9 +74,7 @@ const aggregateMetricsLogData = (
   if (isMatrixResult(data)) {
     for (const logData of data.result) {
       let logDataIngroup = false;
-      for (const [group, abbreviations] of Object.entries(
-        severityAbbreviations,
-      )) {
+      for (const [group, abbreviations] of Object.entries(severityAbbreviations)) {
         if (resultHasAbreviation(logData.metric, abbreviations)) {
           histogramData[group as Severity].push(...logData.values);
           logDataIngroup = true;
@@ -126,28 +112,19 @@ const metricValueToChartData = (
     };
   });
 
-const getChartsData = (
-  data: HistogramData,
-  interval: number,
-): HistogramChartData => {
+const getChartsData = (data: HistogramData, interval: number): HistogramChartData => {
   const charts: HistogramChartData = {} as HistogramChartData;
 
   Object.keys(data).forEach((group) => {
     const severityGroup = severityFromString(group) ?? 'other';
-    charts[severityGroup] = metricValueToChartData(
-      severityGroup,
-      data[severityGroup],
-      interval,
-    );
+    charts[severityGroup] = metricValueToChartData(severityGroup, data[severityGroup], interval);
   });
 
   return charts;
 };
 
-const tickCountFromTimeRange = (
-  timeRange: TimeRange,
-  interval: number,
-): number => Math.ceil((timeRange.end - timeRange.start) / interval);
+const tickCountFromTimeRange = (timeRange: TimeRange, interval: number): number =>
+  Math.ceil((timeRange.end - timeRange.start) / interval);
 
 const HistogramTooltip: React.FC<ChartLegendTooltipProps> = ({ ...props }) => {
   const { x: xProps, y: yProps, center, height } = props;
@@ -222,8 +199,7 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
     const tickCount = tickCountFromTimeRange(timeRange, interval);
 
     const availableGroups = SORTED_CHART_GROUPS.filter(
-      (group: Severity) =>
-        chartsData && chartsData[group] && chartsData[group].length > 0,
+      (group: Severity) => chartsData && chartsData[group] && chartsData[group].length > 0,
     );
 
     const charts = availableGroups.map((group: Severity, index: number) => (
@@ -272,12 +248,7 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
             <CenteredContainer>Loading...</CenteredContainer>
           ) : dataIsEmpty ? (
             <CenteredContainer>
-              <Alert
-                variant="warning"
-                isInline
-                isPlain
-                title="No datapoints found"
-              />
+              <Alert variant="warning" isInline isPlain title="No datapoints found" />
             </CenteredContainer>
           ) : histogramData ? (
             <Chart
@@ -312,17 +283,11 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
                 tickFormat={(tick: number) =>
                   dateToFormat(
                     tick,
-                    interval < 60 * 1000
-                      ? DateFormat.TimeMed
-                      : DateFormat.TimeShort,
+                    interval < 60 * 1000 ? DateFormat.TimeMed : DateFormat.TimeShort,
                   )
                 }
               />
-              <ChartAxis
-                tickCount={2}
-                dependentAxis
-                tickFormat={valueWithScalePrefix}
-              />
+              <ChartAxis tickCount={2} dependentAxis tickFormat={valueWithScalePrefix} />
               <ChartStack>{groupsCharts.charts}</ChartStack>
             </Chart>
           ) : (

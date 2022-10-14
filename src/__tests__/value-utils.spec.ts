@@ -1,8 +1,4 @@
-import {
-  durationFromTimestamp,
-  notEmptyString,
-  valueWithScalePrefix,
-} from '../value-utils';
+import { durationFromTimestamp, notEmptyString, valueWithScalePrefix } from '../value-utils';
 
 describe('value utils', () => {
   it('should add the propoer prefix to the value', () => {

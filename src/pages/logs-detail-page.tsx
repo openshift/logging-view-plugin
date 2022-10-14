@@ -1,11 +1,7 @@
 import { Grid, PageSection } from '@patternfly/react-core';
 import React from 'react';
 import { useParams } from 'react-router';
-import {
-  availablePodAttributes,
-  filtersFromQuery,
-  queryFromFilters,
-} from '../attribute-filters';
+import { availablePodAttributes, filtersFromQuery, queryFromFilters } from '../attribute-filters';
 import { AttributeList, Filters } from '../components/filters/filter.types';
 import { LogsTable } from '../components/logs-table';
 import { LogsToolbar } from '../components/logs-toolbar';
@@ -24,8 +20,7 @@ const getInitialTenantFromNamespace = (namespace?: string): string => {
 };
 
 const LogsDetailPage: React.FunctionComponent = () => {
-  const { name: podname, ns: namespace } =
-    useParams<{ name: string; ns: string }>();
+  const { name: podname, ns: namespace } = useParams<{ name: string; ns: string }>();
   const defaultQuery = `{ kubernetes_pod_name = "${podname}" } | json`;
 
   const attributesForPod: AttributeList = React.useMemo(
@@ -33,17 +28,11 @@ const LogsDetailPage: React.FunctionComponent = () => {
     [podname],
   );
 
-  const {
-    query,
-    setQueryInURL,
-    areResourcesShown,
-    setShowResourcesInURL,
-    filters,
-    setFilters,
-  } = useURLState({
-    defaultQuery,
-    attributes: attributesForPod,
-  });
+  const { query, setQueryInURL, areResourcesShown, setShowResourcesInURL, filters, setFilters } =
+    useURLState({
+      defaultQuery,
+      attributes: attributesForPod,
+    });
   const debouncedInputQuery = useDebounce(query);
   const initialTenant = getInitialTenantFromNamespace(namespace);
   const tenant = React.useRef(initialTenant);

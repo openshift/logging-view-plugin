@@ -1,19 +1,8 @@
-import {
-  Button,
-  Flex,
-  Grid,
-  PageSection,
-  Title,
-  Tooltip,
-} from '@patternfly/react-core';
+import { Button, Flex, Grid, PageSection, Title, Tooltip } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
 import React from 'react';
 import { useParams } from 'react-router';
-import {
-  availableAttributes,
-  filtersFromQuery,
-  queryFromFilters,
-} from '../attribute-filters';
+import { availableAttributes, filtersFromQuery, queryFromFilters } from '../attribute-filters';
 import { Filters } from '../components/filters/filter.types';
 import { LogsHistogram } from '../components/logs-histogram';
 import { LogsTable } from '../components/logs-table';
@@ -28,14 +17,8 @@ import { TestIds } from '../test-ids';
 const LogsDevPage: React.FunctionComponent = () => {
   const { ns: namespace } = useParams<{ ns: string }>();
 
-  const {
-    query,
-    setQueryInURL,
-    areResourcesShown,
-    setShowResourcesInURL,
-    filters,
-    setFilters,
-  } = useURLState({ attributes: availableAttributes });
+  const { query, setQueryInURL, areResourcesShown, setShowResourcesInURL, filters, setFilters } =
+    useURLState({ attributes: availableAttributes });
 
   const debouncedInputQuery = useDebounce(query);
 

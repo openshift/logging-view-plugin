@@ -1,8 +1,4 @@
-import {
-  Action,
-  Alert,
-  ExtensionHook,
-} from '@openshift-console/dynamic-plugin-sdk';
+import { Action, Alert, ExtensionHook } from '@openshift-console/dynamic-plugin-sdk';
 import { ListIcon } from '@patternfly/react-icons';
 import React from 'react';
 
@@ -10,10 +6,9 @@ type LogActionsExtensionOptions = {
   alert?: Alert;
 };
 
-const useLogActionsExtension: ExtensionHook<
-  Array<Action>,
-  LogActionsExtensionOptions
-> = (options) => {
+const useLogActionsExtension: ExtensionHook<Array<Action>, LogActionsExtensionOptions> = (
+  options,
+) => {
   // TODO: transform promQL into logQL
   const alertQuery = options.alert?.rule?.query ?? '';
   const href = `/monitoring/logs?q=${alertQuery}`;

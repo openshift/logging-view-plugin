@@ -16,10 +16,7 @@ const DEFAULT_TENANT = 'application';
 const DEFAULT_SHOW_RESOURCES = '0';
 const DEFAULT_QUERY = '{ log_type =~ ".+" } | json';
 
-export const useURLState = ({
-  defaultQuery = DEFAULT_QUERY,
-  attributes,
-}: UseURLStateHook) => {
+export const useURLState = ({ defaultQuery = DEFAULT_QUERY, attributes }: UseURLStateHook) => {
   const queryParams = useQueryParams();
   const history = useHistory();
   const location = useLocation();
@@ -50,8 +47,7 @@ export const useURLState = ({
   React.useEffect(() => {
     const queryValue = queryParams.get(QUERY_PARAM_KEY) ?? initialQuery;
     const tenantValue = queryParams.get(TENANT_PARAM_KEY) ?? DEFAULT_TENANT;
-    const showResourcesValue =
-      queryParams.get(SHOW_RESOURCES_PARAM_KEY) ?? DEFAULT_SHOW_RESOURCES;
+    const showResourcesValue = queryParams.get(SHOW_RESOURCES_PARAM_KEY) ?? DEFAULT_SHOW_RESOURCES;
 
     setQuery(queryValue);
     setTenant(tenantValue);

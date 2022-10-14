@@ -7,21 +7,16 @@
  */
 export const valueWithScalePrefix = (value: number): string => {
   return value >= 1000000
-    ? `${(value / 1000000).toFixed(
-        Math.round(value / 1000000) === value / 1000000 ? 0 : 1,
-      )}M`
+    ? `${(value / 1000000).toFixed(Math.round(value / 1000000) === value / 1000000 ? 0 : 1)}M`
     : value >= 1000
-    ? `${(value / 1000).toFixed(
-        Math.round(value / 1000) === value / 1000 ? 0 : 1,
-      )}k`
+    ? `${(value / 1000).toFixed(Math.round(value / 1000) === value / 1000 ? 0 : 1)}k`
     : String(value);
 };
 
 export const notEmptyString = (value: string | undefined): value is string =>
   value !== undefined && value.length > 0;
 
-export const notUndefined = <T>(value: T | undefined): value is T =>
-  value !== undefined;
+export const notUndefined = <T>(value: T | undefined): value is T => value !== undefined;
 
 const s = 1000;
 const m = s * 60;
