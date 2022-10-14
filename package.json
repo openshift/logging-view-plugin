@@ -22,7 +22,7 @@
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
     "cypress:run:ci": "NO_COLOR=1 npx cypress run --browser chrome",
-    "test": "concurrently --kill-others-on-fail \"npm run test:unit\" \"npm run test:e2e\"",
+    "test": "concurrently -n \"unit,e2e\" --kill-others-on-fail \"npm run test:unit\" \"npm run test:e2e\"",
     "test:unit": "jest --config jest.config.js",
     "test:e2e": "./scripts/run-cypress.sh",
     "test:unit:watch": "jest --config jest.config.js --watch",

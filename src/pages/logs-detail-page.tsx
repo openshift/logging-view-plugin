@@ -1,10 +1,17 @@
 import { Grid, PageSection } from '@patternfly/react-core';
 import React from 'react';
 import { useParams } from 'react-router';
+import {
+  availablePodAttributes,
+  filtersFromQuery,
+  queryFromFilters,
+} from '../attribute-filters';
+import { AttributeList, Filters } from '../components/filters/filter.types';
 import { LogsTable } from '../components/logs-table';
 import { LogsToolbar } from '../components/logs-toolbar';
+import { useDebounce } from '../hooks/useDebounce';
 import { useLogs } from '../hooks/useLogs';
-import { Severity } from '../severity';
+import { useURLState } from '../hooks/useURLState';
 
 const DEFAULT_TENANT = 'application';
 
@@ -19,14 +26,27 @@ const getInitialTenantFromNamespace = (namespace?: string): string => {
 const LogsDetailPage: React.FunctionComponent = () => {
   const { name: podname, ns: namespace } =
     useParams<{ name: string; ns: string }>();
-  const initialQuery = `{ kubernetes_pod_name = "${podname}" } | json`;
-  const initialTenant = getInitialTenantFromNamespace(namespace);
-  const [query, setQuery] = React.useState(initialQuery);
-  const tenant = React.useRef(initialTenant);
-  const [severityFilter, setSeverityFilter] = React.useState<Set<Severity>>(
-    new Set(),
+  const defaultQuery = `{ kubernetes_pod_name = "${podname}" } | json`;
+
+  const attributesForPod: AttributeList = React.useMemo(
+    () => availablePodAttributes(namespace, podname),
+    [podname],
   );
-  const [showResources, setShowResources] = React.useState(false);
+
+  const {
+    query,
+    setQueryInURL,
+    areResourcesShown,
+    setShowResourcesInURL,
+    filters,
+    setFilters,
+  } = useURLState({
+    defaultQuery,
+    attributes: attributesForPod,
+  });
+  const debouncedInputQuery = useDebounce(query);
+  const initialTenant = getInitialTenantFromNamespace(namespace);
+  const tenant = React.useRef(initialTenant);
 
   const {
     isLoadingLogsData,
@@ -41,35 +61,48 @@ const LogsDetailPage: React.FunctionComponent = () => {
   } = useLogs();
 
   const handleToggleStreaming = () => {
-    toggleStreaming({ query, severityFilter });
+    toggleStreaming({ query });
   };
 
   const handleLoadMoreData = (lastTimestamp: number) => {
     if (!isLoadingMoreLogsData) {
-      getMoreLogs({ lastTimestamp, query, severityFilter });
+      getMoreLogs({ lastTimestamp, query });
     }
   };
 
-  const runQuery = ({
-    severityValue,
-  }: {
-    severityValue?: Set<Severity>;
-  } = {}) => {
-    getLogs({
-      query,
-      severityFilter: severityValue ?? severityFilter,
-      tenant: tenant.current,
+  const runQuery = () => {
+    getLogs({ query, tenant: tenant.current });
+  };
+
+  const handleFiltersChange = (filters?: Filters) => {
+    setFilters(filters);
+
+    if (!filters || Object.keys(filters).length === 0) {
+      setQueryInURL(defaultQuery);
+    } else {
+      const updatedQuery = queryFromFilters({
+        existingQuery: query,
+        filters,
+        attributes: attributesForPod,
+      });
+      setQueryInURL(updatedQuery);
+    }
+  };
+
+  const handleQueryChange = (queryFromInput: string) => {
+    setQueryInURL(queryFromInput);
+
+    const updatedFilters = filtersFromQuery({
+      query: queryFromInput,
+      attributes: attributesForPod,
     });
+
+    setFilters(updatedFilters);
   };
 
   React.useEffect(() => {
     runQuery();
-  }, []);
-
-  const handleSeverityFilterChange = (severityFilterValue: Set<Severity>) => {
-    setSeverityFilter(severityFilterValue);
-    runQuery({ severityValue: severityFilterValue });
-  };
+  }, [debouncedInputQuery]);
 
   const isQueryEmpty = query === '';
 
@@ -87,17 +120,18 @@ const LogsDetailPage: React.FunctionComponent = () => {
         >
           <LogsToolbar
             query={query}
-            onQueryChange={setQuery}
+            onQueryChange={handleQueryChange}
             onQueryRun={runQuery}
-            severityFilter={severityFilter}
-            onSeverityChange={handleSeverityFilterChange}
             isStreaming={isStreaming}
             onStreamingToggle={handleToggleStreaming}
-            showResources={showResources}
-            onShowResourcesToggle={setShowResources}
+            showResources={areResourcesShown}
+            onShowResourcesToggle={setShowResourcesInURL}
             enableStreaming
             enableTenantDropdown={false}
             isDisabled={isQueryEmpty}
+            attributeList={attributesForPod}
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
           />
         </LogsTable>
       </Grid>

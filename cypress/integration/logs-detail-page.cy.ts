@@ -44,8 +44,10 @@ describe('Logs Detail Page', () => {
         cy.contains(TEST_MESSAGE);
       });
 
+    cy.getByTestId(TestIds.ShowQueryToggle).click();
+
     cy.getByTestId(TestIds.LogsQueryInput).within(() => {
-      cy.get('input')
+      cy.get('textarea')
         .type('{selectAll}')
         .type('{ job = "some_job" }', {
           parseSpecialCharSequences: false,
@@ -77,7 +79,7 @@ describe('Logs Detail Page', () => {
         cy.contains('warning').click();
       });
 
-    cy.get('@queryRangeStreams.all').should('have.length.at.least', 2);
+    cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
   });
 
   it('disables query executors when the query is empty', () => {
@@ -88,8 +90,10 @@ describe('Logs Detail Page', () => {
 
     cy.visit(LOGS_DETAIL_PAGE_URL);
 
+    cy.getByTestId(TestIds.ShowQueryToggle).click();
+
     cy.getByTestId(TestIds.LogsQueryInput).within(() => {
-      cy.get('input').clear();
+      cy.get('textarea').clear();
     });
 
     cy.getByTestId(TestIds.ExecuteQueryButton).should('be.disabled');

@@ -9,4 +9,6 @@ export enum TestIds {
   TenantDropdown = 'TenantDropdown',
   SeverityDropdown = 'SeverityDropdown',
   ToogleStreamingButton = 'ToogleStreamingButton',
+  ShowQueryToggle = 'ShowQueryToggle',
+  AttributeFilters = 'AttributeFilters',
 }

@@ -1,0 +1,7 @@
+.co-logs__attribute-filter .pf-c-select__toggle-wrapper {
+  flex-wrap: nowrap;
+}
+
+.co-logs__attribute-filter .co-logs__attribute-filter__text {
+  min-width: 200px;
+}

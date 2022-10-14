@@ -24,6 +24,9 @@ describe('Logs Dev Page', () => {
     cy.getByTestId(TestIds.RefreshIntervalDropdown).should('exist');
     cy.getByTestId(TestIds.TimeRangeDropdown).should('exist');
     cy.getByTestId(TestIds.SyncButton).should('exist');
+    cy.getByTestId(TestIds.LogsQueryInput).should('not.exist');
+
+    cy.getByTestId(TestIds.ShowQueryToggle).click();
     cy.getByTestId(TestIds.LogsQueryInput).should('exist');
 
     cy.getByTestId(TestIds.LogsTable)
@@ -75,6 +78,8 @@ describe('Logs Dev Page', () => {
 
     cy.visit(LOGS_DEV_PAGE_URL);
 
+    cy.getByTestId(TestIds.ShowQueryToggle).click();
+
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
       .within(() => {
@@ -82,7 +87,7 @@ describe('Logs Dev Page', () => {
       });
 
     cy.getByTestId(TestIds.LogsQueryInput).within(() => {
-      cy.get('input')
+      cy.get('textarea')
         .type('{selectAll}')
         .type('{ job = "some_job" }', {
           parseSpecialCharSequences: false,
@@ -119,7 +124,7 @@ describe('Logs Dev Page', () => {
         cy.contains('warning').click();
       });
 
-    cy.get('@queryRangeStreams.all').should('have.length.at.least', 2);
+    cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
     cy.get('@queryRangeMatrix.all').should('have.length.at.least', 1);
   });
 

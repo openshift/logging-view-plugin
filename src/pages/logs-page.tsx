@@ -8,37 +8,33 @@ import {
 } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
 import React from 'react';
-import { useHistory, useLocation } from 'react-router';
+import {
+  availableAttributes,
+  filtersFromQuery,
+  queryFromFilters,
+} from '../attribute-filters';
+import { Filters } from '../components/filters/filter.types';
 import { LogsHistogram } from '../components/logs-histogram';
 import { LogsTable } from '../components/logs-table';
 import { LogsToolbar } from '../components/logs-toolbar';
 import { RefreshIntervalDropdown } from '../components/refresh-interval-dropdown';
 import { TimeRangeDropdown } from '../components/time-range-dropdown';
+import { useDebounce } from '../hooks/useDebounce';
 import { useLogs } from '../hooks/useLogs';
-import { useQueryParams } from '../hooks/useQueryParams';
-import { Severity, severityFiltersFromParams } from '../severity';
+import { useURLState } from '../hooks/useURLState';
 import { TestIds } from '../test-ids';
 
-const QUERY_PARAM_KEY = 'q';
-const TENANT_PARAM_KEY = 'tenant';
-const SEVERITY_FILTER_PARAM_KEY = 'severity';
-const DEFAULT_QUERY = '{ log_type =~ ".+" } | json';
-const DEFAULT_TENANT = 'application';
-
-const LogsPage: React.FunctionComponent = () => {
-  const queryParams = useQueryParams();
-  const history = useHistory();
-  const location = useLocation();
-
-  const initialQuery = queryParams.get(QUERY_PARAM_KEY) ?? DEFAULT_QUERY;
-  const initialTenant = queryParams.get(TENANT_PARAM_KEY) ?? DEFAULT_TENANT;
-  const initialSeverity = severityFiltersFromParams(
-    queryParams.get(SEVERITY_FILTER_PARAM_KEY),
-  );
-  const [query, setQuery] = React.useState(initialQuery);
-  const [showResources, setShowResources] = React.useState(false);
-  const [severityFilter, setSeverityFilter] = React.useState(initialSeverity);
-  const [tenant, setTenant] = React.useState(initialTenant);
+const LogsPage: React.FC = () => {
+  const {
+    query,
+    setQueryInURL,
+    tenant,
+    setTenantInURL,
+    areResourcesShown,
+    setShowResourcesInURL,
+    filters,
+    setFilters,
+  } = useURLState({ attributes: availableAttributes });
 
   const {
     histogramData,
@@ -60,83 +56,62 @@ const LogsPage: React.FunctionComponent = () => {
     config,
   } = useLogs();
 
+  const debouncedInputQuery = useDebounce(query);
+
   const handleToggleStreaming = () => {
-    toggleStreaming({ query, severityFilter });
+    toggleStreaming({ query });
   };
 
   const handleLoadMoreData = (lastTimestamp: number) => {
     if (!isLoadingMoreLogsData) {
-      getMoreLogs({ lastTimestamp, query, severityFilter });
+      getMoreLogs({ lastTimestamp, query });
     }
-  };
-
-  const setQueryInURL = () => {
-    queryParams.set(QUERY_PARAM_KEY, query);
-    history.push(`${location.pathname}?${queryParams.toString()}`);
-  };
-
-  const setSeverityInURL = (newSeverityFilter: Set<Severity>) => {
-    if (newSeverityFilter.size === 0) {
-      queryParams.delete(SEVERITY_FILTER_PARAM_KEY);
-    } else {
-      queryParams.set(
-        SEVERITY_FILTER_PARAM_KEY,
-        Array.from(newSeverityFilter).join(','),
-      );
-    }
-    history.push(`${location.pathname}?${queryParams.toString()}`);
   };
 
   const runQuery = ({
-    queryValue,
-    severityValue,
-    tenantValue,
+    tenantToConsider,
   }: {
-    queryValue?: string;
-    severityValue?: Set<Severity>;
-    tenantValue?: string;
+    tenantToConsider?: string;
   } = {}) => {
-    getLogs({
-      query: queryValue ?? query,
-      severityFilter: severityValue ?? severityFilter,
-      tenant: tenantValue ?? tenant,
-    });
-    getHistogram({
-      query: queryValue ?? query,
-      severityFilter: severityValue ?? severityFilter,
-      tenant: tenantValue ?? tenant,
-    });
+    getLogs({ query, tenant: tenantToConsider ?? tenant });
+    getHistogram({ query, tenant: tenantToConsider ?? tenant });
   };
 
   const handleRefreshClick = () => {
     runQuery();
   };
 
-  React.useEffect(() => {
-    return history.listen((location) => {
-      const urlParams = new URLSearchParams(location.search);
-      const queryValue = urlParams.get(QUERY_PARAM_KEY) ?? DEFAULT_QUERY;
-      const tenantValue = urlParams.get(TENANT_PARAM_KEY) ?? DEFAULT_TENANT;
-      const severityValue = severityFiltersFromParams(
-        urlParams.get(SEVERITY_FILTER_PARAM_KEY),
-      );
+  const handleFiltersChange = (filters?: Filters) => {
+    setFilters(filters);
 
-      setQuery(queryValue);
-      setTenant(tenantValue);
-      setSeverityFilter(severityValue);
-
-      runQuery({ queryValue, severityValue, tenantValue });
+    const updatedQuery = queryFromFilters({
+      existingQuery: query,
+      filters,
+      attributes: availableAttributes,
     });
-  }, [history]);
+
+    setQueryInURL(updatedQuery);
+  };
+
+  const handleQueryChange = (queryFromInput: string) => {
+    setQueryInURL(queryFromInput);
+
+    const updatedFilters = filtersFromQuery({
+      query: queryFromInput,
+      attributes: availableAttributes,
+    });
+
+    setFilters(updatedFilters);
+  };
+
+  const handleTenantChange = (newTenant: string) => {
+    setTenantInURL(newTenant);
+    runQuery({ tenantToConsider: newTenant });
+  };
 
   React.useEffect(() => {
     runQuery();
-  }, []);
-
-  const setTenantInURL = (tenant: string) => {
-    queryParams.set(TENANT_PARAM_KEY, tenant);
-    history.push(`${location.pathname}?${queryParams.toString()}`);
-  };
+  }, [debouncedInputQuery]);
 
   const isQueryEmpty = query === '';
 
@@ -184,24 +159,25 @@ const LogsPage: React.FunctionComponent = () => {
           isLoading={isLoadingLogsData}
           isLoadingMore={isLoadingMoreLogsData}
           hasMoreLogsData={hasMoreLogsData}
-          showResources={showResources}
+          showResources={areResourcesShown}
           isStreaming={isStreaming}
           error={logsError}
         >
           <LogsToolbar
             query={query}
-            onQueryChange={setQuery}
-            onQueryRun={setQueryInURL}
-            onTenantSelect={setTenantInURL}
+            onQueryChange={handleQueryChange}
+            onQueryRun={runQuery}
+            onTenantSelect={handleTenantChange}
             tenant={tenant}
-            severityFilter={severityFilter}
-            onSeverityChange={setSeverityInURL}
             isStreaming={isStreaming}
             onStreamingToggle={handleToggleStreaming}
             enableStreaming={config.isStreamingEnabledInDefaultPage}
-            showResources={showResources}
-            onShowResourcesToggle={setShowResources}
+            showResources={areResourcesShown}
+            onShowResourcesToggle={setShowResourcesInURL}
             isDisabled={isQueryEmpty}
+            attributeList={availableAttributes}
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
           />
         </LogsTable>
       </Grid>

@@ -17,8 +17,8 @@ export const valueWithScalePrefix = (value: number): string => {
     : String(value);
 };
 
-export const notEmptyString = (value: string): value is string =>
-  value.length > 0;
+export const notEmptyString = (value: string | undefined): value is string =>
+  value !== undefined && value.length > 0;
 
 export const notUndefined = <T>(value: T | undefined): value is T =>
   value !== undefined;

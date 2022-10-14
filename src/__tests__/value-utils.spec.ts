@@ -23,5 +23,6 @@ describe('value utils', () => {
   it('should validate a notEmptyString', () => {
     expect(notEmptyString('foo')).toBe(true);
     expect(notEmptyString('')).toBe(false);
+    expect(notEmptyString(undefined)).toBe(false);
   });
 });

@@ -3,8 +3,10 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   transform: {
-    '^.+\\.ts?$': 'ts-jest',
+    '\\.[jt]sx?$': 'ts-jest',
   },
-  transformIgnorePatterns: ['<rootDir>/node_modules/'],
+  transformIgnorePatterns: [
+    '<rootDir>/node_modules/(?!(@openshift-console|@patternfly))',
+  ],
   coverageDirectory: '<rootDir>/coverage/cov-jest',
 };
