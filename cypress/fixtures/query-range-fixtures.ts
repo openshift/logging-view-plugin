@@ -1,10 +1,4 @@
-const generateMatrixValues = ({
-  nValues,
-  startTime,
-}: {
-  nValues: number;
-  startTime: number;
-}) =>
+const generateMatrixValues = ({ nValues, startTime }: { nValues: number; startTime: number }) =>
   Array.from({ length: nValues }, (_, i) => [
     startTime + i * 60,
     String(Math.floor(Math.random() * 9999) + 100),
@@ -39,11 +33,7 @@ const generateStream = ({
   values: generateStreamValues({ nValues, startTime, message }),
 });
 
-export const queryRangeStreamsvalidResponse = ({
-  message,
-}: {
-  message?: string;
-}) => {
+export const queryRangeStreamsvalidResponse = ({ message }: { message?: string }) => {
   const startTime = Date.now();
 
   return {

@@ -52,14 +52,10 @@ describe('Logs Page', () => {
 
   it('handles errors gracefully when a request fails', () => {
     cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, (req) => {
-      req.continue((res) =>
-        res.send({ statusCode: 500, body: 'Internal Server Error' }),
-      );
+      req.continue((res) => res.send({ statusCode: 500, body: 'Internal Server Error' }));
     });
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, (req) => {
-      req.continue((res) =>
-        res.send({ statusCode: 500, body: 'Internal Server Error' }),
-      );
+      req.continue((res) => res.send({ statusCode: 500, body: 'Internal Server Error' }));
     });
 
     cy.visit(LOGS_PAGE_URL);
@@ -78,14 +74,8 @@ describe('Logs Page', () => {
   });
 
   it('handles errors gracefully when a response is invalid', () => {
-    cy.intercept(
-      QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsInvalidResponse(),
-    );
-    cy.intercept(
-      QUERY_RANGE_MATRIX_URL_MATCH,
-      queryRangeMatrixInvalidResponse(),
-    );
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeStreamsInvalidResponse());
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixInvalidResponse());
 
     cy.visit(LOGS_PAGE_URL);
 
@@ -107,10 +97,9 @@ describe('Logs Page', () => {
       QUERY_RANGE_STREAMS_URL_MATCH,
       queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
-    cy.intercept(
-      QUERY_RANGE_MATRIX_URL_MATCH,
-      queryRangeMatrixValidResponse(),
-    ).as('queryRangeMatrix');
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrix',
+    );
 
     cy.visit(LOGS_PAGE_URL);
 
@@ -137,10 +126,9 @@ describe('Logs Page', () => {
       QUERY_RANGE_STREAMS_URL_MATCH,
       queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
-    cy.intercept(
-      QUERY_RANGE_MATRIX_URL_MATCH,
-      queryRangeMatrixValidResponse(),
-    ).as('queryRangeMatrix');
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrix',
+    );
 
     cy.visit(LOGS_PAGE_URL);
 
@@ -177,19 +165,17 @@ describe('Logs Page', () => {
       QUERY_RANGE_STREAMS_URL_MATCH,
       queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
-    cy.intercept(
-      QUERY_RANGE_MATRIX_URL_MATCH,
-      queryRangeMatrixValidResponse(),
-    ).as('queryRangeMatrix');
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrix',
+    );
 
     cy.intercept(
       QUERY_RANGE_STREAMS_INFRASTRUCTURE_URL_MATCH,
       queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreamsInfrastructure');
-    cy.intercept(
-      QUERY_RANGE_MATRIX_INFRASTRUCTURE_URL_MATCH,
-      queryRangeMatrixValidResponse(),
-    ).as('queryRangeMatrixInfrastructure');
+    cy.intercept(QUERY_RANGE_MATRIX_INFRASTRUCTURE_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrixInfrastructure',
+    );
 
     cy.visit(LOGS_PAGE_URL);
 
@@ -212,14 +198,8 @@ describe('Logs Page', () => {
 
     cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
     cy.get('@queryRangeMatrix.all').should('have.length.at.least', 1);
-    cy.get('@queryRangeStreamsInfrastructure.all').should(
-      'have.length.at.least',
-      1,
-    );
-    cy.get('@queryRangeMatrixInfrastructure.all').should(
-      'have.length.at.least',
-      1,
-    );
+    cy.get('@queryRangeStreamsInfrastructure.all').should('have.length.at.least', 1);
+    cy.get('@queryRangeMatrixInfrastructure.all').should('have.length.at.least', 1);
   });
 
   it('stores selected values for time range and refresh interval', () => {
@@ -227,10 +207,9 @@ describe('Logs Page', () => {
       QUERY_RANGE_STREAMS_URL_MATCH,
       queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
-    cy.intercept(
-      QUERY_RANGE_MATRIX_URL_MATCH,
-      queryRangeMatrixValidResponse(),
-    ).as('queryRangeMatrix');
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrix',
+    );
 
     cy.visit(LOGS_PAGE_URL);
 
@@ -262,10 +241,9 @@ describe('Logs Page', () => {
       QUERY_RANGE_STREAMS_URL_MATCH,
       queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
-    cy.intercept(
-      QUERY_RANGE_MATRIX_URL_MATCH,
-      queryRangeMatrixValidResponse(),
-    ).as('queryRangeMatrix');
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrix',
+    );
 
     cy.visit(LOGS_PAGE_URL);
 
@@ -296,15 +274,14 @@ describe('Logs Page', () => {
     });
   });
 
-  it.only('updates the query when selecting filters', () => {
+  it('updates the query when selecting filters', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
       queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
-    cy.intercept(
-      QUERY_RANGE_MATRIX_URL_MATCH,
-      queryRangeMatrixValidResponse(),
-    ).as('queryRangeMatrix');
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrix',
+    );
 
     cy.intercept(RESOURCE_URL_MATCH, namespaceListResponse).as('resourceQuery');
 

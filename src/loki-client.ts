@@ -26,7 +26,7 @@ type HistogramQuerParams = {
   tenant: string;
 };
 
-const getFetchConfig = ({
+export const getFetchConfig = ({
   config,
   tenant,
 }: {
@@ -42,14 +42,7 @@ const getFetchConfig = ({
     };
   }
 
-  return {
-    requestInit: {
-      headers: {
-        authorization: `Bearer sha256~Gptz_uJRGgLxwslvLe22nMkaGOr_HKbal06tjZ4TuHI`,
-      },
-    },
-    endpoint: `${LOKI_ENDPOINT}/api/logs/v1/${tenant}`,
-  };
+  return { endpoint: `${LOKI_ENDPOINT}/api/logs/v1/${tenant}` };
 };
 
 export const executeQueryRange = ({

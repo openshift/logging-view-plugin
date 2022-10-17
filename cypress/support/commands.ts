@@ -10,6 +10,4 @@ declare global {
   }
 }
 
-Cypress.Commands.add('getByTestId', (testId: TestIds) =>
-  cy.get(`[data-test="${testId}"]`),
-);
+Cypress.Commands.add('getByTestId', (testId: TestIds) => cy.get(`[data-test="${testId}"]`));
