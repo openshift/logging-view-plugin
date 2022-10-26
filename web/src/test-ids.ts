@@ -4,6 +4,7 @@ export enum TestIds {
   SyncButton = 'SyncButton',
   LogsHistogram = 'LogsHistogram',
   LogsTable = 'LogsTable',
+  LogsMetrics = 'LogsMetrics',
   LogsQueryInput = 'LogsQueryInput',
   ExecuteQueryButton = 'ExecuteQueryButton',
   TenantDropdown = 'TenantDropdown',

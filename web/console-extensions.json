@@ -47,5 +47,20 @@
       "contextId": "alert-detail-toolbar-actions",
       "provider": { "$codeRef": "LogActionsProvider" }
     }
+  },
+  {
+    "type": "console.alerts/rules-source",
+    "properties": {
+      "id": "logging-loki",
+      "contextId": "observe-alerting",
+      "getAlertingRules": { "$codeRef": "getAlertingRules" }
+    }
+  },
+  {
+    "type": "console.alerts/rules-chart",
+    "properties": {
+      "sourceId": "logging-loki",
+      "chart": { "$codeRef": "LogsAlertMetrics" }
+    }
   }
 ]

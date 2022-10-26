@@ -1,5 +1,6 @@
 import { OptionsMenu, OptionsMenuItem, OptionsMenuToggle } from '@patternfly/react-core';
 import React from 'react';
+import { TENANTS } from '../tenants';
 import { TestIds } from '../test-ids';
 
 interface TenantDropdownProps {
@@ -7,8 +8,6 @@ interface TenantDropdownProps {
   onTenantSelected?: (tenant: string) => void;
   isDisabled?: boolean;
 }
-
-const tenants = ['application', 'infrastructure', 'audit'];
 
 export const TenantDropdown: React.FC<TenantDropdownProps> = ({
   selectedTenant,
@@ -31,7 +30,7 @@ export const TenantDropdown: React.FC<TenantDropdownProps> = ({
       id="logging-view-tenant-dropdown"
       data-test={TestIds.TenantDropdown}
       disabled={isDisabled}
-      menuItems={tenants.map((tenant) => (
+      menuItems={TENANTS.map((tenant) => (
         <OptionsMenuItem
           onSelect={onSelect}
           isSelected={selectedTenant === tenant}

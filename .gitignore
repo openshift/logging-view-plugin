@@ -9,3 +9,4 @@ web/.nyc_output/
 .DS_Store
 /plugin-backend
 env.list
+.vscode

@@ -1,6 +1,7 @@
 export type Config = {
   useTenantInHeader?: boolean;
   isStreamingEnabledInDefaultPage?: boolean;
+  lokiTenanLabelKey?: string;
 };
 
 export type MetricValue = Array<number | string>;
@@ -53,5 +54,19 @@ export type QueryRangeResponse<T = MatrixResult | StreamsResult> = {
       store: Record<string, number>;
       summary: Record<string, number>;
     };
+  };
+};
+
+export type Rule = {
+  query?: string;
+  labels?: Record<string, string>;
+};
+
+export type RulesResponse = {
+  status: string;
+  data: {
+    groups: Array<{
+      rules: Array<Rule>;
+    }>;
   };
 };
