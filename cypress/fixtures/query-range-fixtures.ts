@@ -33,7 +33,7 @@ const generateStream = ({
   values: generateStreamValues({ nValues, startTime, message }),
 });
 
-export const queryRangeStreamsvalidResponse = ({ message }: { message?: string }) => {
+export const queryRangeStreamsValidResponse = ({ message }: { message?: string }) => {
   const startTime = Date.now();
 
   return {

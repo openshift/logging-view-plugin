@@ -1,5 +1,5 @@
 import { TestIds } from '../../src/test-ids';
-import { queryRangeStreamsvalidResponse } from '../fixtures/query-range-fixtures';
+import { queryRangeStreamsValidResponse } from '../fixtures/query-range-fixtures';
 
 const LOGS_DETAIL_PAGE_URL = '/k8s/ns/my-namespace/pods/test-pod-name';
 const LOGS_DETAIL_PAGE_URL_OPENSHIFT_NS = '/k8s/ns/openshift-api/pods/test-pod-name';
@@ -13,7 +13,7 @@ describe('Logs Detail Page', () => {
   it('executes a query when "run query" is pressed', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
 
     cy.visit(LOGS_DETAIL_PAGE_URL);
@@ -32,7 +32,7 @@ describe('Logs Detail Page', () => {
   it('executes a query with a new value when "Enter" is pressed on the query input field', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
 
     cy.visit(LOGS_DETAIL_PAGE_URL);
@@ -61,7 +61,7 @@ describe('Logs Detail Page', () => {
   it('executes a query when severity is changed', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
 
     cy.visit(LOGS_DETAIL_PAGE_URL);
@@ -84,7 +84,7 @@ describe('Logs Detail Page', () => {
   it('disables query executors when the query is empty', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
 
     cy.visit(LOGS_DETAIL_PAGE_URL);
@@ -107,7 +107,7 @@ describe('Logs Detail Page', () => {
   it('executes a query for the applications tenant based on the namespace', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
 
     cy.visit(LOGS_DETAIL_PAGE_URL);
@@ -124,7 +124,7 @@ describe('Logs Detail Page', () => {
   it('executes a query for the infrastructure tenant based on the namespace', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_INFRASTRUCTURE_URL_MATCH,
-      queryRangeStreamsvalidResponse({ message: TEST_MESSAGE }),
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreamsInfrastructure');
 
     cy.visit(LOGS_DETAIL_PAGE_URL_OPENSHIFT_NS);

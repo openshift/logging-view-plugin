@@ -27,13 +27,13 @@ export const RefreshIntervalDropdown: React.FC<RefreshIntervalDropdownProps> = (
   onRefresh,
   isDisabled = false,
 }) => {
-  const [storedRefreshInterval, setStoredRefreshInterval] = useLocalStorage(
+  const [storedRefreshInterval, setStoredRefreshInterval] = useLocalStorage<{ interval: string }>(
     STORED_REFRESH_INTERVAL_KEY,
   );
   const [isOpen, setIsOpen] = React.useState(false);
   const [selectedIndex, setSelectedIndex] = React.useState<number>(
-    storedRefreshInterval && !isNaN(parseInt(storedRefreshInterval, 10))
-      ? parseInt(storedRefreshInterval, 10)
+    storedRefreshInterval && !isNaN(parseInt(storedRefreshInterval.interval, 10))
+      ? parseInt(storedRefreshInterval.interval, 10)
       : 0,
   );
   const [delay, setDelay] = React.useState<number>(0);
@@ -50,7 +50,7 @@ export const RefreshIntervalDropdown: React.FC<RefreshIntervalDropdownProps> = (
     setSelectedIndex(index);
     const selectedDelay = refreshIntervalOptions[index].delay;
     setDelay(selectedDelay);
-    setStoredRefreshInterval(index.toString(10));
+    setStoredRefreshInterval({ interval: index.toString(10) });
   };
 
   const restartTimer = (callRefreshImmediately = true) => {

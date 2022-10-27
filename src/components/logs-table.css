@@ -60,9 +60,7 @@
   background-color: var(--pf-global--palette--cyan-200);
 }
 
-.co-logs-table.pf-m-compact
-  tr:not(.pf-c-table__expandable-row)
-  > *:first-child {
+.co-logs-table.pf-m-compact tr:not(.pf-c-table__expandable-row) > *:first-child {
   padding-left: 0;
 }
 
@@ -75,6 +73,10 @@
   background-color: var(--pf-global--Background-color--100);
   --pf-c-table--cell--PaddingBottom: var(--pf-global--spacer--xs);
   --pf-c-table--cell--PaddingTop: var(--pf-global--spacer--xs);
+}
+
+.co-logs-table__row-info td {
+  text-align: center;
 }
 
 .co-logs-table__row-info .pf-c-alert {

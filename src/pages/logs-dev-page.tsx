@@ -17,8 +17,17 @@ import { TestIds } from '../test-ids';
 const LogsDevPage: React.FunctionComponent = () => {
   const { ns: namespace } = useParams<{ ns: string }>();
 
-  const { query, setQueryInURL, areResourcesShown, setShowResourcesInURL, filters, setFilters } =
-    useURLState({ attributes: availableAttributes });
+  const {
+    query,
+    setQueryInURL,
+    areResourcesShown,
+    setShowResourcesInURL,
+    filters,
+    setFilters,
+    setTimeRangeInURL,
+    timeRange,
+    interval,
+  } = useURLState({ attributes: availableAttributes });
 
   const debouncedInputQuery = useDebounce(query);
 
@@ -35,9 +44,6 @@ const LogsDevPage: React.FunctionComponent = () => {
     getMoreLogs,
     hasMoreLogsData,
     getHistogram,
-    setTimeSpan,
-    timeRange,
-    interval,
     toggleStreaming,
     config,
   } = useLogs();
@@ -53,8 +59,8 @@ const LogsDevPage: React.FunctionComponent = () => {
   };
 
   const runQuery = () => {
-    getLogs({ query, namespace });
-    getHistogram({ query, namespace });
+    getLogs({ query, namespace, timeRange });
+    getHistogram({ query, namespace, timeRange });
   };
 
   const handleFiltersChange = (filters?: Filters) => {
@@ -82,7 +88,7 @@ const LogsDevPage: React.FunctionComponent = () => {
 
   React.useEffect(() => {
     runQuery();
-  }, [debouncedInputQuery]);
+  }, [debouncedInputQuery, timeRange]);
 
   return (
     <PageSection>
@@ -92,7 +98,7 @@ const LogsDevPage: React.FunctionComponent = () => {
             Logs
           </Title>
           <Flex>
-            <TimeRangeDropdown onChange={setTimeSpan} />
+            <TimeRangeDropdown onChange={setTimeRangeInURL} />
             <RefreshIntervalDropdown onRefresh={runQuery} />
             <Tooltip content={<div>Refresh</div>}>
               <Button

@@ -23,7 +23,7 @@ const m = s * 60;
 const h = m * 60;
 const d = h * 24;
 const w = d * 7;
-const units = { w, d, h, m, s };
+export const units: Record<string, number> = { w, d, h, m, s };
 
 /**
  * Converts a timesamp into a string in prometheus duration format `[0-9]+[smhdwy]`
@@ -43,6 +43,51 @@ export const durationFromTimestamp = (timestamp: number): string => {
     }
   }
   return str.trim();
+};
+
+export const millisecondsFromDuration = (duration: string): number => {
+  try {
+    const parts = duration
+      .trim()
+      .split(/\s+/)
+      .map((p) => p.match(/^(\d+)([wdhms])$/));
+    return parts.reduce((sum, p) => {
+      if (p && p.length >= 3) {
+        const digit = p[1];
+        const unit = p[2];
+
+        return sum + parseInt(digit, 10) * units[unit];
+      }
+      return sum;
+    }, 0);
+  } catch (ignored) {
+    // Invalid duration format
+    return 0;
+  }
+};
+
+const getPart = (
+  parts: Intl.DateTimeFormatPart[],
+  type: 'day' | 'hour' | 'minute' | 'month' | 'second' | 'year',
+) => parts.find((p) => p.type === type)?.value || '';
+
+export const formatDate = (timestamp: number): string => {
+  const parts = new Intl.DateTimeFormat('en', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(timestamp);
+  return `${getPart(parts, 'year')}-${getPart(parts, 'month')}-${getPart(parts, 'day')}`;
+};
+export const formatTime = (timestamp: number, includeSeconds = false): string => {
+  const parts = new Intl.DateTimeFormat('en', {
+    hour: '2-digit',
+    hourCycle: 'h24',
+    minute: '2-digit',
+    second: 'numeric',
+  }).formatToParts(timestamp);
+  const seconds = includeSeconds ? `:${getPart(parts, 'second')}` : '';
+  return `${getPart(parts, 'hour')}:${getPart(parts, 'minute')}${seconds}`;
 };
 
 export const trim = (value: string): string => value.trim();

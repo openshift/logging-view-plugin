@@ -11,4 +11,6 @@ export enum TestIds {
   ToogleStreamingButton = 'ToogleStreamingButton',
   ShowQueryToggle = 'ShowQueryToggle',
   AttributeFilters = 'AttributeFilters',
+  TimeRangeSelectModal = 'TimeRangeSelectModal',
+  TimeRangeDropdownSaveButton = 'TimeRangeDropdownSaveButton',
 }

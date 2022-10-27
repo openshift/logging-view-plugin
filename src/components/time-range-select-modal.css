@@ -1,0 +1,21 @@
+.co-logs-time-range-modal {
+  --pf-global--FontSize--md: 14px;
+}
+
+.co-logs-time-range-modal__footer {
+  display: flex;
+  gap: var(--pf-global--spacer--sm);
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.co-logs-time-range-modal__body {
+  overflow: visible;
+  display: grid;
+  gap: var(--pf-global--spacer--md);
+}
+
+.co-logs-time-range-modal__field {
+  display: flex;
+  align-items: flex-start;
+}

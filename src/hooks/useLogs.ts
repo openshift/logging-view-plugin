@@ -9,9 +9,10 @@ import {
   TimeRange,
 } from '../logs.types';
 import { connectToTailSocket, executeHistogramQuery, executeQueryRange } from '../loki-client';
-import { timeRangeOptions } from '../time-range-options';
+import { intervalFromTimeRange, numericTimeRange, timeRangeFromDuration } from '../time-range';
+import { millisecondsFromDuration } from '../value-utils';
 
-const DEFAULT_TIME_RANGE = '1h';
+const DEFAULT_TIME_SPAN = '1h';
 const QUERY_LOGS_LIMIT = 100;
 const STREAMING_MAX_LOGS_LIMIT = 1e3;
 
@@ -28,7 +29,6 @@ const isAbortError = (error: unknown): boolean =>
   error instanceof Error && error.name === 'AbortError';
 
 type State = {
-  timeSpan: number;
   isLoadingHistogramData: boolean;
   histogramData?: QueryRangeResponse;
   histogramError?: unknown;
@@ -47,10 +47,7 @@ type Action =
     }
   | {
       type: 'histogramResponse';
-      payload: {
-        histogramData: QueryRangeResponse;
-        timeSpan: number;
-      };
+      payload: { histogramData: QueryRangeResponse };
     }
   | {
       type: 'logsRequest';
@@ -60,9 +57,7 @@ type Action =
     }
   | {
       type: 'logsResponse';
-      payload: {
-        logsData: QueryRangeResponse;
-      };
+      payload: { logsData: QueryRangeResponse };
     }
   | {
       type: 'startStreaming';
@@ -72,33 +67,23 @@ type Action =
     }
   | {
       type: 'streamingResponse';
-      payload: {
-        logsData: QueryRangeResponse;
-      };
+      payload: { logsData: QueryRangeResponse };
     }
   | {
       type: 'moreLogsResponse';
-      payload: {
-        logsData: QueryRangeResponse;
-      };
+      payload: { logsData: QueryRangeResponse };
     }
   | {
       type: 'logsError';
-      payload: {
-        error: unknown;
-      };
+      payload: { error: unknown };
     }
   | {
       type: 'histogramError';
-      payload: {
-        error: unknown;
-      };
+      payload: { error: unknown };
     }
   | {
       type: 'setConfig';
-      payload: {
-        config: Config;
-      };
+      payload: { config: Config };
     };
 
 const appendData = (
@@ -140,7 +125,6 @@ const reducer = (state: State, action: Action): State => {
     case 'histogramResponse':
       return {
         ...state,
-        timeSpan: action.payload.timeSpan,
         isLoadingHistogramData: false,
         histogramData: action.payload.histogramData,
       };
@@ -223,33 +207,21 @@ const reducer = (state: State, action: Action): State => {
   }
 };
 
-const timeRangeFromSpan = (span: number, currentTime: number = Date.now()): TimeRange => ({
-  start: currentTime - span,
-  end: currentTime,
-});
+const defaultTimeRange = (): TimeRange => timeRangeFromDuration(DEFAULT_TIME_SPAN);
 
-const intervalFromSpan = (timeSpan: number): number => {
-  return timeRangeOptions.find((option) => option.span === timeSpan)?.interval ?? 60 * 1000;
-};
-
-const defaultTimeSpan = (): number => {
-  const defaultSpan = timeRangeOptions.find((item) => item.key === DEFAULT_TIME_RANGE)?.span;
-  return defaultSpan ?? 60 * 60 * 1000;
-};
-
-type UseLogOptions = { initialTimeSpan?: number; initialTenant?: string } | undefined;
+type UseLogOptions = { initialTimeRange?: TimeRange; initialTenant?: string } | undefined;
 
 export const useLogs = (
-  { initialTimeSpan = defaultTimeSpan(), initialTenant = 'application' }: UseLogOptions = {
-    initialTimeSpan: defaultTimeSpan(),
+  { initialTimeRange = defaultTimeRange(), initialTenant = 'application' }: UseLogOptions = {
+    initialTimeRange: defaultTimeRange(),
     initialTenant: 'application',
   },
 ) => {
   const currentQuery = React.useRef<string | undefined>();
   const currentConfig = React.useRef<Config>(defaultConfig);
   const currentTenant = React.useRef<string>(initialTenant);
+  const currentTimeRange = React.useRef<TimeRange>(initialTimeRange);
   const currentTime = React.useRef<number>(Date.now());
-  const [localTimeSpan, setTimeSpan] = React.useState<number>(initialTimeSpan);
   const logsAbort = React.useRef<() => void | undefined>();
   const histogramAbort = React.useRef<() => void | undefined>();
   const ws = React.useRef<WSFactory | null>();
@@ -263,7 +235,6 @@ export const useLogs = (
     {
       logsData,
       histogramData,
-      timeSpan,
       isLoadingHistogramData,
       isLoadingLogsData,
       isLoadingMoreLogsData,
@@ -275,7 +246,6 @@ export const useLogs = (
     },
     dispatch,
   ] = React.useReducer(reducer, {
-    timeSpan: initialTimeSpan,
     isLoadingHistogramData: false,
     isLoadingLogsData: false,
     isLoadingMoreLogsData: false,
@@ -312,7 +282,7 @@ export const useLogs = (
       currentQuery.current = query;
       currentTime.current = Date.now();
 
-      const { start } = timeRangeFromSpan(localTimeSpan);
+      const start = lastTimestamp - millisecondsFromDuration('1h');
 
       dispatch({ type: 'moreLogsRequest' });
 
@@ -348,20 +318,21 @@ export const useLogs = (
   const getLogs = async ({
     query,
     tenant,
-    timeSpan,
+    timeRange,
     namespace,
   }: {
     query: string;
     tenant?: string;
-    timeSpan?: number;
+    timeRange?: TimeRange;
     namespace?: string;
   }) => {
     try {
       currentQuery.current = query;
       currentTenant.current = tenant ?? currentTenant.current;
       currentTime.current = Date.now();
+      currentTimeRange.current = timeRange ?? currentTimeRange.current;
 
-      const { start, end } = timeRangeFromSpan(timeSpan ?? localTimeSpan);
+      const { start, end } = numericTimeRange(currentTimeRange.current);
 
       dispatch({ type: 'logsRequest' });
 
@@ -412,7 +383,7 @@ export const useLogs = (
     currentTenant.current = tenant ?? currentTenant.current;
     currentTime.current = Date.now();
 
-    const { start } = timeRangeFromSpan(localTimeSpan);
+    const start = millisecondsFromDuration('1h');
 
     if (ws.current) {
       ws.current.destroy();
@@ -474,33 +445,34 @@ export const useLogs = (
   const getHistogram = async ({
     query,
     tenant,
-    timeSpan,
+    timeRange,
     namespace,
   }: {
     query: string;
     tenant?: string;
-    timeSpan?: number;
+    timeRange?: TimeRange;
     namespace?: string;
   }) => {
     try {
       currentQuery.current = query;
       currentTenant.current = tenant ?? currentTenant.current;
       currentTime.current = Date.now();
+      currentTimeRange.current = timeRange ?? currentTimeRange.current;
 
       // TODO split on multiple/parallel queries for long timespans and concat results
-      const { start, end } = timeRangeFromSpan(timeSpan ?? localTimeSpan);
-
       dispatch({ type: 'histogramRequest' });
 
       if (histogramAbort.current) {
         histogramAbort.current();
       }
 
+      const { start, end } = numericTimeRange(currentTimeRange.current);
+
       const { request, abort } = executeHistogramQuery({
         query,
         start,
         end,
-        interval: intervalFromSpan(localTimeSpan),
+        interval: intervalFromTimeRange(currentTimeRange.current),
         config: currentConfig.current,
         tenant: currentTenant.current,
         namespace,
@@ -512,7 +484,7 @@ export const useLogs = (
 
       dispatch({
         type: 'histogramResponse',
-        payload: { histogramData: histogramResponse, timeSpan: localTimeSpan },
+        payload: { histogramData: histogramResponse },
       });
     } catch (error) {
       if (!isAbortError(error)) {
@@ -521,29 +493,6 @@ export const useLogs = (
     }
   };
 
-  React.useEffect(() => {
-    if (currentQuery?.current) {
-      getLogs({
-        query: currentQuery.current,
-        timeSpan: localTimeSpan,
-      });
-      getHistogram({
-        query: currentQuery.current,
-        timeSpan: localTimeSpan,
-      });
-    }
-
-    return () => {
-      if (histogramAbort.current) {
-        histogramAbort.current();
-      }
-
-      if (logsAbort.current) {
-        logsAbort.current();
-      }
-    };
-  }, [localTimeSpan]);
-
   return {
     logsData,
     isLoadingLogsData,
@@ -551,8 +500,6 @@ export const useLogs = (
     isStreaming,
     histogramData,
     isLoadingHistogramData,
-    timeSpan,
-    setTimeSpan,
     getLogs,
     getMoreLogs,
     hasMoreLogsData,
@@ -561,7 +508,5 @@ export const useLogs = (
     histogramError,
     toggleStreaming,
     config,
-    timeRange: timeRangeFromSpan(timeSpan, currentTime.current),
-    interval: intervalFromSpan(timeSpan),
   };
 };
