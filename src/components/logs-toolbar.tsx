@@ -1,5 +1,4 @@
 import {
-  Checkbox,
   Select,
   SelectOption,
   SelectOptionObject,
@@ -22,6 +21,7 @@ import { LogsQueryInput } from './logs-query-input';
 import './logs-toolbar.css';
 import { Spacer } from './spacer';
 import { TenantDropdown } from './tenant-dropdown';
+import { ToggleButton } from './toggle-button';
 import { TogglePlay } from './toggle-play';
 
 interface LogsToolbarProps {
@@ -35,7 +35,7 @@ interface LogsToolbarProps {
   severityFilter?: Set<Severity>;
   onStreamingToggle?: (e: React.MouseEvent) => void;
   onSeverityChange?: (severityFilter: Set<Severity>) => void;
-  onShowResourcesToggle?: (showResources: boolean, e: React.FormEvent<HTMLInputElement>) => void;
+  onShowResourcesToggle?: (showResources: boolean) => void;
   showResources?: boolean;
   enableTenantDropdown?: boolean;
   isDisabled?: boolean;
@@ -165,12 +165,11 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
         )}
 
         <ToolbarGroup>
-          <Checkbox
-            label="Show Resources"
-            isChecked={showResources}
-            onChange={onShowResourcesToggle}
-            aria-label="checkbox for showing resources names"
-            id="showResourcesCheckbox"
+          <ToggleButton
+            isToggled={showResources}
+            onToggle={onShowResourcesToggle}
+            untoggledText="Show Resources"
+            toggledText="Hide Resources"
           />
         </ToolbarGroup>
 
@@ -183,12 +182,11 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
         <Spacer />
 
         <ToolbarGroup>
-          <Checkbox
-            label="Show Query"
-            isChecked={isQueryShown}
-            onChange={setIsQueryShown}
-            aria-label="checkbox for showing the query"
-            id="showQueryCheckbox"
+          <ToggleButton
+            isToggled={isQueryShown}
+            onToggle={setIsQueryShown}
+            untoggledText="Show Query"
+            toggledText="Hide Query"
             data-test={TestIds.ShowQueryToggle}
           />
         </ToolbarGroup>

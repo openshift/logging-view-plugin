@@ -9,6 +9,7 @@ import { LogsTable } from '../components/logs-table';
 import { LogsToolbar } from '../components/logs-toolbar';
 import { RefreshIntervalDropdown } from '../components/refresh-interval-dropdown';
 import { TimeRangeDropdown } from '../components/time-range-dropdown';
+import { ToggleHistogramButton } from '../components/toggle-histogram-button';
 import { useDebounce } from '../hooks/useDebounce';
 import { useLogs } from '../hooks/useLogs';
 import { useURLState } from '../hooks/useURLState';
@@ -16,6 +17,7 @@ import { TestIds } from '../test-ids';
 
 const LogsDevPage: React.FunctionComponent = () => {
   const { ns: namespace } = useParams<{ ns: string }>();
+  const [isHistogramVisible, setIsHistogramVisible] = React.useState(false);
 
   const {
     query,
@@ -60,7 +62,10 @@ const LogsDevPage: React.FunctionComponent = () => {
 
   const runQuery = () => {
     getLogs({ query, namespace, timeRange });
-    getHistogram({ query, namespace, timeRange });
+
+    if (isHistogramVisible) {
+      getHistogram({ query, namespace, timeRange });
+    }
   };
 
   const handleFiltersChange = (filters?: Filters) => {
@@ -88,7 +93,7 @@ const LogsDevPage: React.FunctionComponent = () => {
 
   React.useEffect(() => {
     runQuery();
-  }, [debouncedInputQuery, timeRange]);
+  }, [debouncedInputQuery, timeRange, isHistogramVisible]);
 
   return (
     <PageSection>
@@ -98,6 +103,11 @@ const LogsDevPage: React.FunctionComponent = () => {
             Logs
           </Title>
           <Flex>
+            <ToggleHistogramButton
+              isToggled={isHistogramVisible}
+              onToggle={() => setIsHistogramVisible(!isHistogramVisible)}
+              data-test={TestIds.ToggleHistogramButton}
+            />
             <TimeRangeDropdown onChange={setTimeRangeInURL} />
             <RefreshIntervalDropdown onRefresh={runQuery} />
             <Tooltip content={<div>Refresh</div>}>
@@ -113,13 +123,15 @@ const LogsDevPage: React.FunctionComponent = () => {
           </Flex>
         </Flex>
 
-        <LogsHistogram
-          histogramData={histogramData}
-          timeRange={timeRange}
-          interval={interval}
-          isLoading={isLoadingHistogramData}
-          error={histogramError}
-        />
+        {isHistogramVisible && (
+          <LogsHistogram
+            histogramData={histogramData}
+            timeRange={timeRange}
+            interval={interval}
+            isLoading={isLoadingHistogramData}
+            error={histogramError}
+          />
+        )}
 
         <LogsTable
           logsData={logsData}
