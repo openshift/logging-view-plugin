@@ -13,4 +13,5 @@ export enum TestIds {
   AttributeFilters = 'AttributeFilters',
   TimeRangeSelectModal = 'TimeRangeSelectModal',
   TimeRangeDropdownSaveButton = 'TimeRangeDropdownSaveButton',
+  ToggleHistogramButton = 'ToggleHistogramButton',
 }

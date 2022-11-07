@@ -43,6 +43,8 @@ describe('Logs Page', () => {
         cy.contains(TEST_MESSAGE);
       });
 
+    cy.getByTestId(TestIds.ToggleHistogramButton).click();
+
     cy.getByTestId(TestIds.LogsHistogram)
       .should('exist')
       .within(() => {
@@ -66,6 +68,8 @@ describe('Logs Page', () => {
         cy.contains('Internal Server Error');
       });
 
+    cy.getByTestId(TestIds.ToggleHistogramButton).click();
+
     cy.getByTestId(TestIds.LogsHistogram)
       .should('exist')
       .within(() => {
@@ -84,6 +88,8 @@ describe('Logs Page', () => {
       .within(() => {
         cy.contains('Unexpected end of JSON input');
       });
+
+    cy.getByTestId(TestIds.ToggleHistogramButton).click();
 
     cy.getByTestId(TestIds.LogsHistogram)
       .should('exist')
@@ -108,6 +114,8 @@ describe('Logs Page', () => {
       .within(() => {
         cy.contains(TEST_MESSAGE);
       });
+
+    cy.getByTestId(TestIds.ToggleHistogramButton).click();
 
     cy.getByTestId(TestIds.LogsHistogram)
       .should('exist')
@@ -137,6 +145,8 @@ describe('Logs Page', () => {
       .within(() => {
         cy.contains(TEST_MESSAGE);
       });
+
+    cy.getByTestId(TestIds.ToggleHistogramButton).click();
 
     cy.getByTestId(TestIds.LogsHistogram)
       .should('exist')
@@ -184,6 +194,8 @@ describe('Logs Page', () => {
       .within(() => {
         cy.contains(TEST_MESSAGE);
       });
+
+    cy.getByTestId(TestIds.ToggleHistogramButton).click();
 
     cy.getByTestId(TestIds.LogsHistogram)
       .should('exist')
@@ -365,6 +377,8 @@ describe('Logs Page', () => {
     );
 
     cy.visit(LOGS_PAGE_URL);
+
+    cy.getByTestId(TestIds.ToggleHistogramButton).click();
 
     cy.getByTestId(TestIds.TimeRangeDropdown)
       .click()

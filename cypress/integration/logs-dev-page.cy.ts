@@ -35,6 +35,8 @@ describe('Logs Dev Page', () => {
         cy.contains(TEST_MESSAGE);
       });
 
+    cy.getByTestId(TestIds.ToggleHistogramButton).click();
+
     cy.getByTestId(TestIds.LogsHistogram)
       .should('exist')
       .within(() => {
@@ -52,6 +54,8 @@ describe('Logs Dev Page', () => {
     );
 
     cy.visit(LOGS_DEV_PAGE_URL);
+
+    cy.getByTestId(TestIds.ToggleHistogramButton).click();
 
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
@@ -75,6 +79,8 @@ describe('Logs Dev Page', () => {
     );
 
     cy.visit(LOGS_DEV_PAGE_URL);
+
+    cy.getByTestId(TestIds.ToggleHistogramButton).click();
 
     cy.getByTestId(TestIds.ShowQueryToggle).click();
 
@@ -108,6 +114,8 @@ describe('Logs Dev Page', () => {
     );
 
     cy.visit(LOGS_DEV_PAGE_URL);
+
+    cy.getByTestId(TestIds.ToggleHistogramButton).click();
 
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
