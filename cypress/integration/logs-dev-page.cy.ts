@@ -156,4 +156,39 @@ describe('Logs Dev Page', () => {
       expect(query).to.equal('{ log_type=~".+", kubernetes_namespace_name="my-namespace" } | json');
     });
   });
+
+  it('executes a new query when the current namespace changes', () => {
+    cy.intercept(
+      QUERY_RANGE_STREAMS_URL_MATCH,
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
+    ).as('queryRangeStreams');
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrix',
+    );
+
+    cy.visit(LOGS_DEV_PAGE_URL);
+
+    cy.getByTestId(TestIds.LogsTable)
+      .should('exist')
+      .within(() => {
+        cy.contains(TEST_MESSAGE);
+      });
+
+    cy.wait('@queryRangeStreams').then(({ request }) => {
+      const url = new URL(request.url);
+      const query = url.searchParams.get('query');
+      expect(query).to.equal('{ log_type=~".+", kubernetes_namespace_name="my-namespace" } | json');
+    });
+
+    cy.getByTestId('namespace-toggle' as TestIds).click();
+    cy.getByTestId('namespace-dropdown' as TestIds)
+      .contains('default')
+      .click();
+
+    cy.wait('@queryRangeStreams').then(({ request }) => {
+      const url = new URL(request.url);
+      const query = url.searchParams.get('query');
+      expect(query).to.equal('{ log_type=~".+", kubernetes_namespace_name="default" } | json');
+    });
+  });
 });

@@ -1,11 +1,50 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { BrowserRouter, Link, Route } from 'react-router-dom';
+import { BrowserRouter, Link, Route, useHistory, useParams } from 'react-router-dom';
 import LogsDetailPage from './pages/logs-detail-page';
 import LogsPage from './pages/logs-page';
 import '@patternfly/patternfly/patternfly.css';
 import LogsDevPage from './pages/logs-dev-page';
 import './index.css';
+import { Dropdown, DropdownItem, DropdownToggle } from '@patternfly/react-core';
+
+const DevConsole = () => {
+  const { ns: namespace } = useParams<{ ns: string }>();
+  const history = useHistory();
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  const onToggle = () => {
+    setIsOpen(!isOpen);
+  };
+
+  const onSelectNamespace = (namespace: string) => () => {
+    history.push(`/dev-monitoring/ns/${namespace}/logs`);
+    setIsOpen(false);
+  };
+
+  return (
+    <>
+      <Dropdown
+        data-test="namespace-dropdown"
+        toggle={
+          <DropdownToggle id="toggle-basic" onToggle={onToggle} data-test="namespace-toggle">
+            {namespace}
+          </DropdownToggle>
+        }
+        isOpen={isOpen}
+        dropdownItems={[
+          <DropdownItem onClick={onSelectNamespace('default')} key="action" component="button">
+            default
+          </DropdownItem>,
+          <DropdownItem onClick={onSelectNamespace('my-namespace')} key="action" component="button">
+            my-namespace
+          </DropdownItem>,
+        ]}
+      />
+      <LogsDevPage />
+    </>
+  );
+};
 
 const App = () => {
   return (
@@ -44,7 +83,7 @@ const App = () => {
             <LogsPage />
           </Route>
           <Route path="/dev-monitoring/ns/:ns/logs">
-            <LogsDevPage />
+            <DevConsole />
           </Route>
           <Route path="/k8s/ns/:ns/pods/:name">
             <LogsDetailPage />
