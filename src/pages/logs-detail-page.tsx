@@ -80,10 +80,10 @@ const LogsDetailPage: React.FunctionComponent = () => {
   };
 
   const runQuery = () => {
-    getLogs({ query, tenant: tenant.current });
+    getLogs({ query, tenant: tenant.current, namespace, timeRange });
 
     if (isHistogramVisible) {
-      getHistogram({ query, namespace, timeRange });
+      getHistogram({ query, tenant: tenant.current, namespace, timeRange });
     }
   };
 

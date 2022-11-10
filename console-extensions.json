@@ -33,6 +33,15 @@
     }
   },
   {
+    "type": "console.tab",
+    "properties": {
+      "contextId": "dev-console-observe",
+      "name": "Aggregated Logs",
+      "href": "/logs",
+      "component": { "$codeRef": "LogsDevPage" }
+    }
+  },
+  {
     "type": "console.action/provider",
     "properties": {
       "contextId": "alert-detail-toolbar-actions",

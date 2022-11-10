@@ -1,8 +1,13 @@
-import { Button, Flex, Grid, PageSection, Title, Tooltip } from '@patternfly/react-core';
+import { Button, Flex, Grid, PageSection, Tooltip } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
 import React from 'react';
 import { useParams } from 'react-router';
-import { availableAttributes, filtersFromQuery, queryFromFilters } from '../attribute-filters';
+import {
+  availableAttributes,
+  availableDevConsoleAttributes,
+  filtersFromQuery,
+  queryFromFilters,
+} from '../attribute-filters';
 import { Filters } from '../components/filters/filter.types';
 import { LogsHistogram } from '../components/logs-histogram';
 import { LogsTable } from '../components/logs-table';
@@ -93,15 +98,12 @@ const LogsDevPage: React.FunctionComponent = () => {
 
   React.useEffect(() => {
     runQuery();
-  }, [debouncedInputQuery, timeRange, isHistogramVisible]);
+  }, [debouncedInputQuery, timeRange, isHistogramVisible, namespace]);
 
   return (
     <PageSection>
       <Grid hasGutter>
         <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }}>
-          <Title headingLevel="h1" size="lg">
-            Logs
-          </Title>
           <Flex>
             <ToggleHistogramButton
               isToggled={isHistogramVisible}
@@ -130,6 +132,7 @@ const LogsDevPage: React.FunctionComponent = () => {
             interval={interval}
             isLoading={isLoadingHistogramData}
             error={histogramError}
+            onChangeTimeRange={setTimeRangeInURL}
           />
         )}
 
@@ -153,7 +156,7 @@ const LogsDevPage: React.FunctionComponent = () => {
             showResources={areResourcesShown}
             onShowResourcesToggle={setShowResourcesInURL}
             enableTenantDropdown={false}
-            attributeList={availableAttributes}
+            attributeList={availableDevConsoleAttributes}
             filters={filters}
             onFiltersChange={handleFiltersChange}
           />

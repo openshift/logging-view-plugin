@@ -103,6 +103,35 @@ export const availableAttributes: AttributeList = [
   },
 ];
 
+export const availableDevConsoleAttributes: AttributeList = [
+  {
+    name: 'Content',
+    id: 'content',
+    valueType: 'text',
+  },
+  {
+    name: 'Pods',
+    label: 'kubernetes_pod_name',
+    id: 'pod',
+    options: resourceDataSource({ resource: 'pods' }),
+    valueType: 'checkbox-select',
+  },
+  {
+    name: 'Containers',
+    label: 'kubernetes_container_name',
+    id: 'container',
+    options: resourceDataSource({
+      resource: 'pods',
+      mapper: (resource) =>
+        resource?.spec?.containers.map((container) => ({
+          option: `${resource?.metadata?.name} / ${container.name}`,
+          value: container.name,
+        })) ?? [],
+    }),
+    valueType: 'checkbox-select',
+  },
+];
+
 export const availablePodAttributes = (namespace: string, podId: string): AttributeList => [
   {
     name: 'Content',

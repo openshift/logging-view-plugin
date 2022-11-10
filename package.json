@@ -82,7 +82,8 @@
     "exposedModules": {
       "LogsPage": "./pages/logs-page",
       "LogsDetailPage": "./pages/logs-detail-page",
-      "LogActionsProvider": "./hooks/useLogActionsExtension"
+      "LogActionsProvider": "./hooks/useLogActionsExtension",
+      "LogsDevPage": "./pages/logs-dev-page"
     },
     "dependencies": {
       "@console/pluginAPI": "*"
