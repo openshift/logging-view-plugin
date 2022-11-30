@@ -12,6 +12,7 @@ import { TimeRangeDropdown } from '../components/time-range-dropdown';
 import { ToggleHistogramButton } from '../components/toggle-histogram-button';
 import { useLogs } from '../hooks/useLogs';
 import { useURLState } from '../hooks/useURLState';
+import { Direction } from '../logs.types';
 import { TestIds } from '../test-ids';
 
 const DEFAULT_TENANT = 'application';
@@ -44,6 +45,8 @@ const LogsDetailPage: React.FunctionComponent = () => {
     setTimeRangeInURL,
     interval,
     timeRange,
+    direction,
+    setDirectionInURL,
   } = useURLState({
     defaultQuery,
     attributes: attributesForPod,
@@ -77,8 +80,12 @@ const LogsDetailPage: React.FunctionComponent = () => {
     }
   };
 
+  const handleSortByDate = (directionValue?: Direction) => {
+    setDirectionInURL(directionValue);
+  };
+
   const runQuery = () => {
-    getLogs({ query, tenant: tenant.current, namespace, timeRange });
+    getLogs({ query, tenant: tenant.current, namespace, timeRange, direction });
 
     if (isHistogramVisible) {
       getHistogram({ query, tenant: tenant.current, namespace, timeRange });
@@ -113,7 +120,7 @@ const LogsDetailPage: React.FunctionComponent = () => {
 
   React.useEffect(() => {
     runQuery();
-  }, [timeRange, isHistogramVisible]);
+  }, [timeRange, isHistogramVisible, direction]);
 
   const isQueryEmpty = query === '';
 
@@ -159,6 +166,7 @@ const LogsDetailPage: React.FunctionComponent = () => {
           logsData={logsData}
           isStreaming={isStreaming}
           onLoadMore={handleLoadMoreData}
+          onSortByDate={handleSortByDate}
           isLoading={isLoadingLogsData}
           isLoadingMore={isLoadingMoreLogsData}
           hasMoreLogsData={hasMoreLogsData}

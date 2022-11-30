@@ -17,6 +17,7 @@ import { TimeRangeDropdown } from '../components/time-range-dropdown';
 import { ToggleHistogramButton } from '../components/toggle-histogram-button';
 import { useLogs } from '../hooks/useLogs';
 import { useURLState } from '../hooks/useURLState';
+import { Direction } from '../logs.types';
 import { TestIds } from '../test-ids';
 
 const LogsDevPage: React.FunctionComponent = () => {
@@ -33,6 +34,8 @@ const LogsDevPage: React.FunctionComponent = () => {
     setTimeRangeInURL,
     timeRange,
     interval,
+    direction,
+    setDirectionInURL,
   } = useURLState({ attributes: availableAttributes });
 
   const {
@@ -62,8 +65,12 @@ const LogsDevPage: React.FunctionComponent = () => {
     }
   };
 
+  const handleSortByDate = (directionValue?: Direction) => {
+    setDirectionInURL(directionValue);
+  };
+
   const runQuery = () => {
-    getLogs({ query, namespace, timeRange });
+    getLogs({ query, namespace, timeRange, direction });
 
     if (isHistogramVisible) {
       getHistogram({ query, namespace, timeRange });
@@ -95,12 +102,12 @@ const LogsDevPage: React.FunctionComponent = () => {
 
   React.useEffect(() => {
     runQuery();
-  }, [timeRange, isHistogramVisible, namespace]);
+  }, [timeRange, isHistogramVisible, namespace, direction]);
 
   return (
     <PageSection>
       <Grid hasGutter>
-        <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }}>
+        <Flex justifyContent={{ default: 'justifyContentFlexEnd' }}>
           <Flex>
             <ToggleHistogramButton
               isToggled={isHistogramVisible}
@@ -136,6 +143,7 @@ const LogsDevPage: React.FunctionComponent = () => {
         <LogsTable
           logsData={logsData}
           onLoadMore={handleLoadMoreData}
+          onSortByDate={handleSortByDate}
           isLoading={isLoadingLogsData}
           isLoadingMore={isLoadingMoreLogsData}
           hasMoreLogsData={hasMoreLogsData}

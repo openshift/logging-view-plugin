@@ -11,6 +11,7 @@ import { TimeRangeDropdown } from '../components/time-range-dropdown';
 import { ToggleHistogramButton } from '../components/toggle-histogram-button';
 import { useLogs } from '../hooks/useLogs';
 import { useURLState } from '../hooks/useURLState';
+import { Direction } from '../logs.types';
 import { TestIds } from '../test-ids';
 
 const LogsPage: React.FC = () => {
@@ -27,6 +28,8 @@ const LogsPage: React.FC = () => {
     setTimeRangeInURL,
     timeRange,
     interval,
+    direction,
+    setDirectionInURL,
   } = useURLState({ attributes: availableAttributes });
 
   const {
@@ -56,12 +59,16 @@ const LogsPage: React.FC = () => {
     }
   };
 
+  const handleSortByDate = (directionValue?: Direction) => {
+    setDirectionInURL(directionValue);
+  };
+
   const runQuery = ({
     tenantToConsider,
   }: {
     tenantToConsider?: string;
   } = {}) => {
-    getLogs({ query, tenant: tenantToConsider ?? tenant, timeRange });
+    getLogs({ query, tenant: tenantToConsider ?? tenant, timeRange, direction });
 
     if (isHistogramVisible) {
       getHistogram({ query, tenant: tenantToConsider ?? tenant, timeRange });
@@ -102,7 +109,7 @@ const LogsPage: React.FC = () => {
 
   React.useEffect(() => {
     runQuery();
-  }, [timeRange, isHistogramVisible]);
+  }, [timeRange, isHistogramVisible, direction]);
 
   const isQueryEmpty = query === '';
 
@@ -153,6 +160,7 @@ const LogsPage: React.FC = () => {
         <LogsTable
           logsData={logsData}
           onLoadMore={handleLoadMoreData}
+          onSortByDate={handleSortByDate}
           isLoading={isLoadingLogsData}
           isLoadingMore={isLoadingMoreLogsData}
           hasMoreLogsData={hasMoreLogsData}

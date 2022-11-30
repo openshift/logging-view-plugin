@@ -8,6 +8,7 @@ export type MetricValue = Array<number | string>;
 export type TimeRangeText = { start: string; end: string };
 export type TimeRangeNumber = { start: number; end: number };
 export type TimeRange = TimeRangeText | TimeRangeNumber;
+export type Direction = undefined | 'forward' | 'backward';
 
 export const timeRangeIsText = (value: TimeRange): value is TimeRangeText =>
   typeof value.end === 'string' && typeof value.start === 'string';
