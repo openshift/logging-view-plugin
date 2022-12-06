@@ -19,3 +19,7 @@
   display: flex;
   align-items: flex-start;
 }
+
+.co-logs-time-range-modal__error {
+  margin-top: var(--pf-global--spacer--md);
+}

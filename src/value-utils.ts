@@ -91,3 +91,5 @@ export const formatTime = (timestamp: number, includeSeconds = false): string =>
 };
 
 export const trim = (value: string): string => value.trim();
+
+export const padLeadingZero = (value: number) => (value > 9 ? value : `0${value}`);
