@@ -264,6 +264,7 @@ export const useLogs = (
           currentConfig.current = mergedConfig;
         }
       } catch (e) {
+        // eslint-disable-next-line no-console
         console.warn('Error parsing configuration from ConfigMap', e);
       }
     }

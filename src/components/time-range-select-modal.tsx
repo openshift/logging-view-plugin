@@ -1,4 +1,5 @@
 import {
+  Alert,
   Button,
   DatePicker,
   Modal,
@@ -10,7 +11,7 @@ import React from 'react';
 import { TimeRange } from '../logs.types';
 import { TestIds } from '../test-ids';
 import { defaultTimeRange, numericTimeRange } from '../time-range';
-import { formatDate, formatTime } from '../value-utils';
+import { formatDate, formatTime, padLeadingZero } from '../value-utils';
 import './time-range-select-modal.css';
 
 interface TimeRangeSelectModal {
@@ -31,8 +32,20 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
   const [startTime, setStartTime] = React.useState<string>(formatTime(initialRangeNumber.start));
   const [endDate, setEndDate] = React.useState<string>(formatDate(initialRangeNumber.end));
   const [endTime, setEndTime] = React.useState<string>(formatTime(initialRangeNumber.end));
+  const [isRangeValid, setIsRangeValid] = React.useState(false);
 
   const isRangeSelected = startDate && startTime && endDate && endTime;
+
+  React.useEffect(() => {
+    if (isRangeSelected) {
+      const start = `${startDate}T${startTime}:00`;
+      const end = `${endDate}T${endTime}:00`;
+
+      setIsRangeValid(Date.parse(start) < Date.parse(end));
+    } else {
+      setIsRangeValid(false);
+    }
+  }, [startDate, endDate, startTime, endTime, isRangeSelected]);
 
   const handleSelectRange = () => {
     if (isRangeSelected) {
@@ -44,13 +57,13 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
   };
 
   const handleStartTimeChange = (_time: string, hour?: number, minute?: number) => {
-    if (hour && minute) {
-      setStartTime(`${hour}:${minute}`);
+    if (hour !== undefined && hour !== null && minute !== undefined && minute !== null) {
+      setStartTime(`${padLeadingZero(hour)}:${padLeadingZero(minute)}`);
     }
   };
   const handleEndTimeChange = (_time: string, hour?: number, minute?: number) => {
-    if (hour && minute) {
-      setEndTime(`${hour}:${minute}`);
+    if (hour !== undefined && hour !== null && minute !== undefined && minute !== null) {
+      setEndTime(`${padLeadingZero(hour)}:${padLeadingZero(minute)}`);
     }
   };
 
@@ -73,7 +86,7 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
             key="confirm"
             variant="primary"
             onClick={handleSelectRange}
-            isDisabled={!isRangeSelected}
+            isDisabled={!isRangeSelected || !isRangeValid}
             data-test={TestIds.TimeRangeDropdownSaveButton}
           >
             Save
@@ -111,6 +124,15 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
               time={endTime}
             />
           </div>
+          {!isRangeValid && (
+            <Alert
+              className="co-logs-time-range-modal__error"
+              variant="danger"
+              isInline
+              isPlain
+              title="Invalid date range"
+            />
+          )}
         </div>
       </ModalBoxBody>
     </Modal>
