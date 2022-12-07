@@ -41,8 +41,6 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
       const start = `${startDate}T${startTime}:00`;
       const end = `${endDate}T${endTime}:00`;
 
-      console.log({ start, end });
-
       setIsRangeValid(Date.parse(start) < Date.parse(end));
     } else {
       setIsRangeValid(false);
@@ -59,7 +57,6 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
   };
 
   const handleStartTimeChange = (_time: string, hour?: number, minute?: number) => {
-    console.log({ _time });
     if (hour !== undefined && hour !== null && minute !== undefined && minute !== null) {
       setStartTime(`${padLeadingZero(hour)}:${padLeadingZero(minute)}`);
     }
