@@ -10,7 +10,6 @@ import { LogsToolbar } from '../components/logs-toolbar';
 import { RefreshIntervalDropdown } from '../components/refresh-interval-dropdown';
 import { TimeRangeDropdown } from '../components/time-range-dropdown';
 import { ToggleHistogramButton } from '../components/toggle-histogram-button';
-import { useDebounce } from '../hooks/useDebounce';
 import { useLogs } from '../hooks/useLogs';
 import { useURLState } from '../hooks/useURLState';
 import { TestIds } from '../test-ids';
@@ -49,7 +48,6 @@ const LogsDetailPage: React.FunctionComponent = () => {
     defaultQuery,
     attributes: attributesForPod,
   });
-  const debouncedInputQuery = useDebounce(query);
   const initialTenant = getInitialTenantFromNamespace(namespace);
   const tenant = React.useRef(initialTenant);
 
@@ -115,7 +113,7 @@ const LogsDetailPage: React.FunctionComponent = () => {
 
   React.useEffect(() => {
     runQuery();
-  }, [debouncedInputQuery, timeRange, isHistogramVisible]);
+  }, [timeRange, isHistogramVisible]);
 
   const isQueryEmpty = query === '';
 

@@ -9,7 +9,6 @@ import { LogsToolbar } from '../components/logs-toolbar';
 import { RefreshIntervalDropdown } from '../components/refresh-interval-dropdown';
 import { TimeRangeDropdown } from '../components/time-range-dropdown';
 import { ToggleHistogramButton } from '../components/toggle-histogram-button';
-import { useDebounce } from '../hooks/useDebounce';
 import { useLogs } from '../hooks/useLogs';
 import { useURLState } from '../hooks/useURLState';
 import { TestIds } from '../test-ids';
@@ -46,8 +45,6 @@ const LogsPage: React.FC = () => {
     toggleStreaming,
     config,
   } = useLogs();
-
-  const debouncedInputQuery = useDebounce(query);
 
   const handleToggleStreaming = () => {
     toggleStreaming({ query });
@@ -105,7 +102,7 @@ const LogsPage: React.FC = () => {
 
   React.useEffect(() => {
     runQuery();
-  }, [debouncedInputQuery, timeRange, isHistogramVisible]);
+  }, [timeRange, isHistogramVisible]);
 
   const isQueryEmpty = query === '';
 
