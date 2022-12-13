@@ -97,17 +97,23 @@ const LogsDevPage: React.FunctionComponent = () => {
     runQuery();
   }, [timeRange, isHistogramVisible, namespace]);
 
+  const isQueryEmpty = query === '';
+
   return (
     <PageSection>
       <Grid hasGutter>
-        <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }}>
+        <Flex justifyContent={{ default: 'justifyContentFlexEnd' }}>
           <Flex>
             <ToggleHistogramButton
               isToggled={isHistogramVisible}
               onToggle={() => setIsHistogramVisible(!isHistogramVisible)}
               data-test={TestIds.ToggleHistogramButton}
             />
-            <TimeRangeDropdown onChange={setTimeRangeInURL} />
+            <TimeRangeDropdown
+              value={timeRange}
+              onChange={setTimeRangeInURL}
+              isDisabled={isQueryEmpty}
+            />
             <RefreshIntervalDropdown onRefresh={runQuery} />
             <Tooltip content={<div>Refresh</div>}>
               <Button
@@ -115,6 +121,7 @@ const LogsDevPage: React.FunctionComponent = () => {
                 aria-label="Refresh"
                 variant="primary"
                 data-test={TestIds.SyncButton}
+                isDisabled={isQueryEmpty}
               >
                 <SyncAltIcon />
               </Button>
@@ -153,6 +160,7 @@ const LogsDevPage: React.FunctionComponent = () => {
             showResources={areResourcesShown}
             onShowResourcesToggle={setShowResourcesInURL}
             enableTenantDropdown={false}
+            isDisabled={isQueryEmpty}
             attributeList={availableDevConsoleAttributes}
             filters={filters}
             onFiltersChange={handleFiltersChange}
