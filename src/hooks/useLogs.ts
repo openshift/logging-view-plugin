@@ -3,6 +3,7 @@ import { WSFactory } from '@openshift-console/dynamic-plugin-sdk/lib/utils/k8s/w
 import React from 'react';
 import {
   Config,
+  Direction,
   isMatrixResult,
   isStreamsResult,
   QueryRangeResponse,
@@ -222,6 +223,7 @@ export const useLogs = (
   const currentTenant = React.useRef<string>(initialTenant);
   const currentTimeRange = React.useRef<TimeRange>(initialTimeRange);
   const currentTime = React.useRef<number>(Date.now());
+  const currentDirection = React.useRef<Direction>(undefined);
   const logsAbort = React.useRef<() => void | undefined>();
   const histogramAbort = React.useRef<() => void | undefined>();
   const ws = React.useRef<WSFactory | null>();
@@ -274,14 +276,17 @@ export const useLogs = (
     lastTimestamp,
     query,
     namespace,
+    direction,
   }: {
     lastTimestamp: number;
     query: string;
     namespace?: string;
+    direction?: Direction;
   }) => {
     try {
       currentQuery.current = query;
       currentTime.current = Date.now();
+      currentDirection.current = direction;
 
       const start = lastTimestamp - millisecondsFromDuration('1h');
 
@@ -299,6 +304,7 @@ export const useLogs = (
         config: currentConfig.current,
         tenant: currentTenant.current,
         namespace,
+        direction: currentDirection.current,
       });
 
       logsAbort.current = abort;
@@ -321,17 +327,20 @@ export const useLogs = (
     tenant,
     timeRange,
     namespace,
+    direction,
   }: {
     query: string;
     tenant?: string;
     timeRange?: TimeRange;
     namespace?: string;
+    direction?: Direction;
   }) => {
     try {
       currentQuery.current = query;
       currentTenant.current = tenant ?? currentTenant.current;
       currentTime.current = Date.now();
       currentTimeRange.current = timeRange ?? currentTimeRange.current;
+      currentDirection.current = direction;
 
       const { start, end } = numericTimeRange(currentTimeRange.current);
 
@@ -349,6 +358,7 @@ export const useLogs = (
         config: currentConfig.current,
         tenant: currentTenant.current,
         namespace,
+        direction: currentDirection.current,
       });
 
       logsAbort.current = abort;

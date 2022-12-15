@@ -28,6 +28,7 @@ interface LogsTableProps {
   hasMoreLogsData?: boolean;
   isLoadingMore?: boolean;
   onLoadMore?: (lastTimestamp: number) => void;
+  onSortByDate?: (direction?: 'forward' | 'backward') => void;
   showResources?: boolean;
   isStreaming?: boolean;
   error?: unknown;
@@ -234,6 +235,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   isLoading,
   isLoadingMore,
   onLoadMore,
+  onSortByDate,
   hasMoreLogsData,
   showResources = false,
   isStreaming,
@@ -261,6 +263,9 @@ export const LogsTable: React.FC<LogsTableProps> = ({
     onSort: (_event, index, direction) => {
       setExpandedItems(new Set());
       setSortBy({ index, direction, defaultDirection: 'desc' });
+      onSortByDate?.(
+        direction === undefined ? undefined : direction === 'desc' ? 'backward' : 'forward',
+      );
     },
     columnIndex,
   });

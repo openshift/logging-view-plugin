@@ -1,7 +1,7 @@
 import { WSFactory } from '@openshift-console/dynamic-plugin-sdk/lib/utils/k8s/ws-factory';
 import { CancellableFetch, cancellableFetch, RequestInitWithTimeout } from './cancellable-fetch';
 import { queryWithNamespace } from './attribute-filters';
-import { Config, QueryRangeResponse } from './logs.types';
+import { Config, Direction, QueryRangeResponse } from './logs.types';
 import { durationFromTimestamp } from './value-utils';
 
 const LOKI_ENDPOINT = '/api/proxy/plugin/logging-view-plugin/backend';
@@ -14,6 +14,7 @@ type QueryRangeParams = {
   config?: Config;
   namespace?: string;
   tenant: string;
+  direction?: Direction;
 };
 
 type HistogramQuerParams = {
@@ -53,18 +54,23 @@ export const executeQueryRange = ({
   limit = 100,
   tenant,
   namespace,
+  direction,
 }: QueryRangeParams): CancellableFetch<QueryRangeResponse> => {
   const extendedQuery = queryWithNamespace({
     query,
     namespace,
   });
 
-  const params = {
+  const params: Record<string, string> = {
     query: extendedQuery,
     start: String(start * 1000000),
     end: String(end * 1000000),
     limit: String(limit),
   };
+
+  if (direction) {
+    params.direction = direction;
+  }
 
   const { endpoint, requestInit } = getFetchConfig({ config, tenant });
 
