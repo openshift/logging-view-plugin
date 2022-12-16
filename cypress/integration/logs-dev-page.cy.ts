@@ -3,6 +3,7 @@ import {
   queryRangeMatrixValidResponse,
   queryRangeStreamsValidResponse,
 } from '../fixtures/query-range-fixtures';
+import { podsListResponse } from '../fixtures/resource-api-fixtures';
 
 const LOGS_DEV_PAGE_URL = '/dev-monitoring/ns/my-namespace/logs';
 const QUERY_RANGE_STREAMS_URL_MATCH =
@@ -10,6 +11,7 @@ const QUERY_RANGE_STREAMS_URL_MATCH =
 const QUERY_RANGE_MATRIX_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/query_range?query=sum*';
 const TEST_MESSAGE = "loki_1 | level=info msg='test log'";
+const RESOURCE_URL_MATCH = 'api/kubernetes/api/v1/**';
 
 describe('Logs Dev Page', () => {
   it('renders correctly with an expected response', () => {
@@ -189,6 +191,45 @@ describe('Logs Dev Page', () => {
       const url = new URL(request.url);
       const query = url.searchParams.get('query');
       expect(query).to.equal('{ log_type=~".+", kubernetes_namespace_name="default" } | json');
+    });
+  });
+
+  it('executes a namespace-scoped pods list query when selecting the pods filter', () => {
+    cy.intercept(
+      QUERY_RANGE_STREAMS_URL_MATCH,
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
+    ).as('queryRangeStreams');
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrix',
+    );
+    cy.intercept(RESOURCE_URL_MATCH, podsListResponse).as('resourceQuery');
+
+    cy.visit(LOGS_DEV_PAGE_URL);
+
+    cy.getByTestId(TestIds.LogsTable)
+      .should('exist')
+      .within(() => {
+        cy.contains(TEST_MESSAGE);
+      });
+
+    cy.getByTestId(TestIds.AttributeFilters).within(() => {
+      cy.get(`[aria-label="Options menu"]`)
+        .first()
+        .click({ force: true })
+        .parent()
+        .within(() => {
+          cy.contains('Pods').click({ force: true });
+        });
+    });
+
+    cy.getByTestId(TestIds.AttributeFilters).within(() => {
+      cy.contains('Filter by Pods').click({ force: true });
+      cy.contains('my-pod').click({ force: true });
+    });
+
+    cy.wait('@resourceQuery').then(({ request }) => {
+      const url = new URL(request.url);
+      expect(url.pathname).to.equal('/api/kubernetes/api/v1/namespaces/my-namespace/pods');
     });
   });
 });

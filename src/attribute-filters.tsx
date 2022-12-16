@@ -29,18 +29,22 @@ const resourceAbort: Record<string, null | (() => void)> = {};
 const resourceDataSource =
   ({
     resource,
+    namespace,
     mapper = (resource) => ({
       option: resource?.metadata?.name ?? '',
       value: resource?.metadata?.name ?? '',
     }),
   }: {
     resource: 'pods' | 'namespaces' | string;
+    namespace?: string;
     mapper?: ResourceOptionMapper;
   }) =>
   async (): Promise<Array<{ option: string; value: string }>> => {
-    const { request, abort } = cancellableFetch<K8sResourceListResponse>(
-      `${RESOURCES_ENDPOINT}/${resource}`,
-    );
+    const endpoint = namespace
+      ? `${RESOURCES_ENDPOINT}/namespaces/${namespace}/${resource}`
+      : `${RESOURCES_ENDPOINT}/${resource}`;
+
+    const { request, abort } = cancellableFetch<K8sResourceListResponse>(endpoint);
 
     const abortFunction = resourceAbort[resource];
     if (abortFunction) {
@@ -103,7 +107,7 @@ export const availableAttributes: AttributeList = [
   },
 ];
 
-export const availableDevConsoleAttributes: AttributeList = [
+export const availableDevConsoleAttributes = (namespace: string): AttributeList => [
   {
     name: 'Content',
     id: 'content',
@@ -113,7 +117,7 @@ export const availableDevConsoleAttributes: AttributeList = [
     name: 'Pods',
     label: 'kubernetes_pod_name',
     id: 'pod',
-    options: resourceDataSource({ resource: 'pods' }),
+    options: resourceDataSource({ resource: 'pods', namespace }),
     valueType: 'checkbox-select',
   },
   {
@@ -122,6 +126,7 @@ export const availableDevConsoleAttributes: AttributeList = [
     id: 'container',
     options: resourceDataSource({
       resource: 'pods',
+      namespace,
       mapper: (resource) =>
         resource?.spec?.containers.map((container) => ({
           option: `${resource?.metadata?.name} / ${container.name}`,

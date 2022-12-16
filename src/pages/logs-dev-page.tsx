@@ -100,6 +100,8 @@ const LogsDevPage: React.FunctionComponent = () => {
     setFilters(updatedFilters);
   };
 
+  const attributeList = React.useMemo(() => availableDevConsoleAttributes(namespace), [namespace]);
+
   React.useEffect(() => {
     runQuery();
   }, [timeRange, isHistogramVisible, namespace, direction]);
@@ -169,7 +171,7 @@ const LogsDevPage: React.FunctionComponent = () => {
             onShowResourcesToggle={setShowResourcesInURL}
             enableTenantDropdown={false}
             isDisabled={isQueryEmpty}
-            attributeList={availableDevConsoleAttributes}
+            attributeList={attributeList}
             filters={filters}
             onFiltersChange={handleFiltersChange}
           />
