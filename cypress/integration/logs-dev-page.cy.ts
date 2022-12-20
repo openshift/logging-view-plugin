@@ -232,4 +232,41 @@ describe('Logs Dev Page', () => {
       expect(url.pathname).to.equal('/api/kubernetes/api/v1/namespaces/my-namespace/pods');
     });
   });
+
+  it('displays an error when there are no permissions over namespace pods', () => {
+    cy.intercept(
+      QUERY_RANGE_STREAMS_URL_MATCH,
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
+    ).as('queryRangeStreams');
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrix',
+    );
+    cy.intercept(RESOURCE_URL_MATCH, {
+      statusCode: 403,
+      body: 'You are not authorized to list pods in this namespace',
+    }).as('resourceQuery');
+
+    cy.visit(LOGS_DEV_PAGE_URL);
+
+    cy.getByTestId(TestIds.LogsTable)
+      .should('exist')
+      .within(() => {
+        cy.contains(TEST_MESSAGE);
+      });
+
+    cy.getByTestId(TestIds.AttributeFilters).within(() => {
+      cy.get(`[aria-label="Options menu"]`)
+        .first()
+        .click({ force: true })
+        .parent()
+        .within(() => {
+          cy.contains('Pods').click({ force: true });
+        });
+    });
+
+    cy.getByTestId(TestIds.AttributeFilters).within(() => {
+      cy.contains('Filter by Pods').click({ force: true });
+      cy.contains('You are not authorized to list pods in this namespace');
+    });
+  });
 });

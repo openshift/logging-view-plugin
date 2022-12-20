@@ -1,4 +1,5 @@
 import {
+  Alert,
   Select,
   SelectOption,
   SelectOptionObject,
@@ -7,7 +8,7 @@ import {
 } from '@patternfly/react-core';
 import React from 'react';
 import { useAttributeValueData } from './attribute-value-data';
-import { Attribute } from './filter.types';
+import { Attribute, Option } from './filter.types';
 import { isOption } from './filters-from-params';
 import './search-select.css';
 
@@ -18,13 +19,39 @@ interface SearchSelectProps {
   onSelect: (selections: Set<string>) => void;
 }
 
+const ERROR_VALUE = '__attribute_error';
+
+const getOptionComponents = (optionsData: Option[] | undefined, error: Error | undefined) => {
+  if (error) {
+    return [
+      <SelectOption key="error" value={ERROR_VALUE}>
+        <Alert variant="danger" isInline isPlain title={error.message || String(error)} />
+      </SelectOption>,
+    ];
+  }
+
+  if (optionsData) {
+    return optionsData.map((item) => (
+      <SelectOption key={item.value} value={item.value}>
+        {item.option}
+      </SelectOption>
+    ));
+  }
+
+  return [
+    <SelectOption isLoading key="custom-loading" value="loading">
+      <Spinner size="lg" />
+    </SelectOption>,
+  ];
+};
+
 export const SearchSelect: React.FC<SearchSelectProps> = ({
   attribute,
   variant,
   selections,
   onSelect,
 }) => {
-  const [getOptions, optionsData] = useAttributeValueData(attribute);
+  const [getOptions, optionsData, error] = useAttributeValueData(attribute);
   const [isOpen, setIsOpen] = React.useState(false);
 
   const handleClear = () => {
@@ -37,7 +64,7 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
   ) => {
     const selectedValue = isOption(selectedOption) ? selectedOption.value : String(selectedOption);
 
-    if (selectedValue) {
+    if (selectedValue && selectedValue !== ERROR_VALUE) {
       if (variant === SelectVariant.single || variant === undefined) {
         onSelect(new Set([selectedValue]));
         setIsOpen(false);
@@ -62,18 +89,6 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
     getOptions();
   }, []);
 
-  const optionComponents = optionsData
-    ? optionsData.map((item) => (
-        <SelectOption key={item.value} value={item.value}>
-          {item.option}
-        </SelectOption>
-      ))
-    : [
-        <SelectOption isLoading key="custom-loading" value="loading">
-          <Spinner size="lg" />
-        </SelectOption>,
-      ];
-
   const handleFilter = (
     _e: React.ChangeEvent<HTMLInputElement> | null,
     filterQuery: string,
@@ -94,7 +109,7 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
         {attribute.name}
       </span>
       <Select
-        variant={variant}
+        variant={error ? 'single' : variant}
         onToggle={handleToggle}
         onSelect={handleSelect}
         selections={selections ? Array.from(selections) : []}
@@ -107,7 +122,7 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
         inlineFilterPlaceholderText="Search"
         className="co-logs__search-select"
       >
-        {optionComponents}
+        {getOptionComponents(optionsData, error)}
       </Select>
     </>
   );
