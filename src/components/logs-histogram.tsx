@@ -10,7 +10,7 @@ import {
 } from '@patternfly/react-charts';
 import { Alert, Card, CardBody } from '@patternfly/react-core';
 import React from 'react';
-import { DateFormat, dateToFormat } from '../date-utils';
+import { dateToFormat, getTimeFormatFromInterval, getTimeFormatFromTimeRange } from '../date-utils';
 import {
   isMatrixResult,
   MetricValue,
@@ -21,7 +21,7 @@ import {
 import { getSeverityColor, Severity, severityAbbreviations, severityFromString } from '../severity';
 import { TestIds } from '../test-ids';
 import { intervalFromTimeRange, numericTimeRange } from '../time-range';
-import { formatTime, valueWithScalePrefix } from '../value-utils';
+import { valueWithScalePrefix } from '../value-utils';
 import { CenteredContainer } from './centered-container';
 import './logs-histogram.css';
 
@@ -106,10 +106,7 @@ const metricValueToChartData = (
 ): Array<ChartData> =>
   value.map((metric) => {
     const time = parseFloat(String(metric[0])) * 1000;
-    const formattedTime = dateToFormat(
-      time,
-      interval < 60 * 1000 ? DateFormat.TimeMed : DateFormat.TimeShort,
-    );
+    const formattedTime = dateToFormat(time, getTimeFormatFromInterval(interval));
 
     return {
       x: time,
@@ -121,20 +118,25 @@ const metricValueToChartData = (
   });
 
 const getChartsData = (data: HistogramData, interval: number): HistogramChartData => {
-  const charts: HistogramChartData = {} as HistogramChartData;
+  const chartsData: HistogramChartData = {} as HistogramChartData;
 
   Object.keys(data).forEach((group) => {
     const severityGroup = severityFromString(group) ?? 'other';
-    charts[severityGroup] = metricValueToChartData(severityGroup, data[severityGroup], interval);
+    const chartData = metricValueToChartData(severityGroup, data[severityGroup], interval);
+
+    chartsData[severityGroup] = chartData;
   });
 
-  return charts;
+  return chartsData;
 };
 
 const tickCountFromTimeRange = (timeRange: TimeRangeNumber, interval: number): number =>
   Math.ceil((timeRange.end - timeRange.start) / interval);
 
-const HistogramTooltip: React.FC<ChartLegendTooltipProps> = ({ ...props }) => {
+const HistogramTooltip: React.FC<ChartLegendTooltipProps & { interval: number }> = ({
+  interval,
+  ...props
+}) => {
   const { x: xProps, y: yProps, center, height } = props;
 
   if (!center) {
@@ -159,7 +161,7 @@ const HistogramTooltip: React.FC<ChartLegendTooltipProps> = ({ ...props }) => {
     <>
       <ChartLegendTooltip
         {...fixedProps}
-        title={(datum: ChartData) => formatTime(datum.x, true)}
+        title={(datum: ChartData) => dateToFormat(datum.x, getTimeFormatFromInterval(interval))}
         constrainToVisibleArea
       />
       <line
@@ -204,6 +206,18 @@ const BrushHandleComponent: React.FC<SelectionComponentProps> = ({ x, y, width, 
       />
     </g>
   );
+};
+
+const clampTimeToChartRange = (time: number, timeRange: TimeRangeNumber): number => {
+  if (time > timeRange.end) {
+    return timeRange.end;
+  }
+
+  if (time < timeRange.start) {
+    return timeRange.start;
+  }
+
+  return time;
 };
 
 const SelectVoronoiContainer = createContainer('brush', 'voronoi');
@@ -253,16 +267,27 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
       (group: Severity) => chartsData && chartsData[group] && chartsData[group].length > 0,
     );
 
-    const charts = availableGroups.map((group: Severity, index: number) => (
-      <ChartBar
-        key={`${group}-${index}`}
-        data={chartsData[group]}
-        name={group}
-        barWidth={(width / tickCount) * 0.8}
-        style={{ data: { fill: getSeverityColor(group) } }}
-        labelComponent={<g />}
-      />
-    ));
+    const charts = availableGroups.map((group: Severity, index: number) => {
+      let barData = chartsData[group];
+
+      /**
+       * If we are in subsecond resolution, clamp time to current range so the bar is visible
+       *  */
+      if (timeRangeValue.end - timeRangeValue.start <= 1000) {
+        barData = barData.map((d) => ({ ...d, x: clampTimeToChartRange(d.x, timeRangeValue) }));
+      }
+
+      return (
+        <ChartBar
+          key={`${group}-${index}`}
+          data={barData}
+          name={group}
+          barWidth={(width / tickCount) * 0.8}
+          style={{ data: { fill: getSeverityColor(group) } }}
+          labelComponent={<g />}
+        />
+      );
+    });
 
     return {
       charts,
@@ -291,7 +316,10 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
     ) {
       const start = domain.x[0];
       const end = domain.x[1];
-      onChangeTimeRange?.({ start: start.getTime(), end: end.getTime() });
+
+      if (start.getTime() < end.getTime()) {
+        onChangeTimeRange?.({ start: start.getTime(), end: end.getTime() });
+      }
     }
   };
 
@@ -333,7 +361,9 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
                   labels={({ datum }: { datum: ChartData }) =>
                     `${datum.y !== null ? datum.y : 'no data'}`
                   }
-                  labelComponent={<HistogramTooltip legendData={legendData} />}
+                  labelComponent={
+                    <HistogramTooltip interval={intervalValue} legendData={legendData} />
+                  }
                   voronoiDimension="x"
                   voronoiPadding={0}
                   brushDimension="x"
@@ -352,10 +382,7 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
                 tickCount={60}
                 fixLabelOverlap
                 tickFormat={(tick: number) =>
-                  dateToFormat(
-                    tick,
-                    intervalValue < 60 * 1000 ? DateFormat.TimeMed : DateFormat.TimeShort,
-                  )
+                  dateToFormat(tick, getTimeFormatFromTimeRange(timeRangeValue))
                 }
               />
               <ChartAxis tickCount={2} dependentAxis tickFormat={valueWithScalePrefix} />

@@ -8,10 +8,11 @@ import {
   TimePicker,
 } from '@patternfly/react-core';
 import React from 'react';
+import { DateFormat, dateToFormat } from '../date-utils';
 import { TimeRange } from '../logs.types';
 import { TestIds } from '../test-ids';
 import { defaultTimeRange, numericTimeRange } from '../time-range';
-import { formatDate, formatTime, padLeadingZero } from '../value-utils';
+import { padLeadingZero } from '../value-utils';
 import './time-range-select-modal.css';
 
 interface TimeRangeSelectModal {
@@ -28,10 +29,18 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
   initialRange,
 }) => {
   const initialRangeNumber = numericTimeRange(initialRange ?? defaultTimeRange());
-  const [startDate, setStartDate] = React.useState<string>(formatDate(initialRangeNumber.start));
-  const [startTime, setStartTime] = React.useState<string>(formatTime(initialRangeNumber.start));
-  const [endDate, setEndDate] = React.useState<string>(formatDate(initialRangeNumber.end));
-  const [endTime, setEndTime] = React.useState<string>(formatTime(initialRangeNumber.end));
+  const [startDate, setStartDate] = React.useState<string>(
+    dateToFormat(initialRangeNumber.start, DateFormat.DateMed),
+  );
+  const [startTime, setStartTime] = React.useState<string>(
+    dateToFormat(initialRangeNumber.start, DateFormat.TimeFull),
+  );
+  const [endDate, setEndDate] = React.useState<string>(
+    dateToFormat(initialRangeNumber.end, DateFormat.DateMed),
+  );
+  const [endTime, setEndTime] = React.useState<string>(
+    dateToFormat(initialRangeNumber.end, DateFormat.TimeFull),
+  );
   const [isRangeValid, setIsRangeValid] = React.useState(false);
 
   const isRangeSelected = startDate && startTime && endDate && endTime;
