@@ -75,7 +75,8 @@
     "webpack-dev-server": "^4.11.1"
   },
   "overrides": {
-    "qs": "6.11.0"
+    "qs": "6.11.0",
+    "glob-parent": "^6.0.2"
   },
   "consolePlugin": {
     "name": "logging-view-plugin",
