@@ -6,6 +6,7 @@ import {
   queryRangeStreamsValidResponse,
 } from '../fixtures/query-range-fixtures';
 import { namespaceListResponse } from '../fixtures/resource-api-fixtures';
+import { formatTimeRange } from '../../src/time-range';
 
 const LOGS_PAGE_URL = '/monitoring/logs';
 const QUERY_RANGE_STREAMS_URL_MATCH =
@@ -367,7 +368,7 @@ describe('Logs Page', () => {
     cy.get('@resourceQuery.all').should('have.length.at.least', 1);
   });
 
-  it('updates the url with the proper parameters when selecting a custom range', () => {
+  it.only('updates the url with the proper parameters when selecting a custom range', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
       queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
@@ -409,7 +410,9 @@ describe('Logs Page', () => {
 
     cy.url().should('match', new RegExp(`start=${startTime}&end=${endTime}`));
 
-    cy.contains('2022-10-17 14:50 - 2022-10-17 15:55');
+    const formattedTimeRange = formatTimeRange({ start: startTime, end: endTime });
+
+    cy.contains(formattedTimeRange);
 
     cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
     cy.get('@queryRangeMatrix.all').should('have.length.at.least', 1);

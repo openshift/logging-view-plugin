@@ -1,5 +1,6 @@
+import { DateFormat, dateToFormat, getTimeFormatFromTimeRange } from './date-utils';
 import { TimeRange, timeRangeIsNumber, timeRangeIsText, TimeRangeNumber } from './logs.types';
-import { formatDate, formatTime, millisecondsFromDuration, units } from './value-utils';
+import { millisecondsFromDuration, units } from './value-utils';
 
 export const CUSTOM_TIME_RANGE_KEY = 'CUSTOM';
 
@@ -122,8 +123,16 @@ export const intervalFromTimeRange = (
 
 export const formatTimeRange = (timeRange: TimeRange): string => {
   const numericRange = numericTimeRange(timeRange);
-  const start = `${formatDate(numericRange.start)} ${formatTime(numericRange.start)}`;
-  const end = `${formatDate(numericRange.end)} ${formatTime(numericRange.end)}`;
+  const timeFormat = getTimeFormatFromTimeRange(numericRange);
+
+  const start = `${dateToFormat(numericRange.start, DateFormat.DateMed)} ${dateToFormat(
+    numericRange.start,
+    timeFormat,
+  )}`;
+  const end = `${dateToFormat(numericRange.end, DateFormat.DateMed)} ${dateToFormat(
+    numericRange.end,
+    timeFormat,
+  )}`;
 
   return `${start} - ${end}`;
 };

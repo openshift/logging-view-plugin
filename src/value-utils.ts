@@ -66,30 +66,4 @@ export const millisecondsFromDuration = (duration: string): number => {
   }
 };
 
-const getPart = (
-  parts: Intl.DateTimeFormatPart[],
-  type: 'day' | 'hour' | 'minute' | 'month' | 'second' | 'year',
-) => parts.find((p) => p.type === type)?.value || '';
-
-export const formatDate = (timestamp: number): string => {
-  const parts = new Intl.DateTimeFormat('en', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(timestamp);
-  return `${getPart(parts, 'year')}-${getPart(parts, 'month')}-${getPart(parts, 'day')}`;
-};
-export const formatTime = (timestamp: number, includeSeconds = false): string => {
-  const parts = new Intl.DateTimeFormat('en', {
-    hour: '2-digit',
-    hourCycle: 'h24',
-    minute: '2-digit',
-    second: 'numeric',
-  }).formatToParts(timestamp);
-  const seconds = includeSeconds ? `:${getPart(parts, 'second')}` : '';
-  return `${getPart(parts, 'hour')}:${getPart(parts, 'minute')}${seconds}`;
-};
-
-export const trim = (value: string): string => value.trim();
-
 export const padLeadingZero = (value: number) => (value > 9 ? value : `0${value}`);
