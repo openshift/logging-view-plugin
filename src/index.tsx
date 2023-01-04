@@ -33,11 +33,29 @@ const DevConsole = () => {
         }
         isOpen={isOpen}
         dropdownItems={[
-          <DropdownItem onClick={onSelectNamespace('default')} key="action" component="button">
+          <DropdownItem onClick={onSelectNamespace('default')} key="default" component="button">
             default
           </DropdownItem>,
-          <DropdownItem onClick={onSelectNamespace('my-namespace')} key="action" component="button">
+          <DropdownItem
+            onClick={onSelectNamespace('my-namespace')}
+            key="my-namespace"
+            component="button"
+          >
             my-namespace
+          </DropdownItem>,
+          <DropdownItem
+            onClick={onSelectNamespace('my-namespace-two')}
+            key="my-namespace-two"
+            component="button"
+          >
+            my-namespace-two
+          </DropdownItem>,
+          <DropdownItem
+            onClick={onSelectNamespace('openshift-cluster-version')}
+            key="action"
+            component="button"
+          >
+            openshift-cluster-version
           </DropdownItem>,
         ]}
       />

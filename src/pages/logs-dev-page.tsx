@@ -19,6 +19,7 @@ import { useLogs } from '../hooks/useLogs';
 import { useURLState } from '../hooks/useURLState';
 import { Direction } from '../logs.types';
 import { TestIds } from '../test-ids';
+import { getInitialTenantFromNamespace } from '../value-utils';
 
 const LogsDevPage: React.FunctionComponent = () => {
   const { ns: namespace } = useParams<{ ns: string }>();
@@ -37,6 +38,8 @@ const LogsDevPage: React.FunctionComponent = () => {
     direction,
     setDirectionInURL,
   } = useURLState({ attributes: availableAttributes });
+
+  const tenant = getInitialTenantFromNamespace(namespace);
 
   const {
     histogramData,
@@ -70,10 +73,10 @@ const LogsDevPage: React.FunctionComponent = () => {
   };
 
   const runQuery = () => {
-    getLogs({ query, namespace, timeRange, direction });
+    getLogs({ query, namespace, timeRange, direction, tenant });
 
     if (isHistogramVisible) {
-      getHistogram({ query, namespace, timeRange });
+      getHistogram({ query, namespace, timeRange, tenant });
     }
   };
 

@@ -14,16 +14,7 @@ import { useLogs } from '../hooks/useLogs';
 import { useURLState } from '../hooks/useURLState';
 import { Direction } from '../logs.types';
 import { TestIds } from '../test-ids';
-
-const DEFAULT_TENANT = 'application';
-
-const getInitialTenantFromNamespace = (namespace?: string): string => {
-  if (namespace && /^openshift-|^openshift$|^default$|^kube-/.test(namespace)) {
-    return 'infrastructure';
-  }
-
-  return DEFAULT_TENANT;
-};
+import { getInitialTenantFromNamespace } from '../value-utils';
 
 const LogsDetailPage: React.FunctionComponent = () => {
   const { name: podname, ns: namespace } = useParams<{ name: string; ns: string }>();

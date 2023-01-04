@@ -67,3 +67,13 @@ export const millisecondsFromDuration = (duration: string): number => {
 };
 
 export const padLeadingZero = (value: number) => (value > 9 ? value : `0${value}`);
+
+const DEFAULT_TENANT = 'application';
+
+export const getInitialTenantFromNamespace = (namespace?: string): string => {
+  if (namespace && /^openshift-|^openshift$|^default$|^kube-/.test(namespace)) {
+    return 'infrastructure';
+  }
+
+  return DEFAULT_TENANT;
+};
