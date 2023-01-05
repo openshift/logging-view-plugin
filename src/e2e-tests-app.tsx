@@ -64,7 +64,7 @@ const DevConsole = () => {
   );
 };
 
-const App = () => {
+const EndToEndTestsApp = () => {
   return (
     <div className="pf-c-page co-logs-standalone__page">
       <BrowserRouter>
@@ -112,4 +112,4 @@ const App = () => {
   );
 };
 
-ReactDOM.render(<App />, document.getElementById('app'));
+ReactDOM.render(<EndToEndTestsApp />, document.getElementById('app'));
