@@ -10,6 +10,10 @@ const QUERY_RANGE_STREAMS_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/query_range?query=%7B*';
 const QUERY_RANGE_MATRIX_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/query_range?query=sum*';
+const QUERY_RANGE_STREAMS_INFRASTRUCTURE_URL_MATCH =
+  '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/infrastructure/loki/api/v1/query_range?query=%7B*';
+const QUERY_RANGE_MATRIX_INFRASTRUCTURE_URL_MATCH =
+  '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/infrastructure/loki/api/v1/query_range?query=sum*';
 const TEST_MESSAGE = "loki_1 | level=info msg='test log'";
 const RESOURCE_URL_MATCH = 'api/kubernetes/api/v1/**';
 
@@ -184,13 +188,64 @@ describe('Logs Dev Page', () => {
 
     cy.getByTestId('namespace-toggle' as TestIds).click();
     cy.getByTestId('namespace-dropdown' as TestIds)
-      .contains('default')
+      .contains('my-namespace-two')
       .click();
 
     cy.wait('@queryRangeStreams').then(({ request }) => {
       const url = new URL(request.url);
       const query = url.searchParams.get('query');
-      expect(query).to.equal('{ log_type=~".+", kubernetes_namespace_name="default" } | json');
+      expect(query).to.equal(
+        '{ log_type=~".+", kubernetes_namespace_name="my-namespace-two" } | json',
+      );
+    });
+  });
+
+  it('executes a query with infra logs when the current namespace changes', () => {
+    cy.intercept(
+      QUERY_RANGE_STREAMS_URL_MATCH,
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
+    ).as('queryRangeStreams');
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrix',
+    );
+
+    cy.intercept(
+      QUERY_RANGE_STREAMS_INFRASTRUCTURE_URL_MATCH,
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
+    ).as('queryRangeStreamsInfrastructure');
+    cy.intercept(QUERY_RANGE_MATRIX_INFRASTRUCTURE_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrixInfrastructure',
+    );
+
+    cy.visit(LOGS_DEV_PAGE_URL);
+
+    cy.getByTestId(TestIds.LogsTable)
+      .should('exist')
+      .within(() => {
+        cy.contains(TEST_MESSAGE);
+      });
+
+    cy.wait('@queryRangeStreams').then(({ request }) => {
+      const url = new URL(request.url);
+      const query = url.searchParams.get('query');
+      expect(query).to.equal('{ log_type=~".+", kubernetes_namespace_name="my-namespace" } | json');
+    });
+
+    cy.getByTestId('namespace-toggle' as TestIds).click();
+    cy.getByTestId('namespace-dropdown' as TestIds)
+      .contains('openshift-cluster-version')
+      .click();
+
+    cy.wait('@queryRangeStreamsInfrastructure').then(({ request }) => {
+      const url = new URL(request.url);
+      const pathname = url.pathname;
+      expect(pathname).to.equal(
+        '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/infrastructure/loki/api/v1/query_range',
+      );
+      const query = url.searchParams.get('query');
+      expect(query).to.equal(
+        '{ log_type=~".+", kubernetes_namespace_name="openshift-cluster-version" } | json',
+      );
     });
   });
 

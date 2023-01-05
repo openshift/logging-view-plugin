@@ -33,11 +33,29 @@ const DevConsole = () => {
         }
         isOpen={isOpen}
         dropdownItems={[
-          <DropdownItem onClick={onSelectNamespace('default')} key="action" component="button">
+          <DropdownItem onClick={onSelectNamespace('default')} key="default" component="button">
             default
           </DropdownItem>,
-          <DropdownItem onClick={onSelectNamespace('my-namespace')} key="action" component="button">
+          <DropdownItem
+            onClick={onSelectNamespace('my-namespace')}
+            key="my-namespace"
+            component="button"
+          >
             my-namespace
+          </DropdownItem>,
+          <DropdownItem
+            onClick={onSelectNamespace('my-namespace-two')}
+            key="my-namespace-two"
+            component="button"
+          >
+            my-namespace-two
+          </DropdownItem>,
+          <DropdownItem
+            onClick={onSelectNamespace('openshift-cluster-version')}
+            key="action"
+            component="button"
+          >
+            openshift-cluster-version
           </DropdownItem>,
         ]}
       />
@@ -46,7 +64,7 @@ const DevConsole = () => {
   );
 };
 
-const App = () => {
+const EndToEndTestsApp = () => {
   return (
     <div className="pf-c-page co-logs-standalone__page">
       <BrowserRouter>
@@ -94,4 +112,4 @@ const App = () => {
   );
 };
 
-ReactDOM.render(<App />, document.getElementById('app'));
+ReactDOM.render(<EndToEndTestsApp />, document.getElementById('app'));

@@ -12,7 +12,7 @@ interface Configuration extends WebpackConfiguration {
 
 const config: Configuration = {
   mode: 'development',
-  entry: './index.tsx',
+  entry: './e2e-tests-app.tsx',
   context: path.resolve(__dirname, 'src'),
   output: {
     path: path.resolve(__dirname, 'dist-standalone'),
@@ -65,8 +65,7 @@ const config: Configuration = {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-      'Access-Control-Allow-Headers':
-        'X-Requested-With, Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'X-Requested-With, Content-Type, Authorization',
     },
     devMiddleware: {
       writeToDisk: true,
@@ -78,9 +77,7 @@ const config: Configuration = {
     minimize: false,
   },
   plugins: [
-    new webpack.NormalModuleReplacementPlugin(/dynamic-plugin-sdk/, function (
-      resource,
-    ) {
+    new webpack.NormalModuleReplacementPlugin(/dynamic-plugin-sdk/, function (resource) {
       resource.request = path.resolve(__dirname, 'mockModules/dummy');
     }),
     new HtmlWebpackPlugin({
