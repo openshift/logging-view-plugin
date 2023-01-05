@@ -1,4 +1,4 @@
-FROM registry.redhat.io/ubi8/ubi-minimal:8.6 as builder
+FROM registry.redhat.io/ubi8/ubi-minimal:8.6 as web-builder
 
 ENV APP_ROOT=/opt/app-root \
     HOME=/opt/app-root/src \
@@ -11,7 +11,7 @@ ENV APP_ROOT=/opt/app-root \
 ENV NPM_CONFIG_PREFIX=$HOME/.npm-global \
     PATH=$HOME/node_modules/.bin/:$HOME/.npm-global/bin/:$PATH
 
-RUN INSTALL_PKGS="nodejs nodejs-nodemon npm findutils tar" && \
+RUN INSTALL_PKGS="nodejs nodejs-nodemon npm findutils tar make" && \
     microdnf module disable nodejs && \
     microdnf module enable nodejs:$NODEJS_VERSION && \
     microdnf --nodocs install $INSTALL_PKGS && \
@@ -21,16 +21,35 @@ RUN INSTALL_PKGS="nodejs nodejs-nodemon npm findutils tar" && \
 WORKDIR ${HOME}
 
 ENV HUSKY=0
-COPY package*.json .
-RUN npm ci
+COPY web/package*.json ${HOME}/web/
+COPY Makefile Makefile
+RUN make install-frontend-ci
 
-COPY . ${HOME}
-RUN npm run build
+COPY web/ ${HOME}/web
+RUN make build-frontend
 
-FROM registry.redhat.io/ubi8/nginx-120:1-44
+FROM registry.access.redhat.com/ubi8/go-toolset:1.18 as go-builder
+
+WORKDIR /opt/app-root
+
+COPY Makefile Makefile
+COPY go.mod go.mod
+COPY go.sum go.sum
+
+RUN make install-backend
+
+COPY config/ config/
+COPY cmd/ cmd/
+COPY pkg/ pkg/
+
+RUN make build-backend
+
+FROM registry.redhat.io/ubi8/ubi-minimal:8.6
 
 USER 1001
 
-COPY --from=builder /opt/app-root/src/dist /usr/share/nginx/html
+COPY --from=web-builder /opt/app-root/src/web/dist ./web/dist
+COPY --from=go-builder /opt/app-root/plugin-backend ./
+COPY --from=go-builder /opt/app-root/config ./config
 
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["./plugin-backend"]
