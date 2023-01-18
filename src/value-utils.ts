@@ -66,4 +66,5 @@ export const millisecondsFromDuration = (duration: string): number => {
   }
 };
 
-export const padLeadingZero = (value: number) => (value > 9 ? value : `0${value}`);
+export const padLeadingZero = (value: number): string =>
+  value >= 10 ? value.toString(10) : `0${value}`;
