@@ -5,7 +5,6 @@ import {
   Modal,
   ModalBoxBody,
   ModalVariant,
-  TimePicker,
 } from '@patternfly/react-core';
 import React from 'react';
 import { DateFormat, dateToFormat } from '../date-utils';
@@ -13,6 +12,7 @@ import { TimeRange } from '../logs.types';
 import { TestIds } from '../test-ids';
 import { defaultTimeRange, numericTimeRange } from '../time-range';
 import { padLeadingZero } from '../value-utils';
+import { PrecisionTimePicker } from './precision-time-picker';
 import './time-range-select-modal.css';
 
 interface TimeRangeSelectModal {
@@ -47,8 +47,8 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
 
   React.useEffect(() => {
     if (isRangeSelected) {
-      const start = `${startDate}T${startTime}:00`;
-      const end = `${endDate}T${endTime}:00`;
+      const start = `${startDate}T${startTime}`;
+      const end = `${endDate}T${endTime}`;
 
       setIsRangeValid(Date.parse(start) < Date.parse(end));
     } else {
@@ -58,21 +58,52 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
 
   const handleSelectRange = () => {
     if (isRangeSelected) {
-      const start = `${startDate}T${startTime}:00`;
-      const end = `${endDate}T${endTime}:00`;
+      const start = `${startDate}T${startTime}`;
+      const end = `${endDate}T${endTime}`;
 
       onSelectRange?.({ start: Date.parse(start), end: Date.parse(end) });
     }
   };
 
-  const handleStartTimeChange = (_time: string, hour?: number, minute?: number) => {
-    if (hour !== undefined && hour !== null && minute !== undefined && minute !== null) {
-      setStartTime(`${padLeadingZero(hour)}:${padLeadingZero(minute)}`);
+  const handleStartTimeChange = (
+    _time: string,
+    hours?: number,
+    minutes?: number,
+    seconds?: number,
+  ) => {
+    if (
+      hours !== undefined &&
+      hours !== null &&
+      minutes !== undefined &&
+      minutes !== null &&
+      seconds !== undefined &&
+      seconds !== null
+    ) {
+      setStartTime(
+        `${padLeadingZero(hours)}:${padLeadingZero(minutes)}:${padLeadingZero(seconds)}`,
+      );
+    } else {
+      setIsRangeValid(false);
     }
   };
-  const handleEndTimeChange = (_time: string, hour?: number, minute?: number) => {
-    if (hour !== undefined && hour !== null && minute !== undefined && minute !== null) {
-      setEndTime(`${padLeadingZero(hour)}:${padLeadingZero(minute)}`);
+
+  const handleEndTimeChange = (
+    _time: string,
+    hour?: number,
+    minutes?: number,
+    seconds?: number,
+  ) => {
+    if (
+      hour !== undefined &&
+      hour !== null &&
+      minutes !== undefined &&
+      minutes !== null &&
+      seconds !== undefined &&
+      seconds !== null
+    ) {
+      setEndTime(`${padLeadingZero(hour)}:${padLeadingZero(minutes)}:${padLeadingZero(seconds)}`);
+    } else {
+      setIsRangeValid(false);
     }
   };
 
@@ -88,6 +119,7 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
       onClose={onClose}
       showClose={false}
       hasNoBodyWrapper={true}
+      aria-label="date-time-picker-modal"
       data-test={TestIds.TimeRangeSelectModal}
       footer={
         <div className="co-logs-time-range-modal__footer">
@@ -114,24 +146,14 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
           <label>From</label>
           <div className="co-logs-time-range-modal__field">
             <DatePicker onChange={setStartDate} value={startDate} />
-            <TimePicker
-              menuAppendTo="inline"
-              is24Hour
-              onChange={handleStartTimeChange}
-              time={startTime}
-            />
+            <PrecisionTimePicker time={startTime} onChange={handleStartTimeChange} />
           </div>
         </div>
         <div>
           <label>To</label>
           <div className="co-logs-time-range-modal__field">
             <DatePicker onChange={setEndDate} value={endDate} />
-            <TimePicker
-              menuAppendTo="inline"
-              is24Hour
-              onChange={handleEndTimeChange}
-              time={endTime}
-            />
+            <PrecisionTimePicker time={endTime} onChange={handleEndTimeChange} />
           </div>
           {!isRangeValid && (
             <Alert
