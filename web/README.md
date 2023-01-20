@@ -16,16 +16,19 @@ to build and run the plugin. To run OpenShift console in a container, either
 
 Make sure you have loki running on `http://localhost:3100`
 
-1. Install the dependencies running `make install`
-2. Start the backend `make start-backend`
-3. In a different terminal start the frontend `make start-frontend`
-4. In a different terminal start the console
-   a. `oc login` (requires [oc](https://console.redhat.com/openshift/downloads) and an [OpenShift cluster](https://console.redhat.com/openshift/create))
-   b. `make start-console` (requires [Docker](https://www.docker.com) or [podman 3.2.0+](https://podman.io))
+In one terminal window, run:
 
-This will create an environment file `web/scripts/env.list` and run the OpenShift console
-in a container connected to the cluster you've logged into. The plugin backend server
-runs on port 9002 with CORS enabled.
+1. `npm install`
+2. `npm run dev`
+
+In another terminal window, run:
+
+1. `oc login` (requires [oc](https://console.redhat.com/openshift/downloads) and an [OpenShift cluster](https://console.redhat.com/openshift/create))
+2. `npm run start:console` (requires [Docker](https://www.docker.com) or [podman 3.2.0+](https://podman.io))
+
+This will create an environment file `scripts/env.list` and run the OpenShift console
+in a container connected to the cluster you've logged into. The plugin HTTP server
+runs on port 9001 with CORS enabled.
 
 The dynamic console plugin is configured to connect to loki using a proxy
 `/api/proxy/plugin/logging-view-plugin/backend/`, in local mode this will point
@@ -34,27 +37,47 @@ to `http://localhost:3100`. You can disable this by re-running the console with
 
 Navigate to <http://localhost:9000/monitoring/logs> to see the running plugin.
 
+#### Running start:console with Apple silicon and podman
+
+If you are using podman on a Mac with Apple silicon, `npm run start:console`
+might fail since it runs an amd64 image. You can workaround the problem with
+[qemu-user-static](https://github.com/multiarch/qemu-user-static) by running
+these commands:
+
+```sh
+podman machine ssh
+sudo -i
+rpm-ostree install qemu-user-static
+systemctl reboot
+```
+
 ### Runing tests
 
 #### Unit tests
 
 ```sh
-make test-unit
+npm run test:unit
 ```
 
 #### e2e tests
 
+In order to run the e2e tests, you need first to build the plugin in standalone mode
+
 ```sh
-make test-frontend
+npm run build:standalone:instrumented
 ```
 
-this will build the frontend in standalone mode and run the cypress tests
+and then run the cypress tests
+
+```sh
+npm run test:e2e
+```
 
 ## Deployment on cluster
 
 You can deploy the plugin to a cluster by instantiating the provided
 [Plugin Resources](logging-view-plugin-resources.yml). It will use the latest plugin
-docker image and run a light-weight go HTTP server to serve the plugin's assets.
+docker image and run a light-weight nginx HTTP server to serve the plugin's assets.
 
 ```sh
 oc create -f logging-view-plugin-resources.yml
@@ -68,8 +91,8 @@ oc patch consoles.operator.openshift.io cluster \
   --patch '{ "spec": { "plugins": ["logging-view-plugin"] } }' --type=merge
 ```
 
-## Build a testint the image
+## Build the image
 
 ```sh
-make build-image
+./scripts/image.sh -t latest
 ```

@@ -1,14 +1,36 @@
-FROM docker.io/library/node:16.14.2 AS build
+FROM registry.redhat.io/ubi8/nodejs-16:1-72 AS web-builder
 
-WORKDIR /usr/src/app
+WORKDIR /opt/app-root
 
-COPY package*.json .
-RUN npm ci && npm cache clean --force
+USER 0
 
-COPY . /usr/src/app
-RUN npm run build
+COPY web/package*.json web/
+COPY Makefile Makefile
+RUN make install-frontend-ci-clean
 
-FROM docker.io/library/nginx:stable
+COPY web/ web/
+RUN make build-frontend
 
-RUN chmod g+rwx /var/cache/nginx /var/run /var/log/nginx
-COPY --from=build /usr/src/app/dist /usr/share/nginx/html
+FROM registry.redhat.io/ubi8/go-toolset:1.18 as go-builder
+
+WORKDIR /opt/app-root
+
+COPY Makefile Makefile
+COPY go.mod go.mod
+COPY go.sum go.sum
+
+RUN make install-backend
+
+COPY config/ config/
+COPY cmd/ cmd/
+COPY pkg/ pkg/
+
+RUN make build-backend
+
+FROM registry.access.redhat.com/ubi8-micro:8.7-1
+
+COPY --from=web-builder /opt/app-root/web/dist /opt/app-root/web/dist
+COPY --from=go-builder /opt/app-root/plugin-backend /opt/app-root
+COPY --from=go-builder /opt/app-root/config /opt/app-root/config
+
+ENTRYPOINT ["/opt/app-root/plugin-backend", "-config-path", "/opt/app-root/config", "-static-path", "/opt/app-root/web/dist"]

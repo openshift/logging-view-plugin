@@ -1,0 +1,17 @@
+[
+  {
+    "op": "add",
+    "path": "/extensions/0",
+    "value": {
+      "type": "console.tab",
+      "properties": {
+        "contextId": "dev-console-observe",
+        "name": "Aggregated Logs",
+        "href": "/logs",
+        "component": {
+          "$codeRef": "LogsDevPage"
+        }
+      }
+    }
+  }
+]

@@ -6,6 +6,7 @@ PREFER_PODMAN=0
 CREATE_ENV=0
 USE_LOCAL_PROXY=1
 LOKI_HOST=0
+PLUGIN_PORT=9002
 
 while getopts "epcl:" flag; do
     case $flag in
@@ -13,6 +14,7 @@ while getopts "epcl:" flag; do
         p) PREFER_PODMAN=1;;
         c) USE_LOCAL_PROXY=0;;
         l) LOKI_HOST=$OPTARG;;
+        l) PLUGIN_PORT=$OPTARG;;
         \?) echo "Invalid option: -$flag" 
             exit;;
     esac
@@ -37,6 +39,7 @@ CONSOLE_PORT=${CONSOLE_PORT:=9000}
 
 function createEnvironment(){
     echo "Creatig env file..."
+    touch scripts/env.list
 
     BRIDGE_USER_AUTH="disabled"
     echo BRIDGE_USER_AUTH=$BRIDGE_USER_AUTH > scripts/env.list
@@ -73,11 +76,11 @@ function createEnvironment(){
         echo BRIDGE_PLUGIN_PROXY=$BRIDGE_PLUGIN_PROXY >> scripts/env.list
     fi
 
-    BRIDGE_PLUGINS="logging-view-plugin=${INTERNAL_HOST}:9001"
+    BRIDGE_PLUGINS="logging-view-plugin=${INTERNAL_HOST}:${PLUGIN_PORT}"
     echo BRIDGE_PLUGINS=$BRIDGE_PLUGINS >> scripts/env.list
 }
 
-if [[ $CREATE_ENV == 1 ]]; then
+if [[ $CREATE_ENV == 1 ]] || [[ ! -f "scripts/env.list" ]]; then
     createEnvironment
 fi
 
