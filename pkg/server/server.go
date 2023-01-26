@@ -5,22 +5,44 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 )
 
 var slog = logrus.WithField("module", "server")
 
 type Config struct {
-	Port           int
-	CertFile       string
-	PrivateKeyFile string
-	Features       map[string]bool
-	StaticPath     string
-	ConfigPath     string
+	Port             int
+	CertFile         string
+	PrivateKeyFile   string
+	Features         map[string]bool
+	StaticPath       string
+	ConfigPath       string
+	PluginConfigPath string
+}
+
+type PluginConfig struct {
+	UseTenantInHeader               bool          `json:"useTenantInHeader,omitempty" yaml:"useTenantInHeader,omitempty"`
+	IsStreamingEnabledInDefaultPage bool          `json:"isStreamingEnabledInDefaultPage,omitempty" yaml:"isStreamingEnabledInDefaultPage,omitempty"`
+	LokiTenanLabelKey               string        `json:"lokiTenanLabelKey,omitempty" yaml:"lokiTenanLabelKey,omitempty"`
+	Timeout                         time.Duration `json:"timeout,omitempty" yaml:"timeout,omitempty"`
+	LogsLimit                       int           `json:"logsLimit,omitempty" yaml:"logsLimit,omitempty"`
+}
+
+func (pluginConfig *PluginConfig) MarshalJSON() ([]byte, error) {
+	type Alias PluginConfig
+	return json.Marshal(&struct {
+		Timeout float64 `json:"timeout,omitempty"`
+		*Alias
+	}{
+		Timeout: pluginConfig.Timeout.Seconds(),
+		Alias:   (*Alias)(pluginConfig),
+	})
 }
 
 func Start(cfg *Config) {
@@ -62,6 +84,9 @@ func setupRoutes(cfg *Config) *mux.Router {
 	// serve enabled features list to the front-end
 	r.PathPrefix("/features").HandlerFunc(featuresHandler(cfg))
 
+	// serve plugin configuration to the front-end
+	r.PathPrefix("/config").HandlerFunc(configHandler(cfg))
+
 	// serve front end files
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir(cfg.StaticPath)))
 
@@ -89,12 +114,49 @@ func featuresHandler(cfg *Config) http.HandlerFunc {
 		jsonFeatures, err := json.Marshal(cfg.Features)
 
 		if err != nil {
-			slog.WithError(err).Errorf("cannot unmarshal, features were: %v", string(jsonFeatures))
+			slog.WithError(err).Errorf("cannot marshall, features were: %v", string(jsonFeatures))
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(jsonFeatures)
+	})
+}
+
+func configHandler(cfg *Config) http.HandlerFunc {
+	pluginConfData, err := os.ReadFile(cfg.PluginConfigPath)
+
+	if err != nil {
+		slog.WithError(err).Warnf("cannot read config file, serving plugin with default configuration, tried %s", cfg.PluginConfigPath)
+
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte("{}"))
+		})
+	}
+
+	var pluginConfig PluginConfig
+	err = yaml.Unmarshal(pluginConfData, &pluginConfig)
+
+	if err != nil {
+		slog.WithError(err).Error("unable to unmarshall config data")
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "unable to unmarshall config data", http.StatusInternalServerError)
+		})
+	}
+
+	jsonPluginConfig, err := pluginConfig.MarshalJSON()
+
+	if err != nil {
+		slog.WithError(err).Errorf("unable to marshall, config data: %v", pluginConfig)
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "unable to marshall config data", http.StatusInternalServerError)
+		})
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(jsonPluginConfig)
 	})
 }

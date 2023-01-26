@@ -16,7 +16,7 @@ const LOKI_TENANT_LABEL_KEY = 'tenantId';
 const LogsAlertMetrics: React.FC<LogsAlertMetricsProps> = ({ rule }) => {
   const { getLogs, logsData, logsError, isLoadingLogsData, config } = useLogs();
 
-  const tenant = rule?.labels?.[config.lokiTenanLabelKey ?? LOKI_TENANT_LABEL_KEY];
+  const tenant = rule?.labels?.[config.alertingRuleTenantLabelKey ?? LOKI_TENANT_LABEL_KEY];
   const [timeRange, setTimeRange] = React.useState<TimeRange | undefined>();
 
   useEffect(() => {

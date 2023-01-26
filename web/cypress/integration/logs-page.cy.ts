@@ -7,6 +7,7 @@ import {
 } from '../fixtures/query-range-fixtures';
 import { namespaceListResponse } from '../fixtures/resource-api-fixtures';
 import { formatTimeRange } from '../../src/time-range';
+import { configResponse } from '../fixtures/backend-fixtures';
 
 const LOGS_PAGE_URL = '/monitoring/logs';
 const QUERY_RANGE_STREAMS_URL_MATCH =
@@ -17,6 +18,7 @@ const QUERY_RANGE_STREAMS_INFRASTRUCTURE_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/infrastructure/loki/api/v1/query_range?query=%7B*';
 const QUERY_RANGE_MATRIX_INFRASTRUCTURE_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/infrastructure/loki/api/v1/query_range?query=sum*';
+const CONFIG_URL_MATCH = '/api/plugins/logging-view-plugin/config';
 const RESOURCE_URL_MATCH = '/api/kubernetes/api/v1/*';
 const TEST_MESSAGE = "loki_1 | level=info msg='test log'";
 
@@ -416,5 +418,39 @@ describe('Logs Page', () => {
 
     cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
     cy.get('@queryRangeMatrix.all').should('have.length.at.least', 1);
+  });
+
+  it('applies plugin configuration from the backend', () => {
+    cy.intercept(
+      QUERY_RANGE_STREAMS_URL_MATCH,
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
+    ).as('queryRangeStreams');
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrix',
+    );
+    cy.intercept(CONFIG_URL_MATCH, configResponse).as('config');
+
+    cy.visit(LOGS_PAGE_URL);
+
+    cy.getByTestId(TestIds.ToggleHistogramButton).click();
+
+    cy.getByTestId(TestIds.LogsHistogram)
+      .should('exist')
+      .within(() => {
+        cy.get('svg g > path').should('have.length.above', 0);
+      });
+
+    cy.wait('@queryRangeStreams').then(({ request }) => {
+      const url = new URL(request.url);
+      const pathname = url.pathname;
+      expect(pathname).to.equal(
+        '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/query_range',
+      );
+      const limit = url.searchParams.get('limit');
+      expect(limit).to.equal(String(configResponse.logsLimit));
+    });
+
+    cy.get('@queryRangeMatrix.all').should('have.length.at.least', 1);
+    cy.get('@config.all').should('have.length.at.least', 1);
   });
 });
