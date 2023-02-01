@@ -368,7 +368,7 @@ describe('Logs Page', () => {
     cy.get('@resourceQuery.all').should('have.length.at.least', 1);
   });
 
-  it.only('updates the url with the proper parameters when selecting a custom range', () => {
+  it('updates the url with the proper parameters when selecting a custom range', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
       queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
@@ -399,8 +399,8 @@ describe('Logs Page', () => {
       cy.get('input[aria-label="Date picker"]').first().clear().type('2022-10-17').blur();
       cy.get('input[aria-label="Date picker"]').last().clear().type('2022-10-17').blur();
 
-      cy.get('input[aria-label="Time picker"]').first().clear().type('14:50{enter}');
-      cy.get('input[aria-label="Time picker"]').last().clear().type('15:55{enter}');
+      cy.get('input[aria-label="Precision time picker"]').first().clear().type('14:50{enter}');
+      cy.get('input[aria-label="Precision time picker"]').last().clear().type('15:55{enter}');
     });
 
     cy.getByTestId(TestIds.TimeRangeDropdownSaveButton).click();
