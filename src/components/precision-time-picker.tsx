@@ -31,13 +31,16 @@ const parseTimeString = (
   const parts = time.split(':');
 
   if (parts.length >= 2) {
-    let hours = parseInt(parts[0], 10);
-    hours = hours >= 24 ? 0 : hours;
+    const hours = parseInt(parts[0], 10);
     const minutes = parseInt(parts[1], 10);
     const seconds = parts.length >= 3 ? parseFloat(parts[2]) : 0;
 
     if (!isNaN(hours) && !isNaN(minutes) && !isNaN(seconds)) {
-      return { hours, minutes, seconds };
+      if (hours >= 24 || minutes >= 60 || seconds >= 60) {
+        return null;
+      } else {
+        return { hours, minutes, seconds };
+      }
     }
   }
 
