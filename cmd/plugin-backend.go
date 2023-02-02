@@ -26,9 +26,9 @@ func main() {
 	port := mergeEnvValueInt("PORT", *portArg, 9002)
 	cert := mergeEnvValue("CERT_FILE_PATH", *certArg, "")
 	key := mergeEnvValue("PRIVATE_KEY_FILE_PATH", *keyArg, "")
-	features := mergeEnvValue("FEATURES", *featuresArg, "")
-	staticPath := mergeEnvValue("STATIC_PATH", *staticPathArg, "./web/dist")
-	configPath := mergeEnvValue("CONFIG_PATH", *configPathArg, "./config")
+	features := mergeEnvValue("LOGGING_VIEW_PLUGIN_FEATURES", *featuresArg, "")
+	staticPath := mergeEnvValue("LOGGING_VIEW_PLUGIN_STATIC_PATH", *staticPathArg, "./web/dist")
+	configPath := mergeEnvValue("LOGGING_VIEW_PLUGIN_CONFIG_PATH", *configPathArg, "./config")
 
 	featuresList := strings.Fields(strings.Join(strings.Split(strings.ToLower(features), ","), " "))
 
