@@ -267,6 +267,8 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
       (group: Severity) => chartsData && chartsData[group] && chartsData[group].length > 0,
     );
 
+    const maxBarWidth = width / 10;
+
     const charts = availableGroups.map((group: Severity, index: number) => {
       let barData = chartsData[group];
 
@@ -282,7 +284,7 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
           key={`${group}-${index}`}
           data={barData}
           name={group}
-          barWidth={(width / tickCount) * 0.8}
+          barWidth={Math.min(maxBarWidth, (width / tickCount) * 0.8)}
           style={{ data: { fill: getSeverityColor(group) } }}
           labelComponent={<g />}
         />
