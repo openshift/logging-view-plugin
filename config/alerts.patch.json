@@ -1,0 +1,26 @@
+[
+  {
+    "op": "add",
+    "path": "/extensions/0",
+    "value": {
+      "type": "console.alerts/rules-source",
+      "properties": {
+        "id": "logging-loki",
+        "contextId": "observe-alerting",
+        "getAlertingRules": { "$codeRef": "getAlertingRules" }
+      }
+    }
+  },
+
+  {
+    "op": "add",
+    "path": "/extensions/0",
+    "value": {
+      "type": "console.alerts/rules-chart",
+      "properties": {
+        "sourceId": "logging-loki",
+        "chart": { "$codeRef": "LogsAlertMetrics" }
+      }
+    }
+  }
+]

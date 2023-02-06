@@ -87,7 +87,9 @@
       "LogsPage": "./pages/logs-page",
       "LogsDetailPage": "./pages/logs-detail-page",
       "LogActionsProvider": "./hooks/useLogActionsExtension",
-      "LogsDevPage": "./pages/logs-dev-page"
+      "LogsDevPage": "./pages/logs-dev-page",
+      "getAlertingRules": "./getAlertingRules",
+      "LogsAlertMetrics": "./components/alerts/logs-alerts-metrics"
     },
     "dependencies": {
       "@console/pluginAPI": "*"

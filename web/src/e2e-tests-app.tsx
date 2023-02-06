@@ -1,12 +1,13 @@
+import '@patternfly/patternfly/patternfly.css';
+import { Dropdown, DropdownItem, DropdownToggle } from '@patternfly/react-core';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter, Link, Route, useHistory, useParams } from 'react-router-dom';
-import LogsDetailPage from './pages/logs-detail-page';
-import LogsPage from './pages/logs-page';
-import '@patternfly/patternfly/patternfly.css';
-import LogsDevPage from './pages/logs-dev-page';
+import LogsAlertMetrics from './components/alerts/logs-alerts-metrics';
 import './index.css';
-import { Dropdown, DropdownItem, DropdownToggle } from '@patternfly/react-core';
+import LogsDetailPage from './pages/logs-detail-page';
+import LogsDevPage from './pages/logs-dev-page';
+import LogsPage from './pages/logs-page';
 
 const DevConsole = () => {
   const { ns: namespace } = useParams<{ ns: string }>();
@@ -105,6 +106,14 @@ const EndToEndTestsApp = () => {
           </Route>
           <Route path="/k8s/ns/:ns/pods/:name">
             <LogsDetailPage />
+          </Route>
+          <Route path="/monitoring/alerts/:alertname">
+            <LogsAlertMetrics
+              rule={{
+                labels: { tenantId: 'application' },
+                query: `sum by(job)(rate({ job=~".+" }[5m])) > 0`,
+              }}
+            />
           </Route>
         </main>
       </BrowserRouter>

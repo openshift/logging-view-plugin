@@ -1,7 +1,7 @@
 import { WSFactory } from '@openshift-console/dynamic-plugin-sdk/lib/utils/k8s/ws-factory';
-import { CancellableFetch, cancellableFetch, RequestInitWithTimeout } from './cancellable-fetch';
 import { queryWithNamespace } from './attribute-filters';
-import { Config, Direction, QueryRangeResponse } from './logs.types';
+import { CancellableFetch, cancellableFetch, RequestInitWithTimeout } from './cancellable-fetch';
+import { Config, Direction, QueryRangeResponse, RulesResponse } from './logs.types';
 import { durationFromTimestamp } from './value-utils';
 
 const LOKI_ENDPOINT = '/api/proxy/plugin/logging-view-plugin/backend';
@@ -33,6 +33,7 @@ export const getFetchConfig = ({
 }: {
   config?: Config;
   tenant: string;
+  endpoint?: string;
 }): { requestInit?: RequestInitWithTimeout; endpoint: string } => {
   if (config && config.useTenantInHeader === true) {
     return {
@@ -142,4 +143,13 @@ export const connectToTailSocket = ({
     subprotocols: ['json'],
     jsonParse: true,
   });
+};
+
+export const getRules = ({ config, tenant }: { config?: Config; tenant: string }) => {
+  const { endpoint, requestInit } = getFetchConfig({
+    config,
+    tenant,
+  });
+
+  return cancellableFetch<RulesResponse>(`${endpoint}/prometheus/api/v1/rules`, requestInit);
 };

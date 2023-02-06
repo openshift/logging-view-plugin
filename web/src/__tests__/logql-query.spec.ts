@@ -247,7 +247,7 @@ describe('LogQL query', () => {
       {
         query: '{foo="var"}',
         selectorMatcher: { label: 'foo' },
-        expected: '{  }',
+        expected: '',
       },
       {
         query: '{foo="var", baz=~"zad"}',
@@ -367,6 +367,38 @@ describe('LogQL query', () => {
     ].forEach(({ query, pipeline, expected, matchOptions }) => {
       const logql = new LogQLQuery(query);
       expect(logql.removePipelineStage(pipeline, matchOptions).toString()).toEqual(expected);
+    });
+  });
+
+  it('should not change the string representation of a query', () => {
+    [
+      {
+        query: 'max_over_time({ logs_type=~".+" }[10m]))',
+        expected: 'max_over_time({ logs_type=~".+" }[10m]))',
+      },
+      {
+        query: '{ foo="var" } | json |= "line search"',
+        expected: '{ foo="var" } | json |= "line search"',
+      },
+      {
+        query: '1 + 1',
+        expected: '1 + 1',
+      },
+      {
+        query:
+          '(sum((count_over_time({title="martian", second="next"} |= "level=error" [5m]) / count_over_time({title="martian-2", second="next-2"}[5m]))) by(job) * 100.000000)',
+        expected:
+          '(sum((count_over_time({ title="martian", second="next" } |= "level=error" [5m]) / count_over_time({title="martian-2", second="next-2"}[5m]))) by(job) * 100.000000)',
+      },
+      {
+        query:
+          'sum by (level) (count_over_time({ log_type =~ ".+" } | json | level="unknown" or level="" or level=~"emerg|fatal|alert|crit|critical|err|error|eror|warn|warning|inf|info|information|notice" [1m]))',
+        expected:
+          'sum by (level) (count_over_time({ log_type=~".+" } | json | level="unknown" or level="" or level=~"emerg|fatal|alert|crit|critical|err|error|eror|warn|warning|inf|info|information|notice" [1m]))',
+      },
+    ].forEach(({ query, expected }) => {
+      const logql = new LogQLQuery(query);
+      expect(logql.toString()).toEqual(expected);
     });
   });
 });

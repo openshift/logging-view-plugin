@@ -12,6 +12,8 @@ export type PipelineStage = {
   labelsInFilter?: Array<LabelMatcher>;
 };
 
+type ExpressionBounds = { from: number; to: number };
+
 const parseMatchers = (
   syntaxTree: Tree,
   node: SyntaxNodeRef,
@@ -101,20 +103,30 @@ const parsePipelineStages = (
 export class LogQLQuery {
   streamSelector: Array<LabelMatcher> = [];
   pipeline: Array<PipelineStage> = [];
+  streamSelectorBounds: ExpressionBounds | undefined = undefined;
+  pipelineBounds: ExpressionBounds | undefined = undefined;
+  originalQuery = '';
 
   constructor(query: string) {
     const syntaxTree = parser.parse(query);
     let parsedMatchers: Array<LabelMatcher> = [];
     let parsedPipeline: Array<PipelineStage> = [];
 
+    let parsedMatcherBounds: ExpressionBounds | undefined = undefined;
+    let parsedPipelineBounds: ExpressionBounds | undefined = undefined;
+
     syntaxTree.iterate({
       enter(node) {
         if (node.name === 'Selector' && parsedMatchers.length === 0) {
           parsedMatchers = parseMatchers(syntaxTree, node, query);
 
+          parsedMatcherBounds = { from: node.from, to: node.to };
+
           return false;
         } else if (node.name === 'PipelineExpr' && parsedPipeline.length === 0) {
           parsedPipeline = parsePipelineStages(syntaxTree, node, query);
+
+          parsedPipelineBounds = { from: node.from, to: node.to };
 
           return false;
         }
@@ -123,6 +135,9 @@ export class LogQLQuery {
 
     this.streamSelector = parsedMatchers;
     this.pipeline = parsedPipeline;
+    this.streamSelectorBounds = parsedMatcherBounds;
+    this.pipelineBounds = parsedPipelineBounds;
+    this.originalQuery = query;
   }
 
   removeSelectorMatcher = (matcherToRemove: Partial<LabelMatcher>) => {
@@ -214,10 +229,36 @@ export class LogQLQuery {
   };
 
   toString = () => {
-    return `{ ${this.streamSelector
-      .map(({ label, operator, value }) => `${label}${operator}${value}`)
-      .join(', ')} }${this.pipeline
-      .map(({ operator, value }) => ` ${operator} ${value}`)
-      .join('')}`;
+    let query = '';
+
+    const minIndex = Math.min(
+      this.streamSelectorBounds ? this.streamSelectorBounds.from : Number.MAX_SAFE_INTEGER,
+      this.pipelineBounds ? this.pipelineBounds.from : Number.MAX_SAFE_INTEGER,
+    );
+
+    query += minIndex != Number.MAX_SAFE_INTEGER ? this.originalQuery.slice(0, minIndex) : '';
+
+    const stream =
+      this.streamSelector.length > 0
+        ? `{ ${this.streamSelector
+            .map(({ label, operator, value }) => `${label}${operator}${value}`)
+            .join(', ')} }`
+        : '';
+
+    const pipeline =
+      this.streamSelector.length > 0
+        ? `${this.pipeline.map(({ operator, value }) => ` ${operator} ${value}`).join('')}`
+        : '';
+
+    query += stream + pipeline;
+
+    query += this.originalQuery.slice(
+      Math.max(
+        this.streamSelectorBounds ? this.streamSelectorBounds.to : 0,
+        this.pipelineBounds ? this.pipelineBounds.to : 0,
+      ),
+    );
+
+    return query;
   };
 }
