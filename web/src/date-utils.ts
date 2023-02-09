@@ -24,7 +24,6 @@ export const timeShortFormatter = new Intl.DateTimeFormat(undefined, {
 
 export const timeMedFormatter = new Intl.DateTimeFormat(undefined, {
   hour: '2-digit',
-  hourCycle: 'h24',
   minute: '2-digit',
   second: 'numeric',
 });
