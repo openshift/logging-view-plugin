@@ -26,6 +26,7 @@ export const timeMedFormatter = new Intl.DateTimeFormat(undefined, {
   hour: '2-digit',
   minute: '2-digit',
   second: 'numeric',
+  hour12: false,
 });
 
 const dateMedFormatter = new Intl.DateTimeFormat('en', {
