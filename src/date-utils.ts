@@ -1,4 +1,5 @@
 import { TimeRangeNumber } from './logs.types';
+import { padLeadingZero } from './value-utils';
 
 export enum DateFormat {
   TimeShort,
@@ -55,7 +56,14 @@ export const dateToFormat = (date: Date | number, format: DateFormat): string =>
     case DateFormat.TimeFull: {
       const fractionalSeconds =
         typeof date === 'number' ? Math.floor(date % 1000) : date.getMilliseconds();
-      return `${timeMedFormatter.format(date)}.${fractionalSeconds}`;
+      const parts = timeMedFormatter.formatToParts(date);
+      const hours = parseInt(getPart(parts, 'hour'), 10);
+      const clampedHours = !isNaN(hours) ? padLeadingZero(hours >= 24 ? 0 : hours) : '';
+
+      return `${clampedHours}:${getPart(parts, 'minute')}:${getPart(
+        parts,
+        'second',
+      )}.${fractionalSeconds}`;
     }
     case DateFormat.Full:
       {
