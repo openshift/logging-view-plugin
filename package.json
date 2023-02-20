@@ -23,10 +23,10 @@
     "cypress:run": "cypress run",
     "cypress:run:ci": "NO_COLOR=1 npx cypress run --browser chrome",
     "test": "concurrently -n \"unit,e2e\" --kill-others-on-fail \"npm run test:unit\" \"npm run test:e2e\"",
-    "test:unit": "jest --config jest.config.js",
+    "test:unit": "TZ=UTC jest --config jest.config.js",
     "test:e2e": "./scripts/run-cypress.sh",
-    "test:unit:watch": "jest --config jest.config.js --watch",
-    "test:unit:coverage": "jest --config jest.config.js --coverage",
+    "test:unit:watch": "TZ=UTC jest --config jest.config.js --watch",
+    "test:unit:coverage": "TZ=UTC jest --config jest.config.js --coverage",
     "pre-commit:check": "concurrently -n \"lint,unit,tsc\" --kill-others-on-fail \"npm run lint\" \"npm run test:unit\" \"npm run lint:tsc\"",
     "prepare": "husky install"
   },
