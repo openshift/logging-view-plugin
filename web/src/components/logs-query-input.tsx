@@ -1,5 +1,6 @@
-import { TextArea } from '@patternfly/react-core';
+import { Form, FormGroup, TextArea } from '@patternfly/react-core';
 import React from 'react';
+import { LogQLQuery } from '../logql-query';
 import { TestIds } from '../test-ids';
 import { ExecuteQueryButton } from './execute-query-button';
 import './logs-query-input.css';
@@ -12,6 +13,7 @@ interface LogsQueryInputProps {
 
 export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({ value = '', onChange, onRun }) => {
   const [internalValue, setInternalValue] = React.useState(value);
+  const [isValid, setIsValid] = React.useState(true);
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       onRun?.();
@@ -20,6 +22,9 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({ value = '', onCh
 
   React.useEffect(() => {
     setInternalValue(value);
+    const parsedQuery = new LogQLQuery(value);
+
+    setIsValid(parsedQuery.streamSelector.length > 0);
   }, [value]);
 
   const handleOnChange = (text: string) => {
@@ -29,14 +34,26 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({ value = '', onCh
 
   return (
     <div className="co-logs-expression-input" data-test={TestIds.LogsQueryInput}>
-      <TextArea
-        className="co-logs-expression-input__searchInput"
-        placeholder="LogQL Query"
-        value={internalValue}
-        onChange={handleOnChange}
-        onKeyDown={handleKeyDown}
-        aria-label="LogQL Query"
-      />
+      <Form className="co-logs-expression-input__form">
+        <FormGroup
+          type="string"
+          helperTextInvalid={
+            'Invalid log stream selector. Please select a namespace, pod or container as filter, or add a log stream selector like: { log_type =~ ".+" } | json'
+          }
+          fieldId="selection"
+          validated={!isValid ? 'error' : undefined}
+        >
+          <TextArea
+            className="co-logs-expression-input__searchInput"
+            placeholder="LogQL Query"
+            value={internalValue}
+            onChange={handleOnChange}
+            onKeyDown={handleKeyDown}
+            aria-label="LogQL Query"
+            validated={!isValid ? 'error' : undefined}
+          />
+        </FormGroup>
+      </Form>
       {onRun && (
         <ExecuteQueryButton
           onClick={onRun}
