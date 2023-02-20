@@ -3,8 +3,9 @@
   align-items: flex-start;
 }
 
-.co-logs-expression-input__searchInput {
+.co-logs-expression-input__form {
   margin-right: var(--pf-global--spacer--md);
+  width: 100%;
 }
 
 textarea.pf-c-form-control.co-logs-expression-input__searchInput {
