@@ -73,3 +73,29 @@ oc patch consoles.operator.openshift.io cluster \
 ```sh
 make build-image
 ```
+
+## Features
+
+From 5.6.1+, appart from the core functionality, the plugin offers additional features that can be enabled using the `-features` flag with comma separated values. For example:
+
+`-features=dev-console,alerts`
+
+In Openshift console, these features will be enabled by the Cluster Logging Operator based on the cluster version.
+
+### Feature list
+
+| Feature       | Description                                                                                                                                  |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dev-console` | Adds the logging view to the developer perspective                                                                                           |
+| `alerts`      | Merges the Openshift console alerts with log-based alerts defined in the Loki ruler. Adds a log-based metrics chart in the alert detail view |
+
+### Compatibility matrix
+
+| CLO version | OCP versions                    | Features                                              |
+| ----------- | ------------------------------- | ----------------------------------------------------- |
+| 5.5         | 4.10 (tech preview), 4.11, 4.12 | _No features configuration, just core functionallity_ |
+| 5.6.1+      | 4.10 (tech preview), 4.11       | _No additional features, just core functionallity_    |
+| 5.6.1+      | 4.12, 4.13                      | `dev-console`                                         |
+| 5.7         | 4.11                            | _No additional features, just core functionallity_    |
+| 5.7         | 4.12                            | `dev-console`                                         |
+| 5.7         | 4.13                            | `dev-console`, `alerts`                               |
