@@ -93,6 +93,8 @@ export const LogsMetrics: React.FC<LogsMetricsProps> = ({
   const legendData = data?.map((series) => ({ childName: series.name, name: series.name }));
   const intervalValue = intervalFromTimeRange(timeRangeValue);
 
+  const dataIsEmpty = data ? data?.length === 0 : false;
+
   return (
     <div ref={containerRef} style={{ height: GRAPH_HEIGHT }} data-test={TestIds.LogsMetrics}>
       {error ? (
@@ -106,6 +108,10 @@ export const LogsMetrics: React.FC<LogsMetricsProps> = ({
         </CenteredContainer>
       ) : isLoading ? (
         <CenteredContainer>Loading...</CenteredContainer>
+      ) : dataIsEmpty ? (
+        <CenteredContainer>
+          <Alert variant="warning" isInline isPlain title="No datapoints found" />
+        </CenteredContainer>
       ) : data ? (
         <Chart
           containerComponent={

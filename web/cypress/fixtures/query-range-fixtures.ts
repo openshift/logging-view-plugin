@@ -171,6 +171,89 @@ export const queryRangeMatrixValidResponse = () => {
 export const queryRangeMatrixInvalidResponse = () => {
   return {};
 };
+
+export const queryRangeMatrixEmptyResponse = () => {
+  return {
+    status: 'success',
+    data: {
+      resultType: 'matrix',
+      result: [],
+      stats: {
+        summary: {
+          bytesProcessedPerSecond: 0,
+          linesProcessedPerSecond: 0,
+          totalBytesProcessed: 0,
+          totalLinesProcessed: 0,
+          execTime: 0.029010703,
+          queueTime: 0,
+          subqueries: 4,
+          totalEntriesReturned: 0,
+        },
+        querier: {
+          store: {
+            totalChunksRef: 0,
+            totalChunksDownloaded: 0,
+            chunksDownloadTime: 0,
+            chunk: {
+              headChunkBytes: 0,
+              headChunkLines: 0,
+              decompressedBytes: 0,
+              decompressedLines: 0,
+              compressedBytes: 0,
+              totalDuplicates: 0,
+            },
+          },
+        },
+        ingester: {
+          totalReached: 16,
+          totalChunksMatched: 0,
+          totalBatches: 0,
+          totalLinesSent: 0,
+          store: {
+            totalChunksRef: 0,
+            totalChunksDownloaded: 0,
+            chunksDownloadTime: 0,
+            chunk: {
+              headChunkBytes: 0,
+              headChunkLines: 0,
+              decompressedBytes: 0,
+              decompressedLines: 0,
+              compressedBytes: 0,
+              totalDuplicates: 0,
+            },
+          },
+        },
+        cache: {
+          chunk: {
+            entriesFound: 0,
+            entriesRequested: 0,
+            entriesStored: 0,
+            bytesReceived: 0,
+            bytesSent: 0,
+            requests: 0,
+          },
+          index: {
+            entriesFound: 0,
+            entriesRequested: 0,
+            entriesStored: 0,
+            bytesReceived: 0,
+            bytesSent: 0,
+            requests: 0,
+          },
+          result: {
+            entriesFound: 3,
+            entriesRequested: 3,
+            entriesStored: 1,
+            bytesReceived: 638,
+            bytesSent: 0,
+            requests: 4,
+          },
+        },
+      },
+    },
+  };
+};
+
 export const queryRangeStreamsInvalidResponse = () => {
   return {};
 };
