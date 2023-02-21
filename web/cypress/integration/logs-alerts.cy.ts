@@ -1,5 +1,6 @@
 import { TestIds } from '../../src/test-ids';
 import {
+  queryRangeMatrixEmptyResponse,
   queryRangeMatrixInvalidResponse,
   queryRangeMatrixValidResponse,
 } from '../fixtures/query-range-fixtures';
@@ -46,6 +47,18 @@ describe('Alerts logs metrics', () => {
       .should('exist')
       .within(() => {
         cy.contains('Unexpected end of JSON input');
+      });
+  });
+
+  it('handles errors gracefully when a response is empty', () => {
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixEmptyResponse());
+
+    cy.visit(LOGS_ALERTS_PAGE_URL);
+
+    cy.getByTestId(TestIds.LogsMetrics)
+      .should('exist')
+      .within(() => {
+        cy.contains('No datapoints found');
       });
   });
 

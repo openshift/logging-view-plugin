@@ -40,31 +40,45 @@ const getPart = (
   type: 'day' | 'hour' | 'minute' | 'month' | 'second' | 'year',
 ) => parts.find((p) => p.type === type)?.value || '';
 
+const isDateValid = (date: Date | number) => {
+  if (typeof date === 'number') {
+    return !isNaN(date);
+  } else if (date instanceof Date) {
+    return !isNaN(date.getTime());
+  }
+
+  return false;
+};
+
 export const dateToFormat = (date: Date | number, format: DateFormat): string => {
-  switch (format) {
-    case DateFormat.TimeShort:
-      return timeShortFormatter.format(date);
-      break;
-    case DateFormat.TimeMed:
-      return timeMedFormatter.format(date);
-      break;
-    case DateFormat.DateMed: {
-      const parts = dateMedFormatter.formatToParts(date);
-      return `${getPart(parts, 'year')}-${getPart(parts, 'month')}-${getPart(parts, 'day')}`;
-    }
-    case DateFormat.TimeFull: {
-      const fractionalSeconds =
-        typeof date === 'number' ? Math.floor(date % 1000) : date.getMilliseconds();
-      return `${timeMedFormatter.format(date)}.${fractionalSeconds}`;
-    }
-    case DateFormat.Full:
-      {
+  if (isDateValid(date)) {
+    switch (format) {
+      case DateFormat.TimeShort:
+        return timeShortFormatter.format(date);
+        break;
+      case DateFormat.TimeMed:
+        return timeMedFormatter.format(date);
+        break;
+      case DateFormat.DateMed: {
+        const parts = dateMedFormatter.formatToParts(date);
+        return `${getPart(parts, 'year')}-${getPart(parts, 'month')}-${getPart(parts, 'day')}`;
+      }
+      case DateFormat.TimeFull: {
         const fractionalSeconds =
           typeof date === 'number' ? Math.floor(date % 1000) : date.getMilliseconds();
-        return `${dateTimeFormatter.format(date)}.${fractionalSeconds}`;
+        return `${timeMedFormatter.format(date)}.${fractionalSeconds}`;
       }
-      break;
+      case DateFormat.Full:
+        {
+          const fractionalSeconds =
+            typeof date === 'number' ? Math.floor(date % 1000) : date.getMilliseconds();
+          return `${dateTimeFormatter.format(date)}.${fractionalSeconds}`;
+        }
+        break;
+    }
   }
+
+  return '';
 };
 
 export const getTimeFormatFromTimeRange = (timeRange: TimeRangeNumber): DateFormat =>
