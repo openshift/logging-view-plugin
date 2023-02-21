@@ -1,11 +1,8 @@
-import { Alert } from '@patternfly/react-core';
 import React, { useEffect } from 'react';
 import { useLogs } from '../../hooks/useLogs';
 import { Rule, TimeRange } from '../../logs.types';
-import { CenteredContainer } from '../centered-container';
 import { LogsMetrics } from '../logs-metrics';
 import { TimeRangeDropdown } from '../time-range-dropdown';
-import './logs-alerts-metrics.css';
 
 interface LogsAlertMetricsProps {
   rule?: Rule;
@@ -25,29 +22,21 @@ const LogsAlertMetrics: React.FC<LogsAlertMetricsProps> = ({ rule }) => {
     }
   }, [rule?.query, timeRange]);
 
+  const tenantError = !tenant
+    ? new Error(`label '${LOKI_TENANT_LABEL_KEY} is required to display the alert metrics`)
+    : undefined;
+
   return (
     <div className="co-logs-alert-metrics__container">
       <div className="co-logs-metrics__header">
         <TimeRangeDropdown value={timeRange} onChange={setTimeRange} />
       </div>
-      {tenant ? (
-        <LogsMetrics
-          logsData={logsData}
-          error={logsError}
-          isLoading={isLoadingLogsData}
-          timeRange={timeRange}
-        />
-      ) : (
-        <CenteredContainer>
-          <Alert
-            className="co-logs-metrics__error"
-            variant="danger"
-            isInline
-            isPlain
-            title={`label '${LOKI_TENANT_LABEL_KEY} is required to display the alert metrics`}
-          />
-        </CenteredContainer>
-      )}
+      <LogsMetrics
+        logsData={logsData}
+        error={logsError || tenantError}
+        isLoading={isLoadingLogsData}
+        timeRange={timeRange}
+      />
     </div>
   );
 };
