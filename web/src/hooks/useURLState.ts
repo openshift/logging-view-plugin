@@ -50,8 +50,8 @@ export const useURLState = ({ defaultQuery = DEFAULT_QUERY, attributes }: UseURL
       : undefined,
   );
 
-  const setTenantInURL = (tenant: string) => {
-    queryParams.set(TENANT_PARAM_KEY, tenant);
+  const setTenantInURL = (selectedTenant: string) => {
+    queryParams.set(TENANT_PARAM_KEY, selectedTenant);
     history.push(`${location.pathname}?${queryParams.toString()}`);
   };
 
@@ -65,15 +65,15 @@ export const useURLState = ({ defaultQuery = DEFAULT_QUERY, attributes }: UseURL
     history.push(`${location.pathname}?${queryParams.toString()}`);
   };
 
-  const setTimeRangeInURL = (timeRange: TimeRange) => {
-    queryParams.set(TIME_RANGE_START, String(timeRange.start));
-    queryParams.set(TIME_RANGE_END, String(timeRange.end));
+  const setTimeRangeInURL = (selectedTimeRange: TimeRange) => {
+    queryParams.set(TIME_RANGE_START, String(selectedTimeRange.start));
+    queryParams.set(TIME_RANGE_END, String(selectedTimeRange.end));
     history.push(`${location.pathname}?${queryParams.toString()}`);
   };
 
-  const setDirectionInURL = (direction?: 'forward' | 'backward') => {
-    if (direction) {
-      queryParams.set(DIRECTION, direction);
+  const setDirectionInURL = (selectedDirection?: 'forward' | 'backward') => {
+    if (selectedDirection) {
+      queryParams.set(DIRECTION, selectedDirection);
     } else {
       queryParams.delete(DIRECTION);
     }

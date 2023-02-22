@@ -30,9 +30,9 @@ const resourceDataSource =
   ({
     resource,
     namespace,
-    mapper = (resource) => ({
-      option: resource?.metadata?.name ?? '',
-      value: resource?.metadata?.name ?? '',
+    mapper = (resourceToMap) => ({
+      option: resourceToMap?.metadata?.name ?? '',
+      value: resourceToMap?.metadata?.name ?? '',
     }),
   }: {
     resource: 'pods' | 'namespaces' | string;

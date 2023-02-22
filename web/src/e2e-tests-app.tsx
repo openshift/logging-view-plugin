@@ -18,8 +18,8 @@ const DevConsole = () => {
     setIsOpen(!isOpen);
   };
 
-  const onSelectNamespace = (namespace: string) => () => {
-    history.push(`/dev-monitoring/ns/${namespace}/logs`);
+  const onSelectNamespace = (selectedNamespace: string) => () => {
+    history.push(`/dev-monitoring/ns/${selectedNamespace}/logs`);
     setIsOpen(false);
   };
 

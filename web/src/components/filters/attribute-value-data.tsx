@@ -23,12 +23,12 @@ export const useAttributeValueData = (attribute: Attribute): UseAttributeValueDa
             .then((asyncOptions) => {
               setData(asyncOptions);
             })
-            .catch((error) => {
+            .catch((searchError) => {
               try {
-                const jsonError = JSON.parse(error.message);
-                setError(jsonError.message || error);
+                const jsonError = JSON.parse(searchError.message);
+                setError(jsonError.message || searchError);
               } catch {
-                setError(error);
+                setError(searchError);
               }
             });
         }

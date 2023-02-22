@@ -376,13 +376,16 @@ export const LogsTable: React.FC<LogsTableProps> = ({
               >
                 <Td expand={{ isExpanded, onToggle: handleRowToggle, rowIndex }} />
 
-                {columns.map((column, index) => {
+                {columns.map((column, columnIndex) => {
                   const content = (
                     <LogRow data={value} title={column.title} showResources={showResources} />
                   );
 
                   return content ? (
-                    <Td key={`col-${column.title}-row-${index}`} className={getRowClassName(index)}>
+                    <Td
+                      key={`col-${column.title}-row-${columnIndex}`}
+                      className={getRowClassName(columnIndex)}
+                    >
                       {content}
                     </Td>
                   ) : null;
