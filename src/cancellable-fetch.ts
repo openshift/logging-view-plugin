@@ -30,7 +30,7 @@ export const cancellableFetch = <T>(
     return response.json();
   });
 
-  const timeout = init?.timeout ?? 30 * 1000;
+  const timeout = init?.timeout ?? 60 * 1000;
 
   if (timeout <= 0) {
     return { request: () => fetchPromise, abort };
