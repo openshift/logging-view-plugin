@@ -1,4 +1,5 @@
 import { TimeRangeNumber } from './logs.types';
+import { padLeadingZero } from './value-utils';
 
 export enum DateFormat {
   TimeShort,
@@ -8,63 +9,58 @@ export enum DateFormat {
   Full,
 }
 
-export const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
+const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
   month: 'short',
   day: 'numeric',
   hour: 'numeric',
   minute: 'numeric',
   year: 'numeric',
   second: 'numeric',
-});
-
-export const timeShortFormatter = new Intl.DateTimeFormat(undefined, {
-  hour: 'numeric',
-  minute: 'numeric',
-});
-
-export const timeMedFormatter = new Intl.DateTimeFormat(undefined, {
-  hour: '2-digit',
-  minute: '2-digit',
-  second: 'numeric',
   hour12: false,
 });
 
-const dateMedFormatter = new Intl.DateTimeFormat('en', {
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-});
+const isDateValid = (date: Date | number) => {
+  if (typeof date === 'number') {
+    return !isNaN(date);
+  } else if (date instanceof Date) {
+    return !isNaN(date.getTime());
+  }
 
-const getPart = (
-  parts: Intl.DateTimeFormatPart[],
-  type: 'day' | 'hour' | 'minute' | 'month' | 'second' | 'year',
-) => parts.find((p) => p.type === type)?.value || '';
+  return false;
+};
 
 export const dateToFormat = (date: Date | number, format: DateFormat): string => {
-  switch (format) {
-    case DateFormat.TimeShort:
-      return timeShortFormatter.format(date);
-      break;
-    case DateFormat.TimeMed:
-      return timeMedFormatter.format(date);
-      break;
-    case DateFormat.DateMed: {
-      const parts = dateMedFormatter.formatToParts(date);
-      return `${getPart(parts, 'year')}-${getPart(parts, 'month')}-${getPart(parts, 'day')}`;
-    }
-    case DateFormat.TimeFull: {
-      const fractionalSeconds =
-        typeof date === 'number' ? Math.floor(date % 1000) : date.getMilliseconds();
-      return `${timeMedFormatter.format(date)}.${fractionalSeconds}`;
-    }
-    case DateFormat.Full:
-      {
-        const fractionalSeconds =
-          typeof date === 'number' ? Math.floor(date % 1000) : date.getMilliseconds();
+  if (isDateValid(date)) {
+    const dateObject = new Date(date);
+    const hours = padLeadingZero(dateObject.getHours());
+    const minutes = padLeadingZero(dateObject.getMinutes());
+    const seconds = padLeadingZero(dateObject.getSeconds());
+
+    switch (format) {
+      case DateFormat.TimeShort:
+        return `${hours}:${minutes}`;
+      case DateFormat.TimeMed:
+        return `${hours}:${minutes}:${seconds}`;
+      case DateFormat.DateMed: {
+        const month = padLeadingZero(dateObject.getMonth() + 1);
+        const dayOfTheMonth = padLeadingZero(dateObject.getDate());
+
+        return `${dateObject.getFullYear()}-${month}-${dayOfTheMonth}`;
+      }
+      case DateFormat.TimeFull: {
+        const fractionalSeconds = padLeadingZero(dateObject.getMilliseconds(), 3);
+
+        return `${hours}:${minutes}:${seconds}.${fractionalSeconds}`;
+      }
+      case DateFormat.Full: {
+        const fractionalSeconds = padLeadingZero(dateObject.getMilliseconds(), 3);
+
         return `${dateTimeFormatter.format(date)}.${fractionalSeconds}`;
       }
-      break;
+    }
   }
+
+  return 'invalid date';
 };
 
 export const getTimeFormatFromTimeRange = (timeRange: TimeRangeNumber): DateFormat =>
