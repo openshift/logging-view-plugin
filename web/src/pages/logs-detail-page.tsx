@@ -83,15 +83,15 @@ const LogsDetailPage: React.FunctionComponent = () => {
     }
   };
 
-  const handleFiltersChange = (filters?: Filters) => {
-    setFilters(filters);
+  const handleFiltersChange = (selectedFilters?: Filters) => {
+    setFilters(selectedFilters);
 
-    if (!filters || Object.keys(filters).length === 0) {
+    if (!selectedFilters || Object.keys(selectedFilters).length === 0) {
       setQueryInURL(defaultQuery);
     } else {
       const updatedQuery = queryFromFilters({
         existingQuery: query,
-        filters,
+        filters: selectedFilters,
         attributes: attributesForPod,
       });
       setQueryInURL(updatedQuery);

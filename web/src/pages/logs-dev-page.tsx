@@ -80,12 +80,12 @@ const LogsDevPage: React.FunctionComponent = () => {
     }
   };
 
-  const handleFiltersChange = (filters?: Filters) => {
-    setFilters(filters);
+  const handleFiltersChange = (selectedFilters?: Filters) => {
+    setFilters(selectedFilters);
 
     const updatedQuery = queryFromFilters({
       existingQuery: query,
-      filters,
+      filters: selectedFilters,
       attributes: availableAttributes,
     });
 
