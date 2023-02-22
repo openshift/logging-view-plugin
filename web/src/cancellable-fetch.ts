@@ -11,6 +11,20 @@ class TimeoutError extends Error {
   }
 }
 
+class FetchError extends Error {
+  status: number;
+  name: string;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'Fetch Error';
+    this.status = status;
+  }
+}
+
+export const isFetchError = (error: unknown): error is FetchError =>
+  !!(error as FetchError).name && (error as FetchError).name === 'Fetch Error';
+
 export const cancellableFetch = <T>(
   url: string,
   init?: RequestInitWithTimeout,
@@ -25,7 +39,7 @@ export const cancellableFetch = <T>(
   }).then(async (response) => {
     if (!response.ok) {
       const text = await response.text();
-      throw new Error(text);
+      throw new FetchError(text, response.status);
     }
     return response.json();
   });
