@@ -1,0 +1,5 @@
+.co-logs-error_message {
+  margin-bottom: var(--pf-global--spacer--md);
+  margin-top: var(--pf-global--spacer--md);
+  background-color: transparent;
+}
