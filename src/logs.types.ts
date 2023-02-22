@@ -1,6 +1,7 @@
 export type Config = {
   useTenantInHeader?: boolean;
   isStreamingEnabledInDefaultPage?: boolean;
+  timeout?: number;
 };
 
 export type MetricValue = Array<number | string>;

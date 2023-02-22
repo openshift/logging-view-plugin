@@ -38,12 +38,18 @@ export const getFetchConfig = ({
     return {
       requestInit: {
         headers: { 'X-Scope-OrgID': tenant },
+        timeout: config?.timeout ? config.timeout * 1000 : undefined,
       },
       endpoint: LOKI_ENDPOINT,
     };
   }
 
-  return { endpoint: `${LOKI_ENDPOINT}/api/logs/v1/${tenant}` };
+  return {
+    requestInit: {
+      timeout: config?.timeout ? config.timeout * 1000 : undefined,
+    },
+    endpoint: `${LOKI_ENDPOINT}/api/logs/v1/${tenant}`,
+  };
 };
 
 export const executeQueryRange = ({
