@@ -1,0 +1,2 @@
+logsLimit: 100
+timeout: "30s"

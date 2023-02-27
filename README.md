@@ -68,6 +68,86 @@ oc patch consoles.operator.openshift.io cluster \
   --patch '{ "spec": { "plugins": ["logging-view-plugin"] } }' --type=merge
 ```
 
+## Plugin configuration
+
+The plugin can be configured by mounting a ConfigMap in the deployment and passing the `-plugin-config-path` flag with the file path, for example:
+
+ConfigMap with plugin configuration
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logging-view-plugin-config
+  namespace: openshift-logging
+  labels:
+    app: logging-view-plugin
+    app.kubernetes.io/part-of: logging-view-plugin
+data:
+  config.yaml: |-
+    logsLimit: 200
+    timeout: '60s'
+```
+
+Deployment
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logging-view-plugin
+  namespace: openshift-logging
+  labels:
+    app: logging-view-plugin
+    app.kubernetes.io/component: logging-view-plugin
+    app.kubernetes.io/instance: logging-view-plugin
+    app.kubernetes.io/part-of: logging-view-plugin
+    app.openshift.io/runtime-namespace: openshift-logging
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: logging-view-plugin
+  template:
+    metadata:
+      labels:
+        app: logging-view-plugin
+    spec:
+      containers:
+        - name: logging-view-plugin
+          image: "quay.io/gbernal/logging-view-plugin:latest"
+          args:
+            - "-plugin-config-path"
+            - "/etc/plugin/config.yaml"
+            ...
+
+          volumeMounts:
+            - name: plugin-config
+              readOnly: true
+              mountPath: /etc/plugin/config.yaml
+              subPath: config.yaml
+            ...
+
+      volumes:
+        - name: plugin-conf
+          configMap:
+            name: logging-view-plugin-config
+            defaultMode: 420
+        ...
+
+      ...
+
+```
+
+# Configuration values
+
+| Field                      | Description                                                                                                                                               | Default    | Unit                                         |
+| :------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------- | :------------------------------------------- |
+| timeout                    | fetch timeout when requesting logs                                                                                                                        | `30s`      | [duration](https://pkg.go.dev/time#Duration) |
+| logLimit                   | maximum logs to be requested                                                                                                                              | `100`      | units                                        |
+| alertingRuleTenantLabelKey | name of the alerting rule label used to match the tenantId for log-based alerts. Allows log-based alerts to request metrics to the proper tenant endpoint | `tenantId` | string                                       |
+| useTenantInHeader          | whether or not the tenant header `X-Scope-OrgID` should be used instead of using the tenant in the URL request                                            | `false`    | boolean                                      |
+
 ## Build a testint the image
 
 ```sh

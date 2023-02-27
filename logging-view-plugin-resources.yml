@@ -1,42 +1,10 @@
 apiVersion: v1
-kind: Namespace
-metadata:
-  name: logging-view
-
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: nginx-conf
-  namespace: logging-view
-  labels:
-    app: logging-view-plugin
-    app.kubernetes.io/part-of: logging-view-plugin
-data:
-  nginx.conf: |
-    error_log /dev/stdout info;
-    events {}
-    http {
-      access_log         /dev/stdout;
-      include            /etc/nginx/mime.types;
-      default_type       application/octet-stream;
-      keepalive_timeout  65;
-      server {
-        listen              9443 ssl;
-        ssl_certificate     /var/serving-cert/tls.crt;
-        ssl_certificate_key /var/serving-cert/tls.key;
-        root                /usr/share/nginx/html;
-      }
-    }
-
----
-apiVersion: v1
 kind: Service
 metadata:
   annotations:
     service.alpha.openshift.io/serving-cert-secret-name: plugin-serving-cert
   name: logging-view-plugin
-  namespace: logging-view
+  namespace: openshift-logging
   labels:
     app: logging-view-plugin
     app.kubernetes.io/component: logging-view-plugin
@@ -58,13 +26,13 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: logging-view-plugin
-  namespace: logging-view
+  namespace: openshift-logging
   labels:
     app: logging-view-plugin
     app.kubernetes.io/component: logging-view-plugin
     app.kubernetes.io/instance: logging-view-plugin
     app.kubernetes.io/part-of: logging-view-plugin
-    app.openshift.io/runtime-namespace: logging-view
+    app.openshift.io/runtime-namespace: openshift-logging
 spec:
   replicas: 1
   selector:
@@ -77,7 +45,12 @@ spec:
     spec:
       containers:
         - name: logging-view-plugin
-          image: 'quay.io/gbernal/logging-view-plugin:latest'
+          image: "quay.io/gbernal/logging-view-plugin:latest"
+          args:
+            - "-port=9443"
+            - "-cert=/var/serving-cert/tls.crt"
+            - "-key=/var/serving-cert/tls.key"
+            - "-plugin-config-path=/etc/plugin/config.yaml"
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -95,18 +68,18 @@ spec:
             - name: plugin-serving-cert
               readOnly: true
               mountPath: /var/serving-cert
-            - name: nginx-conf
+            - name: plugin-config
               readOnly: true
-              mountPath: /etc/nginx/nginx.conf
-              subPath: nginx.conf
+              mountPath: /etc/plugin/config.yaml
+              subPath: config.yaml
       volumes:
         - name: plugin-serving-cert
           secret:
             secretName: plugin-serving-cert
             defaultMode: 420
-        - name: nginx-conf
+        - name: plugin-conf
           configMap:
-            name: nginx-conf
+            name: logging-view-plugin-config
             defaultMode: 420
       restartPolicy: Always
       dnsPolicy: ClusterFirst
@@ -126,11 +99,11 @@ kind: ConsolePlugin
 metadata:
   name: logging-view-plugin
 spec:
-  displayName: 'Logging view plugin'
+  displayName: "Logging view plugin"
   service:
     name: logging-view-plugin
-    namespace: logging-view
-    basePath: '/'
+    namespace: openshift-logging
+    basePath: "/"
     port: 9443
   proxy:
     - type: Service
@@ -145,14 +118,12 @@ spec:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: logging-view-config
-  namespace: logging-view
+  name: logging-view-plugin-config
+  namespace: openshift-logging
   labels:
     app: logging-view-plugin
     app.kubernetes.io/part-of: logging-view-plugin
 data:
-  config: |
-    {
-      "useTenantInHeader": true,
-      "isStreamingEnabledInDefaultPage": true
-    }
+  config.yaml: |-
+    logsLimit: 100
+    timeout: "30s"

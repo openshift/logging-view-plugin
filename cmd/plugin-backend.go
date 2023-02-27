@@ -11,13 +11,14 @@ import (
 )
 
 var (
-	portArg       = flag.Int("port", 0, "server port to listen on (default: 9002)")
-	certArg       = flag.String("cert", "", "cert file path to enable TLS (disabled by default)")
-	keyArg        = flag.String("key", "", "private key file path to enable TLS (disabled by default)")
-	featuresArg   = flag.String("features", "", "enabled features, comma separated")
-	staticPathArg = flag.String("static-path", "", "static files path to serve frontend (default: './web/dist')")
-	configPathArg = flag.String("config-path", "", "config files path (default: './config')")
-	log           = logrus.WithField("module", "main")
+	portArg         = flag.Int("port", 0, "server port to listen on (default: 9002)")
+	certArg         = flag.String("cert", "", "cert file path to enable TLS (disabled by default)")
+	keyArg          = flag.String("key", "", "private key file path to enable TLS (disabled by default)")
+	featuresArg     = flag.String("features", "", "enabled features, comma separated")
+	staticPathArg   = flag.String("static-path", "", "static files path to serve frontend (default: './web/dist')")
+	configPathArg   = flag.String("config-path", "", "config files path (default: './config')")
+	pluginConfigArg = flag.String("plugin-config-path", "", "plugin yaml configuration")
+	log             = logrus.WithField("module", "main")
 )
 
 func main() {
@@ -28,7 +29,8 @@ func main() {
 	key := mergeEnvValue("PRIVATE_KEY_FILE_PATH", *keyArg, "")
 	features := mergeEnvValue("LOGGING_VIEW_PLUGIN_FEATURES", *featuresArg, "")
 	staticPath := mergeEnvValue("LOGGING_VIEW_PLUGIN_STATIC_PATH", *staticPathArg, "./web/dist")
-	configPath := mergeEnvValue("LOGGING_VIEW_PLUGIN_CONFIG_PATH", *configPathArg, "./config")
+	configPath := mergeEnvValue("LOGGING_VIEW_PLUGIN_MANIFEST_CONFIG_PATH", *configPathArg, "./config")
+	pluginConfigPath := mergeEnvValue("LOGGING_VIEW_PLUGIN_CONFIG_PATH", *pluginConfigArg, "/etc/plugin/config.yaml")
 
 	featuresList := strings.Fields(strings.Join(strings.Split(strings.ToLower(features), ","), " "))
 
@@ -40,12 +42,13 @@ func main() {
 	log.Infof("enabled features: %+q\n", featuresList)
 
 	server.Start(&server.Config{
-		Port:           port,
-		CertFile:       cert,
-		PrivateKeyFile: key,
-		Features:       featuresSet,
-		StaticPath:     staticPath,
-		ConfigPath:     configPath,
+		Port:             port,
+		CertFile:         cert,
+		PrivateKeyFile:   key,
+		Features:         featuresSet,
+		StaticPath:       staticPath,
+		ConfigPath:       configPath,
+		PluginConfigPath: pluginConfigPath,
 	})
 }
 

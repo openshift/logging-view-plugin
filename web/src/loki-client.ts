@@ -10,7 +10,6 @@ type QueryRangeParams = {
   query: string;
   start: number;
   end: number;
-  limit?: number;
   config?: Config;
   namespace?: string;
   tenant: string;
@@ -39,12 +38,18 @@ export const getFetchConfig = ({
     return {
       requestInit: {
         headers: { 'X-Scope-OrgID': tenant },
+        timeout: config?.timeout ? config.timeout * 1000 : undefined,
       },
       endpoint: LOKI_ENDPOINT,
     };
   }
 
-  return { endpoint: `${LOKI_ENDPOINT}/api/logs/v1/${tenant}` };
+  return {
+    requestInit: {
+      timeout: config?.timeout ? config.timeout * 1000 : undefined,
+    },
+    endpoint: `${LOKI_ENDPOINT}/api/logs/v1/${tenant}`,
+  };
 };
 
 export const executeQueryRange = ({
@@ -52,7 +57,6 @@ export const executeQueryRange = ({
   start,
   end,
   config,
-  limit = 100,
   tenant,
   namespace,
   direction,
@@ -66,7 +70,7 @@ export const executeQueryRange = ({
     query: extendedQuery,
     start: String(start * 1000000),
     end: String(end * 1000000),
-    limit: String(limit),
+    limit: String(config?.logsLimit ?? 100),
   };
 
   if (direction) {
@@ -117,7 +121,6 @@ export const executeHistogramQuery = ({
 export const connectToTailSocket = ({
   query,
   start,
-  limit = 200,
   config,
   tenant,
   namespace,
@@ -130,7 +133,7 @@ export const connectToTailSocket = ({
   const params = {
     query: extendedQuery,
     start: String(start * 1000000),
-    limit: String(limit),
+    limit: String(config?.logsLimit ?? 200),
   };
 
   const { endpoint } = getFetchConfig({ config, tenant });

@@ -1,6 +1,6 @@
-import { useK8sWatchResource } from '@openshift-console/dynamic-plugin-sdk';
 import { WSFactory } from '@openshift-console/dynamic-plugin-sdk/lib/utils/k8s/ws-factory';
 import React from 'react';
+import { getConfig } from '../backend-client';
 import {
   Config,
   Direction,
@@ -14,17 +14,12 @@ import { intervalFromTimeRange, numericTimeRange, timeRangeFromDuration } from '
 import { millisecondsFromDuration } from '../value-utils';
 
 const DEFAULT_TIME_SPAN = '1h';
-const QUERY_LOGS_LIMIT = 100;
 const STREAMING_MAX_LOGS_LIMIT = 1e3;
-
-type RawConfig = { data: { config: string } };
 
 const defaultConfig: Config = {
   isStreamingEnabledInDefaultPage: false,
+  logsLimit: 100,
 };
-
-const isRawConfig = (obj: unknown): obj is RawConfig =>
-  obj !== null && (obj as RawConfig).data && typeof (obj as RawConfig).data.config === 'string';
 
 const isAbortError = (error: unknown): boolean =>
   error instanceof Error && error.name === 'AbortError';
@@ -40,6 +35,7 @@ type State = {
   hasMoreLogsData?: boolean;
   isStreaming: boolean;
   config: Config;
+  configLoaded: boolean;
 };
 
 type Action =
@@ -178,7 +174,7 @@ const reducer = (state: State, action: Action): State => {
         hasMoreLogsData:
           action.payload.logsData.data.result
             .map((result) => result.values.length)
-            .reduce((sum, count) => sum + count, 0) >= QUERY_LOGS_LIMIT,
+            .reduce((sum, count) => sum + count, 0) >= state.config.logsLimit,
       };
     case 'moreLogsResponse':
       return {
@@ -188,7 +184,7 @@ const reducer = (state: State, action: Action): State => {
         hasMoreLogsData:
           action.payload.logsData.data.result
             .map((result) => result.values.length)
-            .reduce((sum, count) => sum + count, 0) >= QUERY_LOGS_LIMIT,
+            .reduce((sum, count) => sum + count, 0) >= state.config.logsLimit,
       };
     case 'logsError':
       return {
@@ -200,6 +196,7 @@ const reducer = (state: State, action: Action): State => {
     case 'setConfig':
       return {
         ...state,
+        configLoaded: true,
         config: action.payload.config,
       };
 
@@ -227,11 +224,6 @@ export const useLogs = (
   const logsAbort = React.useRef<() => void | undefined>();
   const histogramAbort = React.useRef<() => void | undefined>();
   const ws = React.useRef<WSFactory | null>();
-  const [configData, configLoaded, configError] = useK8sWatchResource({
-    namespace: 'logging-view',
-    name: 'logging-view-config',
-    kind: 'ConfigMap',
-  });
 
   const [
     {
@@ -245,6 +237,7 @@ export const useLogs = (
       hasMoreLogsData,
       isStreaming,
       config,
+      configLoaded,
     },
     dispatch,
   ] = React.useReducer(reducer, {
@@ -254,23 +247,25 @@ export const useLogs = (
     hasMoreLogsData: false,
     isStreaming: false,
     config: defaultConfig,
+    configLoaded: false,
   });
 
-  React.useEffect(() => {
-    if (!configError && configLoaded) {
+  const fetchConfig = React.useCallback(async () => {
+    if (!configLoaded) {
       try {
-        if (isRawConfig(configData)) {
-          const parsedConfig = JSON.parse(configData.data.config);
-          const mergedConfig = { ...defaultConfig, ...parsedConfig };
-          dispatch({ type: 'setConfig', payload: { config: mergedConfig } });
-          currentConfig.current = mergedConfig;
-        }
+        const configData = await getConfig();
+        const mergedConfig = { ...defaultConfig, ...configData };
+        dispatch({ type: 'setConfig', payload: { config: mergedConfig } });
+
+        currentConfig.current = mergedConfig;
       } catch (e) {
         // eslint-disable-next-line no-console
-        console.warn('Error parsing configuration from ConfigMap', e);
+        console.warn('Error fetching configuration', e);
       }
     }
-  }, [configLoaded, configError, configData]);
+
+    return currentConfig.current;
+  }, [configLoaded]);
 
   const getMoreLogs = async ({
     lastTimestamp,
@@ -296,11 +291,12 @@ export const useLogs = (
         logsAbort.current();
       }
 
+      await fetchConfig();
+
       const { request, abort } = executeQueryRange({
         query,
         start,
         end: lastTimestamp,
-        limit: QUERY_LOGS_LIMIT,
         config: currentConfig.current,
         tenant: currentTenant.current,
         namespace,
@@ -350,11 +346,12 @@ export const useLogs = (
         logsAbort.current();
       }
 
+      await fetchConfig();
+
       const { request, abort } = executeQueryRange({
         query,
         start,
         end,
-        limit: QUERY_LOGS_LIMIT,
         config: currentConfig.current,
         tenant: currentTenant.current,
         namespace,
@@ -478,6 +475,8 @@ export const useLogs = (
       }
 
       const { start, end } = numericTimeRange(currentTimeRange.current);
+
+      await fetchConfig();
 
       const { request, abort } = executeHistogramQuery({
         query,

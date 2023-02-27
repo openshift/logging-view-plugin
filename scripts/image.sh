@@ -5,12 +5,14 @@ set -euo pipefail
 PREFER_PODMAN=0
 PUSH=0
 TAG="dev"
+REGISTRY_ORG="openshift-logging"
 
-while getopts ":pdt:" flag; do
+while getopts ":pdto:" flag; do
     case $flag in
         p) PREFER_PODMAN=1;;
         d) PUSH=1;;
         t) TAG=$OPTARG;;
+        o) REGISTRY_ORG=$OPTARG;;
         \?) echo "Invalid option: -$flag" 
             exit;;
     esac
@@ -22,7 +24,7 @@ else
     OCI_BIN="docker"
 fi
 
-BASE_IMAGE="quay.io/openshift-logging/logging-view-plugin"
+BASE_IMAGE="quay.io/${REGISTRY_ORG}/logging-view-plugin"
 IMAGE=${BASE_IMAGE}:${TAG}
 
 echo "Building image '${IMAGE}' with ${OCI_BIN}"

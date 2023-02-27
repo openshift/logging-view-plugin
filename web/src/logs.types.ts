@@ -1,7 +1,9 @@
 export type Config = {
   useTenantInHeader?: boolean;
   isStreamingEnabledInDefaultPage?: boolean;
-  lokiTenanLabelKey?: string;
+  alertingRuleTenantLabelKey?: string;
+  timeout?: number;
+  logsLimit: number;
 };
 
 export type MetricValue = Array<number | string>;
