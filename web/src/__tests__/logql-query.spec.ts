@@ -212,6 +212,11 @@ describe('LogQL query', () => {
   it('should append a new selector', () => {
     [
       {
+        query: '',
+        selectorMatcher: { label: 'foo', operator: '=', value: '"var"' },
+        expected: '{ foo="var" }',
+      },
+      {
         query: '{}',
         selectorMatcher: { label: 'foo', operator: '=', value: '"var"' },
         expected: '{ foo="var" }',
@@ -267,6 +272,11 @@ describe('LogQL query', () => {
 
   it('should append a new pipeline stage', () => {
     [
+      {
+        query: '',
+        pipeline: { operator: '|', value: 'json' },
+        expected: '', // If there's no stream selector a pipeline stage cannot be added
+      },
       {
         query: '{ foo="var" }',
         pipeline: { operator: '|', value: 'json' },
