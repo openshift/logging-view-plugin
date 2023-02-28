@@ -20,7 +20,7 @@ const SHOW_RESOURCES_PARAM_KEY = 'showResources';
 
 const DEFAULT_TENANT = 'application';
 const DEFAULT_SHOW_RESOURCES = '0';
-const DEFAULT_QUERY = '{ log_type =~ ".+" } | json';
+export const DEFAULT_QUERY = '{ log_type=~".+" } | json';
 
 const getDirectionValue = (value?: string | null): Direction =>
   value !== null ? (value === 'forward' ? 'forward' : 'backward') : undefined;

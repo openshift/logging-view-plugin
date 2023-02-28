@@ -10,7 +10,7 @@ import { RefreshIntervalDropdown } from '../components/refresh-interval-dropdown
 import { TimeRangeDropdown } from '../components/time-range-dropdown';
 import { ToggleHistogramButton } from '../components/toggle-histogram-button';
 import { useLogs } from '../hooks/useLogs';
-import { useURLState } from '../hooks/useURLState';
+import { DEFAULT_QUERY, useURLState } from '../hooks/useURLState';
 import { Direction } from '../logs.types';
 import { TestIds } from '../test-ids';
 
@@ -79,16 +79,20 @@ const LogsPage: React.FC = () => {
     runQuery();
   };
 
-  const handleFiltersChange = (filters?: Filters) => {
-    setFilters(filters);
+  const handleFiltersChange = (selectedFilters?: Filters) => {
+    setFilters(selectedFilters);
 
-    const updatedQuery = queryFromFilters({
-      existingQuery: query,
-      filters,
-      attributes: availableAttributes,
-    });
+    if (!selectedFilters || Object.keys(selectedFilters).length === 0) {
+      setQueryInURL(DEFAULT_QUERY);
+    } else {
+      const updatedQuery = queryFromFilters({
+        existingQuery: query,
+        filters: selectedFilters,
+        attributes: availableAttributes,
+      });
 
-    setQueryInURL(updatedQuery);
+      setQueryInURL(updatedQuery);
+    }
   };
 
   const handleQueryChange = (queryFromInput: string) => {
