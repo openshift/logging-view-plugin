@@ -283,6 +283,11 @@ export const useLogs = (
     namespace?: string;
     direction?: Direction;
   }) => {
+    if (query.length === 0) {
+      dispatch({ type: 'logsError', payload: { error: new Error('Query is empty') } });
+      return;
+    }
+
     try {
       currentQuery.current = query;
       currentTime.current = Date.now();
@@ -335,6 +340,11 @@ export const useLogs = (
     namespace?: string;
     direction?: Direction;
   }) => {
+    if (query.length === 0) {
+      dispatch({ type: 'logsError', payload: { error: new Error('Query is empty') } });
+      return;
+    }
+
     try {
       currentQuery.current = query;
       currentTenant.current = tenant ?? currentTenant.current;
@@ -464,6 +474,11 @@ export const useLogs = (
     timeRange?: TimeRange;
     namespace?: string;
   }) => {
+    if (query.length === 0) {
+      dispatch({ type: 'histogramError', payload: { error: new Error('Query is empty') } });
+      return;
+    }
+
     try {
       currentQuery.current = query;
       currentTenant.current = tenant ?? currentTenant.current;
