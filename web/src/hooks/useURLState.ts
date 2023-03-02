@@ -61,7 +61,8 @@ export const useURLState = ({ defaultQuery = DEFAULT_QUERY, attributes }: UseURL
   };
 
   const setQueryInURL = (newQuery: string) => {
-    queryParams.set(QUERY_PARAM_KEY, newQuery);
+    const trimmedQuery = newQuery.trim();
+    queryParams.set(QUERY_PARAM_KEY, trimmedQuery);
     history.push(`${location.pathname}?${queryParams.toString()}`);
   };
 
@@ -88,7 +89,7 @@ export const useURLState = ({ defaultQuery = DEFAULT_QUERY, attributes }: UseURL
     const timeRangeEndValue = queryParams.get(TIME_RANGE_END);
     const directionValue = queryParams.get(DIRECTION);
 
-    setQuery(queryValue);
+    setQuery(queryValue.trim());
     setTenant(tenantValue);
     setDirection(getDirectionValue(directionValue));
     setAreResourcesShown(showResourcesValue === '1');
