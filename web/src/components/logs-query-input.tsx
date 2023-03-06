@@ -15,7 +15,7 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({ value = '', onCh
   const [internalValue, setInternalValue] = React.useState(value);
   const [isValid, setIsValid] = React.useState(true);
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && internalValue.trim().length > 0) {
       onRun?.();
     }
   };
