@@ -1,12 +1,11 @@
 import { RulesResponse } from './logs.types';
 import { getRules } from './loki-client';
-import { TENANTS } from './tenants';
 
 const abortControllers: Map<string, null | (() => void)> = new Map();
 
-const getAlertingRules = async () => {
+export const getAlertingRules = async (tenants: Array<string>) => {
   const rulesResponses = await Promise.allSettled(
-    TENANTS.map((tenant) => {
+    tenants.map((tenant) => {
       if (abortControllers.has(tenant)) {
         abortControllers.get(tenant)?.();
       }
@@ -35,5 +34,3 @@ const getAlertingRules = async () => {
 
   return mergedRules;
 };
-
-export default getAlertingRules;
