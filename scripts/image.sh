@@ -2,21 +2,10 @@
 
 set -euo pipefail
 
-PREFER_PODMAN=0
-PUSH=0
-TAG="dev"
-REGISTRY_ORG="openshift-logging"
-
-while getopts ":pdto:" flag; do
-    case $flag in
-        p) PREFER_PODMAN=1;;
-        d) PUSH=1;;
-        t) TAG=$OPTARG;;
-        o) REGISTRY_ORG=$OPTARG;;
-        \?) echo "Invalid option: -$flag" 
-            exit;;
-    esac
-done
+PREFER_PODMAN="${PREFER_PODMAN:-0}"
+PUSH="${PUSH:-0}"
+TAG="${TAG:-dev}"
+REGISTRY_ORG="${REGISTRY_ORG:-openshift-logging}"
 
 if [[ -x "$(command -v podman)" && $PREFER_PODMAN == 1 ]]; then
     OCI_BIN="podman"
