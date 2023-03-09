@@ -74,6 +74,8 @@ describe('Alerts logs metrics', () => {
       cy.contains('Last 6 hours').click();
     });
 
+    cy.wait(200);
+
     cy.get('@queryRangeMatrix.all').should('have.length.at.least', 2);
   });
 });

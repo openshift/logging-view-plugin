@@ -51,15 +51,30 @@
   {
     "type": "console.alerts/rules-source",
     "properties": {
-      "id": "logging-loki",
+      "id": "user",
       "contextId": "observe-alerting",
-      "getAlertingRules": { "$codeRef": "getAlertingRules" }
+      "getAlertingRules": { "$codeRef": "getUserAlertingRules" }
     }
   },
   {
     "type": "console.alerts/rules-chart",
     "properties": {
-      "sourceId": "logging-loki",
+      "sourceId": "user",
+      "chart": { "$codeRef": "LogsAlertMetrics" }
+    }
+  },
+  {
+    "type": "console.alerts/rules-source",
+    "properties": {
+      "id": "platform",
+      "contextId": "observe-alerting",
+      "getAlertingRules": { "$codeRef": "getPlatformAlertingRules" }
+    }
+  },
+  {
+    "type": "console.alerts/rules-chart",
+    "properties": {
+      "sourceId": "platform",
       "chart": { "$codeRef": "LogsAlertMetrics" }
     }
   }
