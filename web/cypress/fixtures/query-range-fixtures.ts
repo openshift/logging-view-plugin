@@ -257,3 +257,7 @@ export const queryRangeMatrixEmptyResponse = () => {
 export const queryRangeStreamsInvalidResponse = () => {
   return {};
 };
+
+export const queryRangeStreamsErrorResponse = () => {
+  return 'max entries limit';
+};
