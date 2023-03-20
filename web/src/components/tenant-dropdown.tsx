@@ -1,5 +1,6 @@
 import { OptionsMenu, OptionsMenuItem, OptionsMenuToggle } from '@patternfly/react-core';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { TENANTS } from '../tenants';
 import { TestIds } from '../test-ids';
 
@@ -14,6 +15,8 @@ export const TenantDropdown: React.FC<TenantDropdownProps> = ({
   onTenantSelected,
   isDisabled = false,
 }) => {
+  const { t } = useTranslation('plugin__logging-view-plugin');
+
   const [isOpen, setIsOpen] = React.useState(false);
 
   const onToggle = () => setIsOpen(!isOpen);
@@ -45,7 +48,7 @@ export const TenantDropdown: React.FC<TenantDropdownProps> = ({
         <OptionsMenuToggle
           isDisabled={isDisabled}
           onToggle={onToggle}
-          toggleTemplate={selectedTenant ?? 'Select a tenant'}
+          toggleTemplate={selectedTenant ?? t('Select a tenant')}
         />
       }
     />

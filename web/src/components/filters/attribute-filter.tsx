@@ -11,6 +11,7 @@ import {
 } from '@patternfly/react-core';
 import { FilterIcon } from '@patternfly/react-icons';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDebounce } from '../../hooks/useDebounce';
 import { TestIds } from '../../test-ids';
 import './attribute-filter.css';
@@ -30,6 +31,8 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
   onFiltersChange,
   isDisabled,
 }) => {
+  const { t } = useTranslation('plugin__logging-view-plugin');
+
   const [isAttributeExpanded, setIsAttributeExpanded] = React.useState(false);
   const changeFromInput = React.useRef(false);
   const [textInputValue, setTextInputValue] = React.useState('');
@@ -112,11 +115,15 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
         return (
           <TextInput
             key={`text-${attribute.id}`}
-            placeholder={`Search by ${attribute.name}`}
+            placeholder={t('Search by {{attributeName}}', {
+              attributeName: attribute.name,
+            })}
             onChange={handleInputValueChange}
             className="co-logs__attribute-filter__text"
             iconVariant="search"
-            aria-label={`Search by ${attribute.name}`}
+            aria-label={t('Search by {{attributeName}}', {
+              attributeName: attribute.name,
+            })}
             value={textInputValue}
           />
         );
@@ -154,7 +161,7 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
           onToggle={handleAttributeToggle}
           isOpen={isAttributeExpanded}
           onSelect={handleAttributeSelect}
-          placeholderText="Attribute"
+          placeholderText={t('Attribute')}
           isDisabled={isDisabled}
           selections={selectedAttributeId}
           toggleIcon={<FilterIcon />}

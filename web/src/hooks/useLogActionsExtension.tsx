@@ -1,6 +1,7 @@
 import { Action, Alert, ExtensionHook } from '@openshift-console/dynamic-plugin-sdk';
 import { ListIcon } from '@patternfly/react-icons';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 type LogActionsExtensionOptions = {
   alert?: Alert;
@@ -9,6 +10,8 @@ type LogActionsExtensionOptions = {
 const useLogActionsExtension: ExtensionHook<Array<Action>, LogActionsExtensionOptions> = (
   options,
 ) => {
+  const { t } = useTranslation('plugin__logging-view-plugin');
+
   // TODO: transform promQL into logQL
   const alertQuery = options.alert?.rule?.query ?? '';
   const href = `/monitoring/logs?q=${alertQuery}`;
@@ -17,7 +20,7 @@ const useLogActionsExtension: ExtensionHook<Array<Action>, LogActionsExtensionOp
       id: 'link-to-logs',
       label: (
         <>
-          <ListIcon /> See related logs
+          <ListIcon /> {t('See related logs')}
         </>
       ),
       cta: { href },

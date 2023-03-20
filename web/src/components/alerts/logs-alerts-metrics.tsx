@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLogs } from '../../hooks/useLogs';
 import { Rule, TimeRange } from '../../logs.types';
 import { LogsMetrics } from '../logs-metrics';
@@ -11,6 +12,7 @@ interface LogsAlertMetricsProps {
 const LOKI_TENANT_LABEL_KEY = 'tenantId';
 
 const LogsAlertMetrics: React.FC<LogsAlertMetricsProps> = ({ rule }) => {
+  const { t } = useTranslation('plugin__logging-view-plugin');
   const { getLogs, logsData, logsError, isLoadingLogsData, config } = useLogs();
 
   const tenant = rule?.labels?.[config.alertingRuleTenantLabelKey ?? LOKI_TENANT_LABEL_KEY];
@@ -23,7 +25,11 @@ const LogsAlertMetrics: React.FC<LogsAlertMetricsProps> = ({ rule }) => {
   }, [rule?.query, timeRange]);
 
   const tenantError = !tenant
-    ? new Error(`label '${LOKI_TENANT_LABEL_KEY} is required to display the alert metrics`)
+    ? new Error(
+        t('Label {{tenantKey}} is required to display the alert metrics', {
+          tenantKey: LOKI_TENANT_LABEL_KEY,
+        }),
+      )
     : undefined;
 
   return (

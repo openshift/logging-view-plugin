@@ -1,5 +1,6 @@
 import { Form, FormGroup, TextArea } from '@patternfly/react-core';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { LogQLQuery } from '../logql-query';
 import { TestIds } from '../test-ids';
 import { ExecuteQueryButton } from './execute-query-button';
@@ -12,6 +13,8 @@ interface LogsQueryInputProps {
 }
 
 export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({ value = '', onChange, onRun }) => {
+  const { t } = useTranslation('plugin__logging-view-plugin');
+
   const [internalValue, setInternalValue] = React.useState(value);
   const [isValid, setIsValid] = React.useState(true);
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -37,9 +40,9 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({ value = '', onCh
       <Form className="co-logs-expression-input__form">
         <FormGroup
           type="string"
-          helperTextInvalid={
-            'Invalid log stream selector. Please select a namespace, pod or container as filter, or add a log stream selector like: { log_type =~ ".+" } | json'
-          }
+          helperTextInvalid={`${t(
+            'Invalid log stream selector. Please select a namespace, pod or container as filter, or add a log stream selector like: ',
+          )} { log_type =~ ".+" } | json`}
           fieldId="selection"
           validated={!isValid ? 'error' : undefined}
         >

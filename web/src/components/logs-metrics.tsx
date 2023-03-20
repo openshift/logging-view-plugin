@@ -9,6 +9,7 @@ import {
 } from '@patternfly/react-charts';
 import { Alert } from '@patternfly/react-core';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { DateFormat, dateToFormat, getTimeFormatFromTimeRange } from '../date-utils';
 import { useRefWidth } from '../hooks/useRefWidth';
 import { isMatrixResult, QueryRangeResponse, TimeRange } from '../logs.types';
@@ -82,6 +83,8 @@ export const LogsMetrics: React.FC<LogsMetricsProps> = ({
   error,
   timeRange,
 }) => {
+  const { t } = useTranslation('plugin__logging-view-plugin');
+
   const [containerRef, width] = useRefWidth();
   const [timeRangeValue, setTimeRangeValue] = React.useState(numericTimeRange(timeRange));
   const { data, xDomain, yDomain } = React.useMemo(() => matrixToMetricsData(logsData), [logsData]);
@@ -107,10 +110,10 @@ export const LogsMetrics: React.FC<LogsMetricsProps> = ({
           />
         </CenteredContainer>
       ) : isLoading ? (
-        <CenteredContainer>Loading...</CenteredContainer>
+        <CenteredContainer>{t('Loading...')}</CenteredContainer>
       ) : dataIsEmpty ? (
         <CenteredContainer>
-          <Alert variant="warning" isInline isPlain title="No datapoints found" />
+          <Alert variant="warning" isInline isPlain title={t('No datapoints found')} />
         </CenteredContainer>
       ) : data ? (
         <Chart
@@ -166,7 +169,7 @@ export const LogsMetrics: React.FC<LogsMetricsProps> = ({
         </Chart>
       ) : (
         <CenteredContainer>
-          <Alert variant="danger" isInline isPlain title="Invalid data" />
+          <Alert variant="danger" isInline isPlain title={t('Invalid data')} />
         </CenteredContainer>
       )}
     </div>

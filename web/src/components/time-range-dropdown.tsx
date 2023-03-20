@@ -11,6 +11,7 @@ import {
   timeRangeOptions,
 } from '../time-range';
 import { TimeRangeSelectModal } from './time-range-select-modal';
+import { useTranslation } from 'react-i18next';
 
 const DEFAULT_DURATION_KEY = '1h';
 const STORED_TIME_RANGE_KEY = 'logging-view-plugin.time-range';
@@ -50,6 +51,8 @@ export const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
   value,
   isDisabled = false,
 }) => {
+  const { t } = useTranslation('plugin__logging-view-plugin');
+
   const [isTimeRangeModalOpen, setIsTimeRangeModalOpen] = React.useState(false);
   const [storedTimeRange, setStoredTimeRange] = useLocalStorage<TimeRange>(STORED_TIME_RANGE_KEY);
 
@@ -108,7 +111,23 @@ export const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
           disabled={isDisabled}
           dropdownItems={timeRangeOptions.map(({ key, name }, index) => (
             <DropdownItem componentID={key} onClick={handleSelectedValue(index)} key={key}>
-              {name}
+              {
+                /*
+                  t('plugin__logging-view-plugin~Custom time range')
+                  t('plugin__logging-view-plugin~Last 5 minutes')
+                  t('plugin__logging-view-plugin~Last 15 minutes')
+                  t('plugin__logging-view-plugin~Last 30 minutes')
+                  t('plugin__logging-view-plugin~Last 1 hour')
+                  t('plugin__logging-view-plugin~Last 2 hours')
+                  t('plugin__logging-view-plugin~Last 6 hours')
+                  t('plugin__logging-view-plugin~Last 12 hours')
+                  t('plugin__logging-view-plugin~Last 1 day')
+                  t('plugin__logging-view-plugin~Last 2 days')
+                  t('plugin__logging-view-plugin~Last 1 week')
+                  t('plugin__logging-view-plugin~Last 2 weeks')
+                */
+                t(`plugin__logging-view-plugin~${name}`)
+              }
             </DropdownItem>
           ))}
           isOpen={isOpen}

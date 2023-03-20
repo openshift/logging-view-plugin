@@ -6,7 +6,7 @@
       "type": "console.tab",
       "properties": {
         "contextId": "dev-console-observe",
-        "name": "Aggregated Logs",
+        "name": "%plugin__logging-view-plugin~Logs%",
         "href": "/logs",
         "component": {
           "$codeRef": "LogsDevPage"
