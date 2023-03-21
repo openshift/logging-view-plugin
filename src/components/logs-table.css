@@ -95,6 +95,7 @@
 
 .co-logs-table__row-error,
 .co-logs-table__row-streaming {
-  display: flex;
+  display: grid;
   justify-content: center;
+  justify-items: center;
 }

@@ -21,6 +21,7 @@ import { TestIds } from '../test-ids';
 import { CenteredContainer } from './centered-container';
 import { LogDetail } from './log-detail';
 import './logs-table.css';
+import { ErrorMessage } from './error-message';
 
 interface LogsTableProps {
   logsData?: QueryRangeResponse;
@@ -320,12 +321,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
             <Tr className="co-logs-table__row-info">
               <Td colSpan={columns.length + 2} key="error-row">
                 <div className="co-logs-table__row-error">
-                  <Alert
-                    variant="danger"
-                    isInline
-                    isPlain
-                    title={(error as Error).message || String(error)}
-                  />
+                  <ErrorMessage error={error} />
                 </div>
               </Td>
             </Tr>
