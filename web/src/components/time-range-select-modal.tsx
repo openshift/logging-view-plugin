@@ -7,6 +7,7 @@ import {
   ModalVariant,
 } from '@patternfly/react-core';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { DateFormat, dateToFormat } from '../date-utils';
 import { TimeRange } from '../logs.types';
 import { TestIds } from '../test-ids';
@@ -28,6 +29,8 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
   onSelectRange,
   initialRange,
 }) => {
+  const { t } = useTranslation('plugin__logging-view-plugin');
+
   const initialRangeNumber = numericTimeRange(initialRange ?? defaultTimeRange());
   const [startDate, setStartDate] = React.useState<string>(
     dateToFormat(initialRangeNumber.start, DateFormat.DateMed),
@@ -130,10 +133,10 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
             isDisabled={!isRangeSelected || !isRangeValid}
             data-test={TestIds.TimeRangeDropdownSaveButton}
           >
-            Save
+            {t('Save')}
           </Button>
           <Button key="cancel" variant="secondary" onClick={onClose}>
-            Cancel
+            {t('Cancel')}
           </Button>
         </div>
       }
@@ -143,14 +146,14 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
         data-test={TestIds.TimeRangeSelectModal}
       >
         <div>
-          <label>From</label>
+          <label>{t('From')}</label>
           <div className="co-logs-time-range-modal__field">
             <DatePicker onChange={setStartDate} value={startDate} />
             <PrecisionTimePicker time={startTime} onChange={handleStartTimeChange} />
           </div>
         </div>
         <div>
-          <label>To</label>
+          <label>{t('To')}</label>
           <div className="co-logs-time-range-modal__field">
             <DatePicker onChange={setEndDate} value={endDate} />
             <PrecisionTimePicker time={endTime} onChange={handleEndTimeChange} />
@@ -161,7 +164,7 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
               variant="danger"
               isInline
               isPlain
-              title="Invalid date range"
+              title={t('Invalid date range')}
             />
           )}
         </div>

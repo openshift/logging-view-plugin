@@ -1,6 +1,7 @@
 import { Button, Flex, Grid, PageSection, Title, Tooltip } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 import { availablePodAttributes, filtersFromQuery, queryFromFilters } from '../attribute-filters';
 import { AttributeList, Filters } from '../components/filters/filter.types';
@@ -16,7 +17,16 @@ import { Direction } from '../logs.types';
 import { TestIds } from '../test-ids';
 import { getInitialTenantFromNamespace } from '../value-utils';
 
+/*
+This comment creates an entry in the translations catalogue for console extensions
+
+t('plugin__logging-view-plugin~Aggregated Logs')
+
+*/
+
 const LogsDetailPage: React.FunctionComponent = () => {
+  const { t } = useTranslation('plugin__logging-view-plugin');
+
   const { name: podname, ns: namespace } = useParams<{ name: string; ns: string }>();
   const defaultQuery = `{ kubernetes_pod_name = "${podname}" } | json`;
   const [isHistogramVisible, setIsHistogramVisible] = React.useState(false);
@@ -120,7 +130,7 @@ const LogsDetailPage: React.FunctionComponent = () => {
       <Grid hasGutter>
         <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }}>
           <Title headingLevel="h1" size="lg">
-            Logs
+            {t('Logs')}
           </Title>
           <Flex>
             <ToggleHistogramButton

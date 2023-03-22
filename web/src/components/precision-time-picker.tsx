@@ -10,6 +10,7 @@ import {
   ValidatedOptions,
 } from '@patternfly/react-core';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useBoolean } from '../hooks/useBoolean';
 import { padLeadingZero } from '../value-utils';
 import './precision-time-picker.css';
@@ -62,6 +63,8 @@ const timeMenuItemsBuilder: () => Array<string> = () => {
 const timeMenuItems = timeMenuItemsBuilder();
 
 export const PrecisionTimePicker: React.FC<PrecisionTimePickerProps> = ({ onChange, time }) => {
+  const { t } = useTranslation('plugin__logging-view-plugin');
+
   const [value, setValue] = React.useState(time);
   const [isValid, setIsvalid] = React.useState(true);
   const { value: isMenuOpen, setTrue: openMenu, setFalse: closeMenu } = useBoolean(false);
@@ -133,7 +136,7 @@ export const PrecisionTimePicker: React.FC<PrecisionTimePickerProps> = ({ onChan
       />
       {!isValid && (
         <HelperText className="co-logs-time-picker__error">
-          <HelperTextItem variant="error">Invalid time format</HelperTextItem>
+          <HelperTextItem variant="error">{t('Invalid time format')}</HelperTextItem>
         </HelperText>
       )}
     </div>

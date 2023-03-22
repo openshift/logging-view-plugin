@@ -7,6 +7,7 @@ import {
   Spinner,
 } from '@patternfly/react-core';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAttributeValueData } from './attribute-value-data';
 import { Attribute, Option } from './filter.types';
 import { isOption } from './filters-from-params';
@@ -51,6 +52,8 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
   selections,
   onSelect,
 }) => {
+  const { t } = useTranslation('plugin__logging-view-plugin');
+
   const [getOptions, optionsData, error] = useAttributeValueData(attribute);
   const [isOpen, setIsOpen] = React.useState(false);
 
@@ -114,12 +117,14 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
         onSelect={handleSelect}
         selections={selections ? Array.from(selections) : []}
         isOpen={isOpen}
-        placeholderText={`Filter by ${attribute.name}`}
+        placeholderText={t('Filter by {{attributeName}}', {
+          attributeName: attribute.name,
+        })}
         aria-labelledby={titleId}
         onFilter={handleFilter}
         onClear={handleClear}
         hasInlineFilter={optionsData && optionsData.length > 10}
-        inlineFilterPlaceholderText="Search"
+        inlineFilterPlaceholderText={t('Search')}
         className="co-logs__search-select"
       >
         {getOptionComponents(optionsData, error)}

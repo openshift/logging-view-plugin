@@ -4,6 +4,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter, Link, Route, useHistory, useParams } from 'react-router-dom';
 import LogsAlertMetrics from './components/alerts/logs-alerts-metrics';
+import i18n from './i18n';
 import './index.css';
 import LogsDetailPage from './pages/logs-detail-page';
 import LogsDevPage from './pages/logs-dev-page';
@@ -121,4 +122,6 @@ const EndToEndTestsApp = () => {
   );
 };
 
-ReactDOM.render(<EndToEndTestsApp />, document.getElementById('app'));
+i18n.on('initialized', () => {
+  ReactDOM.render(<EndToEndTestsApp />, document.getElementById('app'));
+});

@@ -3,6 +3,7 @@
 import { Configuration as WebpackConfiguration } from 'webpack';
 import { Configuration as WebpackDevServerConfiguration } from 'webpack-dev-server';
 import * as path from 'path';
+import CopyWebpackPlugin from 'copy-webpack-plugin';
 import { ConsoleRemotePlugin } from '@openshift-console/dynamic-plugin-sdk-webpack';
 
 interface Configuration extends WebpackConfiguration {
@@ -69,7 +70,12 @@ const config: Configuration = {
       writeToDisk: true,
     },
   },
-  plugins: [new ConsoleRemotePlugin()],
+  plugins: [
+    new ConsoleRemotePlugin(),
+    new CopyWebpackPlugin({
+      patterns: [{ from: path.resolve(__dirname, 'locales'), to: 'locales' }],
+    }),
+  ],
   devtool: 'source-map',
   optimization: {
     chunkIds: 'named',

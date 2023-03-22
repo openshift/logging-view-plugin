@@ -22,6 +22,7 @@ import { CenteredContainer } from './centered-container';
 import { LogDetail } from './log-detail';
 import './logs-table.css';
 import { ErrorMessage } from './error-message';
+import { useTranslation } from 'react-i18next';
 
 interface LogsTableProps {
   logsData?: QueryRangeResponse;
@@ -243,6 +244,8 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   children,
   error,
 }) => {
+  const { t } = useTranslation('plugin__logging-view-plugin');
+
   const [expandedItems, setExpandedItems] = React.useState<Set<number>>(new Set());
   const [sortBy, setSortBy] = React.useState<ISortBy>({
     index: 0,
@@ -310,7 +313,13 @@ export const LogsTable: React.FC<LogsTableProps> = ({
             <Th></Th>
             {columns.map((column, index) => (
               <Th sort={column.sort ? getSortParams(index) : undefined} key={column.title}>
-                {column.title}
+                {
+                  /*
+                  t('Date')
+                  t('Message')
+                */
+                  t(column.title)
+                }
               </Th>
             ))}
           </Tr>
@@ -331,7 +340,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
             <Tr className="co-logs-table__row-info">
               <Td colSpan={columns.length + 2} key="streaming-row">
                 <div className="co-logs-table__row-streaming">
-                  <Alert variant="info" isInline isPlain title="Streaming Logs..." />
+                  <Alert variant="info" isInline isPlain title={t('Streaming Logs...')} />
                 </div>
               </Td>
             </Tr>
@@ -340,7 +349,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
           <Tbody>
             <Tr className="co-logs-table__row-info">
               <Td colSpan={columns.length + 2} key="loading-row">
-                Loading...
+                {t('Loading...')}
               </Td>
             </Tr>
           </Tbody>
@@ -350,7 +359,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
               <Tr className="co-logs-table__row-info">
                 <Td colSpan={columns.length + 2} key="data-empty-row">
                   <CenteredContainer>
-                    <Alert variant="warning" isInline isPlain title="No datapoints found" />
+                    <Alert variant="warning" isInline isPlain title={t('No datapoints found')} />
                   </CenteredContainer>
                 </Td>
               </Tr>
@@ -421,7 +430,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
               onClick={handleLoadMore}
             >
               <Td colSpan={columns.length + 2} key="more-data-row">
-                More data available, {isLoadingMore ? 'loading...' : 'click to load'}
+                {t('More data available')}, {isLoadingMore ? t('Loading...') : t('Click to load')}
               </Td>
             </Tr>
           </Tbody>

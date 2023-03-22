@@ -21,6 +21,13 @@ import { Direction } from '../logs.types';
 import { TestIds } from '../test-ids';
 import { getInitialTenantFromNamespace } from '../value-utils';
 
+/*
+This comment creates an entry in the translations catalogue for console extensions
+
+t('plugin__logging-view-plugin~Logs')
+
+*/
+
 const LogsDevPage: React.FunctionComponent = () => {
   const { ns: namespace } = useParams<{ ns: string }>();
   const [isHistogramVisible, setIsHistogramVisible] = React.useState(false);

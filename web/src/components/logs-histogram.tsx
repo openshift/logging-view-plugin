@@ -10,6 +10,7 @@ import {
 } from '@patternfly/react-charts';
 import { Alert, Card, CardBody } from '@patternfly/react-core';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { dateToFormat, getTimeFormatFromInterval, getTimeFormatFromTimeRange } from '../date-utils';
 import {
   isMatrixResult,
@@ -230,6 +231,8 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
   onChangeTimeRange,
   interval,
 }) => {
+  const { t } = useTranslation('plugin__logging-view-plugin');
+
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = React.useState<number>(0);
   const [timeRangeValue, setTimeRangeValue] = React.useState(numericTimeRange(timeRange));
@@ -339,10 +342,10 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
               />
             </CenteredContainer>
           ) : isLoading ? (
-            <CenteredContainer>Loading...</CenteredContainer>
+            <CenteredContainer>{t('Loading...')}</CenteredContainer>
           ) : dataIsEmpty ? (
             <CenteredContainer>
-              <Alert variant="warning" isInline isPlain title="No datapoints found" />
+              <Alert variant="warning" isInline isPlain title={t('No datapoints found')} />
             </CenteredContainer>
           ) : histogramData ? (
             <Chart
@@ -361,7 +364,7 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
                 <SelectVoronoiContainer
                   activateData={false}
                   labels={({ datum }: { datum: ChartData }) =>
-                    `${datum.y !== null ? datum.y : 'no data'}`
+                    `${datum.y !== null ? datum.y : t('No data')}`
                   }
                   labelComponent={
                     <HistogramTooltip interval={intervalValue} legendData={legendData} />
@@ -391,7 +394,7 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
               <ChartStack>{groupsCharts.charts}</ChartStack>
             </Chart>
           ) : (
-            <div>No data</div>
+            <div>{t('No data')}</div>
           )}
         </div>
       </CardBody>

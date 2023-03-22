@@ -11,6 +11,7 @@ import {
   ToolbarGroup,
 } from '@patternfly/react-core';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Severity, severityFromString } from '../severity';
 import { TestIds } from '../test-ids';
 import { notUndefined } from '../value-utils';
@@ -71,6 +72,8 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
   onFiltersChange,
   attributeList,
 }) => {
+  const { t } = useTranslation('plugin__logging-view-plugin');
+
   const [isSeverityExpanded, setIsSeverityExpanded] = React.useState(false);
   const [isQueryShown, setIsQueryShown] = React.useState(false);
   const severityFilter: Set<Severity> = filters?.severity
@@ -168,8 +171,8 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
           <ToggleButton
             isToggled={showResources}
             onToggle={onShowResourcesToggle}
-            untoggledText="Show Resources"
-            toggledText="Hide Resources"
+            untoggledText={t('Show Resources')}
+            toggledText={t('Hide Resources')}
           />
         </ToolbarGroup>
 
@@ -185,8 +188,8 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
           <ToggleButton
             isToggled={isQueryShown}
             onToggle={setIsQueryShown}
-            untoggledText="Show Query"
-            toggledText="Hide Query"
+            untoggledText={t('Show Query')}
+            toggledText={t('Hide Query')}
             data-test={TestIds.ShowQueryToggle}
           />
         </ToolbarGroup>

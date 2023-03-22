@@ -31,7 +31,7 @@
       "type": "console.tab/horizontalNav",
       "properties": {
         "page": {
-          "name": "Aggregated Logs",
+          "name": "%plugin__logging-view-plugin~Aggregated Logs%",
           "href": "aggregated-logs"
         },
         "model": {

@@ -1,6 +1,7 @@
 import { Button, Flex, Grid, PageSection, Title, Tooltip } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { availableAttributes, filtersFromQuery, queryFromFilters } from '../attribute-filters';
 import { Filters } from '../components/filters/filter.types';
 import { LogsHistogram } from '../components/logs-histogram';
@@ -15,6 +16,8 @@ import { Direction } from '../logs.types';
 import { TestIds } from '../test-ids';
 
 const LogsPage: React.FC = () => {
+  const { t } = useTranslation('plugin__logging-view-plugin');
+
   const [isHistogramVisible, setIsHistogramVisible] = React.useState(false);
   const {
     query,
@@ -122,7 +125,7 @@ const LogsPage: React.FC = () => {
       <Grid hasGutter>
         <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }}>
           <Title headingLevel="h1" size="lg">
-            Logs
+            {t('Logs')}
           </Title>
           <Flex>
             <ToggleHistogramButton
