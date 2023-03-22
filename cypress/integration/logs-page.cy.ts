@@ -2,6 +2,7 @@ import { TestIds } from '../../src/test-ids';
 import {
   queryRangeMatrixInvalidResponse,
   queryRangeMatrixValidResponse,
+  queryRangeStreamsErrorResponse,
   queryRangeStreamsInvalidResponse,
   queryRangeStreamsValidResponse,
 } from '../fixtures/query-range-fixtures';
@@ -416,5 +417,22 @@ describe('Logs Page', () => {
 
     cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
     cy.get('@queryRangeMatrix.all').should('have.length.at.least', 1);
+  });
+
+  it('displays a suggestion to fix an error', () => {
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, {
+      statusCode: 400,
+      body: queryRangeStreamsErrorResponse(),
+    }).as('queryRangeStreams');
+
+    cy.visit(LOGS_PAGE_URL);
+
+    cy.getByTestId(TestIds.LogsTable)
+      .should('exist')
+      .within(() => {
+        cy.contains('Select a smaller time range to reduce the number of results');
+      });
+
+    cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
   });
 });
