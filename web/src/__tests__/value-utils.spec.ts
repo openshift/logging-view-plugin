@@ -3,6 +3,7 @@ import {
   notEmptyString,
   millisecondsFromDuration,
   valueWithScalePrefix,
+  capitalize,
 } from '../value-utils';
 
 describe('value utils', () => {
@@ -33,5 +34,12 @@ describe('value utils', () => {
     expect(notEmptyString('foo')).toBe(true);
     expect(notEmptyString('')).toBe(false);
     expect(notEmptyString(undefined)).toBe(false);
+  });
+
+  it('should capitalize a string', () => {
+    expect(capitalize('foo')).toBe('Foo');
+    expect(capitalize('')).toBe('');
+    expect(capitalize('123')).toBe('123');
+    expect(capitalize()).toBe('');
   });
 });
