@@ -1,13 +1,31 @@
-import { Alert, Text, TextContent, TextVariants } from '@patternfly/react-core';
+import {
+  Alert,
+  CodeBlock,
+  CodeBlockCode,
+  Text,
+  TextContent,
+  TextVariants,
+} from '@patternfly/react-core';
 import React from 'react';
 import { TFunction, useTranslation } from 'react-i18next';
 import { isFetchError } from '../cancellable-fetch';
-import { notUndefined } from '../value-utils';
+import { capitalize, notUndefined } from '../value-utils';
 import './error-message.css';
 
 interface ErrorMessageProps {
   error: unknown | Error;
 }
+
+const ruleCode = `rules:
+- apiGroups:
+  - loki.grafana.com
+  resources:
+  - application # infrastructure and/or audit
+  resourceNames:
+  - logs
+  verbs:
+  - get
+`;
 
 const Suggestion: React.FC = ({ children }) => (
   <Text component={TextVariants.small}>{children}</Text>
@@ -55,9 +73,24 @@ const messages: (t: TFunction) => Record<string, React.ReactElement> = (t) => ({
     </>
   ),
   'cannot connect to LokiStack': (
-    <>
-      <Suggestion>{t('Make sure you have an instance of LokiStack runnning')}</Suggestion>
-    </>
+    <Suggestion>{t('Make sure you have an instance of LokiStack runnning')}</Suggestion>
+  ),
+  forbidden: (
+    <Suggestion>
+      <p>
+        {t('Make sure you have the required role to get audit, application or infrastructure logs')}
+      </p>
+      <p>
+        {t(
+          'Ask your administrator to create a role or cluster role that includes the following rule',
+        )}
+      </p>
+      <p>
+        <CodeBlock>
+          <CodeBlockCode id="code-content">{ruleCode}</CodeBlockCode>
+        </CodeBlock>
+      </p>
+    </Suggestion>
   ),
 });
 
@@ -73,6 +106,10 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({ error }) => {
       case 502:
         title = t('This plugin requires Loki Operator and LokiStack to be running in the cluster');
         errorMessage = 'cannot connect to LokiStack';
+        break;
+      case 403:
+        title = t('Missing permissions to get logs');
+        errorMessage = 'forbidden';
         break;
     }
   }
@@ -96,7 +133,7 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({ error }) => {
         variant="danger"
         isInline
         isPlain
-        title={errorMessage}
+        title={capitalize(errorMessage)}
       />
 
       {suggestions && suggestions.length > 0 ? (
