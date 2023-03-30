@@ -3,3 +3,7 @@
   margin-top: var(--pf-global--spacer--md);
   background-color: transparent;
 }
+
+.co-logs-table__row-error .pf-c-code-block__pre {
+  text-align: left;
+}

@@ -78,3 +78,10 @@ export const getInitialTenantFromNamespace = (namespace?: string): string => {
 
   return DEFAULT_TENANT;
 };
+
+export const capitalize = (str?: string): string => {
+  if (!str) {
+    return '';
+  }
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
