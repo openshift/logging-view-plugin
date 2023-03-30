@@ -8,6 +8,7 @@ import { useQueryParams } from './useQueryParams';
 
 interface UseURLStateHook {
   defaultQuery?: string;
+  defaultTenant?: string;
   attributes: AttributeList;
 }
 
@@ -20,18 +21,24 @@ const SHOW_RESOURCES_PARAM_KEY = 'showResources';
 
 const DEFAULT_TENANT = 'application';
 const DEFAULT_SHOW_RESOURCES = '0';
-export const DEFAULT_QUERY = '{ log_type=~".+" } | json';
+export const defaultQueryFromTenant = (tenant: string = DEFAULT_TENANT) =>
+  `{ log_type="${tenant}" } | json`;
 
 const getDirectionValue = (value?: string | null): Direction =>
   value !== null ? (value === 'forward' ? 'forward' : 'backward') : 'backward';
 
-export const useURLState = ({ defaultQuery = DEFAULT_QUERY, attributes }: UseURLStateHook) => {
+export const useURLState = ({
+  defaultQuery,
+  defaultTenant = DEFAULT_TENANT,
+  attributes,
+}: UseURLStateHook) => {
   const queryParams = useQueryParams();
   const history = useHistory();
   const location = useLocation();
 
-  const initialQuery = queryParams.get(QUERY_PARAM_KEY) ?? defaultQuery;
-  const initialTenant = queryParams.get(TENANT_PARAM_KEY) ?? DEFAULT_TENANT;
+  const initialTenant = queryParams.get(TENANT_PARAM_KEY) ?? defaultTenant;
+  const initialQuery =
+    queryParams.get(QUERY_PARAM_KEY) ?? defaultQuery ?? defaultQueryFromTenant(initialTenant);
   const initialTimeRangeStart = queryParams.get(TIME_RANGE_START);
   const initialTimeRangeEnd = queryParams.get(TIME_RANGE_END);
   const initialDirection = queryParams.get(DIRECTION);

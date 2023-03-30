@@ -163,15 +163,21 @@ export const queryFromFilters = ({
   existingQuery,
   filters,
   attributes,
+  tenant,
 }: {
   existingQuery: string;
   filters?: Filters;
   attributes: AttributeList;
+  tenant?: string;
 }): string => {
   const query = new LogQLQuery(existingQuery);
 
   if (!filters) {
     return query.toString();
+  }
+
+  if (tenant) {
+    query.addSelectorMatcher({ label: 'log_type', operator: '=', value: `"${tenant}"` });
   }
 
   const contentPipelineStage = getContentPipelineStage(filters);
