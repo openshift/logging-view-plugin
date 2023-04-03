@@ -169,6 +169,7 @@ const LogsPage: React.FC = () => {
           isLoadingMore={isLoadingMoreLogsData}
           hasMoreLogsData={hasMoreLogsData}
           showResources={areResourcesShown}
+          direction={direction}
           isStreaming={isStreaming}
           error={logsError}
         >
