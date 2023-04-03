@@ -109,6 +109,16 @@ const appendData = (
   return response ? response : nextResponse;
 };
 
+const hasMoreLogs = (response: QueryRangeResponse | undefined, limit: number): boolean => {
+  if (response === undefined) return false;
+
+  return (
+    response?.data.result
+      .map((result) => result.values.length)
+      .reduce((sum, count) => sum + count, 0) >= limit
+  );
+};
+
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case 'histogramRequest':
@@ -171,20 +181,14 @@ const reducer = (state: State, action: Action): State => {
         ...state,
         isLoadingLogsData: false,
         logsData: action.payload.logsData,
-        hasMoreLogsData:
-          action.payload.logsData.data.result
-            .map((result) => result.values.length)
-            .reduce((sum, count) => sum + count, 0) >= state.config.logsLimit,
+        hasMoreLogsData: hasMoreLogs(action.payload.logsData, state.config.logsLimit),
       };
     case 'moreLogsResponse':
       return {
         ...state,
         isLoadingMoreLogsData: false,
         logsData: appendData(state.logsData, action.payload.logsData),
-        hasMoreLogsData:
-          action.payload.logsData.data.result
-            .map((result) => result.values.length)
-            .reduce((sum, count) => sum + count, 0) >= state.config.logsLimit,
+        hasMoreLogsData: hasMoreLogs(action.payload.logsData, state.config.logsLimit),
       };
     case 'logsError':
       return {
@@ -220,7 +224,7 @@ export const useLogs = (
   const currentTenant = React.useRef<string>(initialTenant);
   const currentTimeRange = React.useRef<TimeRange>(initialTimeRange);
   const currentTime = React.useRef<number>(Date.now());
-  const currentDirection = React.useRef<Direction>(undefined);
+  const currentDirection = React.useRef<Direction>('backward');
   const logsAbort = React.useRef<() => void | undefined>();
   const histogramAbort = React.useRef<() => void | undefined>();
   const ws = React.useRef<WSFactory | null>();
@@ -286,9 +290,17 @@ export const useLogs = (
     try {
       currentQuery.current = query;
       currentTime.current = Date.now();
-      currentDirection.current = direction;
+      currentDirection.current = direction ?? currentDirection.current;
 
-      const start = lastTimestamp - millisecondsFromDuration('1h');
+      const oneHourMilliseconds = millisecondsFromDuration('1h');
+
+      let start = lastTimestamp - oneHourMilliseconds;
+      let end = lastTimestamp - 1;
+
+      if (currentDirection.current === 'forward') {
+        start = lastTimestamp + 1;
+        end = lastTimestamp + oneHourMilliseconds;
+      }
 
       dispatch({ type: 'moreLogsRequest' });
 
@@ -301,7 +313,7 @@ export const useLogs = (
       const { request, abort } = executeQueryRange({
         query,
         start,
-        end: lastTimestamp,
+        end,
         config: currentConfig.current,
         tenant: currentTenant.current,
         namespace,
@@ -346,7 +358,7 @@ export const useLogs = (
       currentTenant.current = tenant ?? currentTenant.current;
       currentTime.current = Date.now();
       currentTimeRange.current = timeRange ?? currentTimeRange.current;
-      currentDirection.current = direction;
+      currentDirection.current = direction ?? currentDirection.current;
 
       const { start, end } = numericTimeRange(currentTimeRange.current);
 
