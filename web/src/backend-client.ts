@@ -3,16 +3,25 @@ import { Config } from './logs.types';
 
 const BACKEND_ENDPOINT = '/api/plugins/logging-view-plugin';
 
-let configAbort: null | (() => void) = null;
+let singletonRequest: Promise<Config> | null = null;
+let throttleTimeout: NodeJS.Timeout | null = null;
 
 export const getConfig = async (): Promise<Config> => {
-  const { abort, request } = cancellableFetch<Config>(`${BACKEND_ENDPOINT}/config`);
+  if (singletonRequest) {
+    if (throttleTimeout) {
+      clearTimeout(throttleTimeout);
+    }
 
-  if (configAbort) {
-    configAbort();
+    throttleTimeout = setTimeout(() => {
+      singletonRequest = null;
+    }, 1000);
+
+    return singletonRequest;
   }
 
-  configAbort = abort;
+  const { request } = cancellableFetch<Config>(`${BACKEND_ENDPOINT}/config`);
 
-  return request();
+  singletonRequest = request();
+
+  return singletonRequest;
 };
