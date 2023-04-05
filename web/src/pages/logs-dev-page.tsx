@@ -16,7 +16,7 @@ import { RefreshIntervalDropdown } from '../components/refresh-interval-dropdown
 import { TimeRangeDropdown } from '../components/time-range-dropdown';
 import { ToggleHistogramButton } from '../components/toggle-histogram-button';
 import { useLogs } from '../hooks/useLogs';
-import { DEFAULT_QUERY, useURLState } from '../hooks/useURLState';
+import { defaultQueryFromTenant, useURLState } from '../hooks/useURLState';
 import { Direction } from '../logs.types';
 import { TestIds } from '../test-ids';
 import { getInitialTenantFromNamespace } from '../value-utils';
@@ -31,6 +31,7 @@ t('plugin__logging-view-plugin~Logs')
 const LogsDevPage: React.FunctionComponent = () => {
   const { ns: namespace } = useParams<{ ns: string }>();
   const [isHistogramVisible, setIsHistogramVisible] = React.useState(false);
+  let tenant = getInitialTenantFromNamespace(namespace);
 
   const {
     query,
@@ -44,9 +45,7 @@ const LogsDevPage: React.FunctionComponent = () => {
     interval,
     direction,
     setDirectionInURL,
-  } = useURLState({ attributes: availableAttributes });
-
-  const tenant = getInitialTenantFromNamespace(namespace);
+  } = useURLState({ attributes: availableAttributes, defaultTenant: tenant });
 
   const {
     histogramData,
@@ -79,28 +78,23 @@ const LogsDevPage: React.FunctionComponent = () => {
     setDirectionInURL(directionValue);
   };
 
-  const runQuery = () => {
-    getLogs({ query, namespace, timeRange, direction, tenant });
+  const runQuery = ({ queryToUse }: { queryToUse?: string } = {}) => {
+    getLogs({
+      query: queryToUse ?? query,
+      namespace,
+      timeRange,
+      direction,
+      tenant,
+    });
 
     if (isHistogramVisible) {
-      getHistogram({ query, namespace, timeRange, tenant });
+      getHistogram({ query: queryToUse ?? query, namespace, timeRange, tenant });
     }
   };
 
   const handleFiltersChange = (selectedFilters?: Filters) => {
     setFilters(selectedFilters);
-
-    if (!selectedFilters || Object.keys(selectedFilters).length === 0) {
-      setQueryInURL(DEFAULT_QUERY);
-    } else {
-      const updatedQuery = queryFromFilters({
-        existingQuery: query,
-        filters: selectedFilters,
-        attributes: availableAttributes,
-      });
-
-      setQueryInURL(updatedQuery);
-    }
+    updateQuery(selectedFilters, tenant);
   };
 
   const handleQueryChange = (queryFromInput: string) => {
@@ -114,10 +108,39 @@ const LogsDevPage: React.FunctionComponent = () => {
     setFilters(updatedFilters);
   };
 
+  const handleRefreshClick = () => {
+    runQuery();
+  };
+
+  const updateQuery = (selectedFilters?: Filters, selectedTenant?: string): string => {
+    if (!selectedFilters || Object.keys(selectedFilters).length === 0) {
+      const defaultQuery = defaultQueryFromTenant(selectedTenant);
+
+      setQueryInURL(defaultQuery);
+
+      return defaultQuery;
+    } else {
+      const updatedQuery = queryFromFilters({
+        existingQuery: query,
+        filters: selectedFilters,
+        attributes: availableAttributes,
+        tenant: selectedTenant,
+      });
+
+      setQueryInURL(updatedQuery);
+
+      return updatedQuery;
+    }
+  };
+
   const attributeList = React.useMemo(() => availableDevConsoleAttributes(namespace), [namespace]);
 
   React.useEffect(() => {
-    runQuery();
+    tenant = getInitialTenantFromNamespace(namespace);
+
+    const queryToUse = updateQuery(filters, tenant);
+
+    runQuery({ queryToUse });
   }, [timeRange, isHistogramVisible, namespace, direction]);
 
   const isQueryEmpty = query === '';
@@ -140,7 +163,7 @@ const LogsDevPage: React.FunctionComponent = () => {
             <RefreshIntervalDropdown onRefresh={runQuery} />
             <Tooltip content={<div>Refresh</div>}>
               <Button
-                onClick={runQuery}
+                onClick={handleRefreshClick}
                 aria-label="Refresh"
                 variant="primary"
                 data-test={TestIds.SyncButton}

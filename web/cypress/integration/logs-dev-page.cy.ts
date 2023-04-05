@@ -159,7 +159,9 @@ describe('Logs Dev Page', () => {
     cy.wait('@queryRangeStreams').then(({ request }) => {
       const url = new URL(request.url);
       const query = url.searchParams.get('query');
-      expect(query).to.equal('{ log_type=~".+", kubernetes_namespace_name="my-namespace" } | json');
+      expect(query).to.equal(
+        '{ log_type="application", kubernetes_namespace_name="my-namespace" } | json',
+      );
     });
   });
 
@@ -183,7 +185,9 @@ describe('Logs Dev Page', () => {
     cy.wait('@queryRangeStreams').then(({ request }) => {
       const url = new URL(request.url);
       const query = url.searchParams.get('query');
-      expect(query).to.equal('{ log_type=~".+", kubernetes_namespace_name="my-namespace" } | json');
+      expect(query).to.equal(
+        '{ log_type="application", kubernetes_namespace_name="my-namespace" } | json',
+      );
     });
 
     cy.getByTestId('namespace-toggle' as TestIds).click();
@@ -195,7 +199,7 @@ describe('Logs Dev Page', () => {
       const url = new URL(request.url);
       const query = url.searchParams.get('query');
       expect(query).to.equal(
-        '{ log_type=~".+", kubernetes_namespace_name="my-namespace-two" } | json',
+        '{ log_type="application", kubernetes_namespace_name="my-namespace-two" } | json',
       );
     });
   });
@@ -228,7 +232,9 @@ describe('Logs Dev Page', () => {
     cy.wait('@queryRangeStreams').then(({ request }) => {
       const url = new URL(request.url);
       const query = url.searchParams.get('query');
-      expect(query).to.equal('{ log_type=~".+", kubernetes_namespace_name="my-namespace" } | json');
+      expect(query).to.equal(
+        '{ log_type="application", kubernetes_namespace_name="my-namespace" } | json',
+      );
     });
 
     cy.getByTestId('namespace-toggle' as TestIds).click();
@@ -244,7 +250,7 @@ describe('Logs Dev Page', () => {
       );
       const query = url.searchParams.get('query');
       expect(query).to.equal(
-        '{ log_type=~".+", kubernetes_namespace_name="openshift-cluster-version" } | json',
+        '{ log_type="infrastructure", kubernetes_namespace_name="openshift-cluster-version" } | json',
       );
     });
   });

@@ -11,7 +11,7 @@ import { RefreshIntervalDropdown } from '../components/refresh-interval-dropdown
 import { TimeRangeDropdown } from '../components/time-range-dropdown';
 import { ToggleHistogramButton } from '../components/toggle-histogram-button';
 import { useLogs } from '../hooks/useLogs';
-import { DEFAULT_QUERY, useURLState } from '../hooks/useURLState';
+import { defaultQueryFromTenant, useURLState } from '../hooks/useURLState';
 import { Direction } from '../logs.types';
 import { TestIds } from '../test-ids';
 
@@ -66,36 +66,17 @@ const LogsPage: React.FC = () => {
     setDirectionInURL(directionValue);
   };
 
-  const runQuery = ({
-    tenantToConsider,
-  }: {
-    tenantToConsider?: string;
-  } = {}) => {
-    getLogs({ query, tenant: tenantToConsider ?? tenant, timeRange, direction });
+  const runQuery = ({ queryToUse }: { queryToUse?: string } = {}) => {
+    getLogs({ query: queryToUse ?? query, tenant, timeRange, direction });
 
     if (isHistogramVisible) {
-      getHistogram({ query, tenant: tenantToConsider ?? tenant, timeRange });
+      getHistogram({ query: queryToUse ?? query, tenant, timeRange });
     }
-  };
-
-  const handleRefreshClick = () => {
-    runQuery();
   };
 
   const handleFiltersChange = (selectedFilters?: Filters) => {
     setFilters(selectedFilters);
-
-    if (!selectedFilters || Object.keys(selectedFilters).length === 0) {
-      setQueryInURL(DEFAULT_QUERY);
-    } else {
-      const updatedQuery = queryFromFilters({
-        existingQuery: query,
-        filters: selectedFilters,
-        attributes: availableAttributes,
-      });
-
-      setQueryInURL(updatedQuery);
-    }
+    updateQuery(selectedFilters, tenant);
   };
 
   const handleQueryChange = (queryFromInput: string) => {
@@ -109,14 +90,36 @@ const LogsPage: React.FC = () => {
     setFilters(updatedFilters);
   };
 
-  const handleTenantChange = (newTenant: string) => {
-    setTenantInURL(newTenant);
-    runQuery({ tenantToConsider: newTenant });
+  const updateQuery = (selectedFilters?: Filters, selectedTenant?: string): string => {
+    if ((!selectedFilters || Object.keys(selectedFilters).length === 0) && !selectedTenant) {
+      const defaultQuery = defaultQueryFromTenant();
+
+      setQueryInURL(defaultQuery);
+
+      return defaultQuery;
+    } else {
+      const updatedQuery = queryFromFilters({
+        existingQuery: query,
+        filters: selectedFilters,
+        attributes: availableAttributes,
+        tenant: selectedTenant,
+      });
+
+      setQueryInURL(updatedQuery);
+
+      return updatedQuery;
+    }
+  };
+
+  const handleRefreshClick = () => {
+    runQuery();
   };
 
   React.useEffect(() => {
-    runQuery();
-  }, [timeRange, isHistogramVisible, direction]);
+    const queryToUse = updateQuery(filters, tenant);
+
+    runQuery({ queryToUse });
+  }, [timeRange, isHistogramVisible, direction, tenant]);
 
   const isQueryEmpty = query === '';
 
@@ -180,7 +183,7 @@ const LogsPage: React.FC = () => {
             query={query}
             onQueryChange={handleQueryChange}
             onQueryRun={runQuery}
-            onTenantSelect={handleTenantChange}
+            onTenantSelect={setTenantInURL}
             tenant={tenant}
             isStreaming={isStreaming}
             onStreamingToggle={handleToggleStreaming}

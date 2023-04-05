@@ -317,7 +317,7 @@ describe('Logs Page', () => {
         .invoke('val')
         .should(
           'equal',
-          '{ log_type=~".+" } | json | level=~"error|err|eror|info|inf|information|notice"',
+          '{ log_type="application" } | json | level=~"error|err|eror|info|inf|information|notice"',
         );
     });
 
@@ -340,7 +340,7 @@ describe('Logs Page', () => {
         .invoke('val')
         .should(
           'equal',
-          '{ log_type=~".+" } |= "line filter" | json | level=~"error|err|eror|info|inf|information|notice"',
+          '{ log_type="application" } |= "line filter" | json | level=~"error|err|eror|info|inf|information|notice"',
         );
     });
 
@@ -364,7 +364,7 @@ describe('Logs Page', () => {
         .invoke('val')
         .should(
           'equal',
-          '{ log_type=~".+", kubernetes_namespace_name="gitops" } |= "line filter" | json | level=~"error|err|eror|info|inf|information|notice"',
+          '{ log_type="application", kubernetes_namespace_name="gitops" } |= "line filter" | json | level=~"error|err|eror|info|inf|information|notice"',
         );
     });
 
