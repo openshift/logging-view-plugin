@@ -23,7 +23,7 @@ const DEFAULT_SHOW_RESOURCES = '0';
 export const DEFAULT_QUERY = '{ log_type=~".+" } | json';
 
 const getDirectionValue = (value?: string | null): Direction =>
-  value !== null ? (value === 'forward' ? 'forward' : 'backward') : undefined;
+  value !== null ? (value === 'forward' ? 'forward' : 'backward') : 'backward';
 
 export const useURLState = ({ defaultQuery = DEFAULT_QUERY, attributes }: UseURLStateHook) => {
   const queryParams = useQueryParams();
