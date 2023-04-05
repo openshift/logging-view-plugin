@@ -15,7 +15,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { notUndefined } from '../value-utils';
 import { DateFormat, dateToFormat } from '../date-utils';
-import { isStreamsResult, QueryRangeResponse, StreamLogData } from '../logs.types';
+import { Direction, isStreamsResult, QueryRangeResponse, StreamLogData } from '../logs.types';
 import { severityFromString } from '../severity';
 import { TestIds } from '../test-ids';
 import { CenteredContainer } from './centered-container';
@@ -29,7 +29,8 @@ interface LogsTableProps {
   hasMoreLogsData?: boolean;
   isLoadingMore?: boolean;
   onLoadMore?: (lastTimestamp: number) => void;
-  onSortByDate?: (direction?: 'forward' | 'backward') => void;
+  onSortByDate?: (direction?: Direction) => void;
+  direction?: Direction;
   showResources?: boolean;
   isStreaming?: boolean;
   error?: unknown;
@@ -239,6 +240,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   onSortByDate,
   hasMoreLogsData,
   showResources = false,
+  direction,
   isStreaming,
   children,
   error,
@@ -246,7 +248,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   const [expandedItems, setExpandedItems] = React.useState<Set<number>>(new Set());
   const [sortBy, setSortBy] = React.useState<ISortBy>({
     index: 0,
-    direction: 'desc',
+    direction: direction === 'backward' ? 'desc' : 'asc',
   });
   const tableData = React.useMemo(() => aggregateStreamLogData(logsData), [logsData]);
 
@@ -261,11 +263,15 @@ export const LogsTable: React.FC<LogsTableProps> = ({
 
   const getSortParams = (columnIndex: number): ThProps['sort'] => ({
     sortBy,
-    onSort: (_event, index, direction) => {
+    onSort: (_event, index, tableSortDirection) => {
       setExpandedItems(new Set());
-      setSortBy({ index, direction, defaultDirection: 'desc' });
+      setSortBy({ index, direction: tableSortDirection, defaultDirection: 'desc' });
       onSortByDate?.(
-        direction === undefined ? undefined : direction === 'desc' ? 'backward' : 'forward',
+        tableSortDirection === undefined
+          ? undefined
+          : tableSortDirection === 'desc'
+          ? 'backward'
+          : 'forward',
       );
     },
     columnIndex,
