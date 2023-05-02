@@ -13,6 +13,7 @@ import (
 	rnd "math/rand"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -345,4 +346,33 @@ func generateCertificate(t *testing.T, certPath string, keyPath string, host str
 
 	t.Logf("Generated security data: %v|%v|%v", certPath, keyPath, host)
 	return nil
+}
+
+func TestFilesHandler(t *testing.T) {
+	fs := http.Dir("testdata")
+	handler := filesHandler(fs)
+
+	req := httptest.NewRequest("GET", "/index.html", nil)
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	res := w.Result()
+	if res.Header.Get("Cache-Control") != "" {
+		t.Errorf("Expected no Cache-Control header, but got %q", res.Header.Get("Cache-Control"))
+	}
+	if res.Header.Get("Expires") != "" {
+		t.Errorf("Expected no Expires header, but got %q", res.Header.Get("Expires"))
+	}
+
+	req = httptest.NewRequest("GET", "/plugin-entry.js", nil)
+	w = httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	res = w.Result()
+	if res.Header.Get("Cache-Control") != "no-cache, no-store, must-revalidate" {
+		t.Errorf("Expected Cache-Control header %q, but got %q", "no-cache, no-store, must-revalidate", res.Header.Get("Cache-Control"))
+	}
+	if res.Header.Get("Expires") != "0" {
+		t.Errorf("Expected Expires header %q, but got %q", "0", res.Header.Get("Expires"))
+	}
 }
