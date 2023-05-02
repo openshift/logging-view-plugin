@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gorilla/handlers"
@@ -88,9 +89,24 @@ func setupRoutes(cfg *Config) *mux.Router {
 	r.PathPrefix("/config").HandlerFunc(configHandler(cfg))
 
 	// serve front end files
-	r.PathPrefix("/").Handler(http.FileServer(http.Dir(cfg.StaticPath)))
+	r.PathPrefix("/").Handler(filesHandler(http.Dir(cfg.StaticPath)))
 
 	return r
+}
+
+func filesHandler(root http.FileSystem) http.Handler {
+	fileServer := http.FileServer(root)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		filePath := r.URL.Path
+
+		// disable caching for plugin entry point
+		if strings.HasPrefix(filePath, "/plugin-entry.js") {
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			w.Header().Set("Expires", "0")
+		}
+
+		fileServer.ServeHTTP(w, r)
+	})
 }
 
 func healthHandler() http.HandlerFunc {
