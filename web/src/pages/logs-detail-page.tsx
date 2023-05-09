@@ -160,6 +160,7 @@ const LogsDetailPage: React.FunctionComponent = () => {
             interval={interval}
             isLoading={isLoadingHistogramData}
             error={histogramError}
+            onChangeTimeRange={setTimeRangeInURL}
           />
         )}
 
@@ -171,6 +172,7 @@ const LogsDetailPage: React.FunctionComponent = () => {
           isLoading={isLoadingLogsData}
           isLoadingMore={isLoadingMoreLogsData}
           hasMoreLogsData={hasMoreLogsData}
+          showResources={areResourcesShown}
           direction={direction}
           error={logsError}
         >
