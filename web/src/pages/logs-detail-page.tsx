@@ -171,6 +171,7 @@ const LogsDetailPage: React.FunctionComponent = () => {
           isLoading={isLoadingLogsData}
           isLoadingMore={isLoadingMoreLogsData}
           hasMoreLogsData={hasMoreLogsData}
+          showResources={areResourcesShown}
           direction={direction}
           error={logsError}
         >
