@@ -2,6 +2,7 @@ export type Config = {
   useTenantInHeader?: boolean;
   isStreamingEnabledInDefaultPage?: boolean;
   alertingRuleTenantLabelKey?: string;
+  alertingRuleNamespaceLabelKey?: string;
   timeout?: number;
   logsLimit: number;
 };

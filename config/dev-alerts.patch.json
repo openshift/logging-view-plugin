@@ -5,9 +5,9 @@
     "value": {
       "type": "console.alerts/rules-source",
       "properties": {
-        "id": "platform",
-        "contextId": "observe-alerting",
-        "getAlertingRules": { "$codeRef": "getPlatformAlertingRules" }
+        "id": "user",
+        "contextId": "dev-observe-alerting",
+        "getAlertingRules": { "$codeRef": "getUserAlertingRules" }
       }
     }
   },
@@ -17,9 +17,9 @@
     "value": {
       "type": "console.alerts/rules-source",
       "properties": {
-        "id": "user",
-        "contextId": "observe-alerting",
-        "getAlertingRules": { "$codeRef": "getUserAlertingRules" }
+        "id": "platform",
+        "contextId": "dev-observe-alerting",
+        "getAlertingRules": { "$codeRef": "getPlatformAlertingRules" }
       }
     }
   }

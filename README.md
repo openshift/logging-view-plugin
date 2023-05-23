@@ -141,12 +141,13 @@ spec:
 
 # Configuration values
 
-| Field                      | Description                                                                                                                                               | Default    | Unit                                         |
-| :------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------- | :------------------------------------------- |
-| timeout                    | fetch timeout when requesting logs                                                                                                                        | `30s`      | [duration](https://pkg.go.dev/time#Duration) |
-| logLimit                   | maximum logs to be requested                                                                                                                              | `100`      | units                                        |
-| alertingRuleTenantLabelKey | name of the alerting rule label used to match the tenantId for log-based alerts. Allows log-based alerts to request metrics to the proper tenant endpoint | `tenantId` | string                                       |
-| useTenantInHeader          | whether or not the tenant header `X-Scope-OrgID` should be used instead of using the tenant in the URL request                                            | `false`    | boolean                                      |
+| Field                         | Description                                                                                                                                               | Default                     | Unit                                         |
+| :---------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------- | :------------------------------------------- |
+| timeout                       | fetch timeout when requesting logs                                                                                                                        | `30s`                       | [duration](https://pkg.go.dev/time#Duration) |
+| logLimit                      | maximum logs to be requested                                                                                                                              | `100`                       | units                                        |
+| alertingRuleTenantLabelKey    | name of the alerting rule label used to match the tenantId for log-based alerts. Allows log-based alerts to request metrics to the proper tenant endpoint | `tenantId`                  | string                                       |
+| alertingRuleNamespaceLabelKey | name of the label used to filter alerting rules by namespace                                                                                              | `kubernetes_namespace_name` | string                                       |
+| useTenantInHeader             | whether or not the tenant header `X-Scope-OrgID` should be used instead of using the tenant in the URL request                                            | `false`                     | boolean                                      |
 
 ## Build a testint the image
 
@@ -164,10 +165,11 @@ In Openshift console, these features will be enabled by the Cluster Logging Oper
 
 ### Feature list
 
-| Feature       | Description                                                                                                                                  |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `dev-console` | Adds the logging view to the developer perspective                                                                                           |
-| `alerts`      | Merges the Openshift console alerts with log-based alerts defined in the Loki ruler. Adds a log-based metrics chart in the alert detail view |
+| Feature       | Description                                                                                                                                                                |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dev-console` | Adds the logging view to the developer perspective                                                                                                                         |
+| `alerts`      | Merges the Openshift console alerts with log-based alerts defined in the Loki ruler. Adds a log-based metrics chart in the alert detail view                               |
+| `dev-alerts`  | Merges the Openshift console alerts with log-based alerts defined in the Loki ruler. Adds a log-based metrics chart in the alert detail view for the developer perspective |
 
 ### Compatibility matrix
 
@@ -179,3 +181,4 @@ In Openshift console, these features will be enabled by the Cluster Logging Oper
 | 5.7         | 4.11                            | _No additional features, just core functionallity_    |
 | 5.7         | 4.12                            | `dev-console`                                         |
 | 5.7         | 4.13                            | `dev-console`, `alerts`                               |
+| 5.8         | 4.14                            | `dev-console`, `alerts`, `dev-alerts`                 |

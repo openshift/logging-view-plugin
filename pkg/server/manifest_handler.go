@@ -23,6 +23,11 @@ func manifestHandler(cfg *Config) http.HandlerFunc {
 
 	patchedManifest := baseManifestData
 
+	// Add alert charts if any of the alert features are enabled
+	if cfg.Features["alerts"] || cfg.Features["dev-alerts"] {
+		patchedManifest = patchManifest(patchedManifest, filepath.Join(cfg.ConfigPath, "alerts-charts.patch.json"))
+	}
+
 	for k := range cfg.Features {
 		patchedManifest = patchManifest(patchedManifest, filepath.Join(cfg.ConfigPath, fmt.Sprintf("%s.patch.json", k)))
 	}

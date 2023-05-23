@@ -1,0 +1,24 @@
+[
+  {
+    "op": "add",
+    "path": "/extensions/0",
+    "value": {
+      "type": "console.alerts/rules-chart",
+      "properties": {
+        "sourceId": "user",
+        "chart": { "$codeRef": "LogsAlertMetrics" }
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/extensions/0",
+    "value": {
+      "type": "console.alerts/rules-chart",
+      "properties": {
+        "sourceId": "platform",
+        "chart": { "$codeRef": "LogsAlertMetrics" }
+      }
+    }
+  }
+]
