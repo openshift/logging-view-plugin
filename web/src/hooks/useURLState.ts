@@ -94,11 +94,23 @@ export const useURLState = ({ defaultQuery = DEFAULT_QUERY, attributes }: UseURL
     setDirection(getDirectionValue(directionValue));
     setAreResourcesShown(showResourcesValue === '1');
     setFilters(filtersFromQuery({ query: queryValue, attributes }));
-    setTimeRange(
-      timeRangeStartValue && timeRangeEndValue
-        ? { start: timeRangeStartValue, end: timeRangeEndValue }
-        : undefined,
-    );
+    setTimeRange((prevTimeRange) => {
+      if (!timeRangeStartValue || !timeRangeEndValue) {
+        return undefined;
+      }
+
+      if (
+        prevTimeRange?.start === timeRangeStartValue &&
+        prevTimeRange?.end === timeRangeEndValue
+      ) {
+        return prevTimeRange;
+      }
+
+      return {
+        start: timeRangeStartValue,
+        end: timeRangeEndValue,
+      };
+    });
   }, [queryParams]);
 
   return {

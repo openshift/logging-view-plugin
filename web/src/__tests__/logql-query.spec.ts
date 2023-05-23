@@ -202,6 +202,35 @@ describe('LogQL query', () => {
           ],
         },
       },
+      {
+        query: '{ log_type =~ ".+" } | unknown',
+        expected: {
+          selectorMatchers: [{ label: 'log_type', operator: '=~', value: '".+"' }],
+          pipeline: [
+            {
+              operator: '|',
+              value: 'unknown',
+              labelsInFilter: [
+                {
+                  label: 'unknown',
+                },
+              ],
+            },
+          ],
+        },
+      },
+      {
+        query: '{ log_type =~ ".+" } | ',
+        expected: {
+          selectorMatchers: [{ label: 'log_type', operator: '=~', value: '".+"' }],
+          pipeline: [
+            {
+              operator: '|',
+              value: undefined,
+            },
+          ],
+        },
+      },
     ].forEach(({ query, expected }) => {
       const logql = new LogQLQuery(query);
       expect(logql.streamSelector).toEqual(expected.selectorMatchers);
@@ -389,6 +418,30 @@ describe('LogQL query', () => {
       {
         query: '{ foo="var" } | json |= "line search"',
         expected: '{ foo="var" } | json |= "line search"',
+      },
+      {
+        query: '{ foo= } | json |= "line search"',
+        expected: '{ foo= } | json |= "line search"',
+      },
+      {
+        query: '{ foo="bar" } | json "line search"',
+        expected: '{ foo="bar" } | json "line search"',
+      },
+      {
+        query: '{ foo } | json |= "line search"',
+        expected: '{ foo } | json |= "line search"',
+      },
+      {
+        query: '{ foo="var" } | unknown',
+        expected: '{ foo="var" } | unknown',
+      },
+      {
+        query: '{ foo="var" } | ',
+        expected: '{ foo="var" } | ',
+      },
+      {
+        query: '{ foo="var" } |= ',
+        expected: '{ foo="var" } |= ',
       },
       {
         query: '1 + 1',
