@@ -241,13 +241,20 @@ export class LogQLQuery {
     const stream =
       this.streamSelector.length > 0
         ? `{ ${this.streamSelector
-            .map(({ label, operator, value }) => `${label}${operator}${value}`)
+            .map(
+              ({ label, operator, value }) =>
+                `${label}${operator !== undefined ? operator : ''}${
+                  value !== undefined ? value : ''
+                }`,
+            )
             .join(', ')} }`
         : '';
 
     const pipeline =
       this.streamSelector.length > 0
-        ? `${this.pipeline.map(({ operator, value }) => ` ${operator} ${value}`).join('')}`
+        ? `${this.pipeline
+            .map(({ operator, value }) => ` ${operator} ${value !== undefined ? value : ''}`)
+            .join('')}`
         : '';
 
     query += stream + pipeline;
