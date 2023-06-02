@@ -413,8 +413,6 @@ export const useLogs = (
     currentTenant.current = tenant ?? currentTenant.current;
     currentTime.current = Date.now();
 
-    const start = millisecondsFromDuration('1h');
-
     if (ws.current) {
       ws.current.destroy();
     }
@@ -423,7 +421,6 @@ export const useLogs = (
 
     ws.current = connectToTailSocket({
       query,
-      start,
       tenant: currentTenant.current,
       namespace,
     });
