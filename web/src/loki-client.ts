@@ -26,6 +26,16 @@ type HistogramQuerParams = {
   tenant: string;
 };
 
+type LokiTailQueryParams = {
+  query: string;
+  delay_for?: string;
+  limit?: number;
+  start?: number;
+  config?: Config;
+  namespace?: string;
+  tenant: string;
+};
+
 export const getFetchConfig = ({
   config,
   tenant,
@@ -118,13 +128,7 @@ export const executeHistogramQuery = ({
   );
 };
 
-export const connectToTailSocket = ({
-  query,
-  start,
-  config,
-  tenant,
-  namespace,
-}: Omit<QueryRangeParams, 'end'>) => {
+export const connectToTailSocket = ({ query, config, tenant, namespace }: LokiTailQueryParams) => {
   const extendedQuery = queryWithNamespace({
     query,
     namespace,
@@ -132,7 +136,6 @@ export const connectToTailSocket = ({
 
   const params = {
     query: extendedQuery,
-    start: String(start * 1000000),
     limit: String(config?.logsLimit ?? 200),
   };
 
