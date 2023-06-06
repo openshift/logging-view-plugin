@@ -37,8 +37,24 @@ fi
 CONSOLE_IMAGE=${CONSOLE_IMAGE:="quay.io/openshift/origin-console:latest"}
 CONSOLE_PORT=${CONSOLE_PORT:=9000}
 
+function checkClusterEndpoint() {
+    echo "Checking cluster endpoints..."         
+    previous="$(grep 'BRIDGE_K8S_MODE_OFF_CLUSTER_ENDPOINT=' $(pwd)/scripts/env.list | cut -d= -f2-)"
+    current=$(oc whoami --show-server)
+
+    echo "Previous cluster endpoint: $previous"
+    echo "Current  cluster endpoint: $current"
+
+    if [ "$previous" == "$current" ]; then
+        echo "Cluster endpoints are the same, env.list will not be updated."
+    else
+        echo -e "Cluster endpoints are different. \nDeleting current env.list..."
+        rm scripts/env.list
+    fi
+}
+
 function createEnvironment(){
-    echo "Creatig env file..."
+    echo "Creating env file..."
     touch scripts/env.list
 
     BRIDGE_USER_AUTH="disabled"
@@ -79,6 +95,10 @@ function createEnvironment(){
     BRIDGE_PLUGINS="logging-view-plugin=${INTERNAL_HOST}:${PLUGIN_PORT}"
     echo BRIDGE_PLUGINS=$BRIDGE_PLUGINS >> scripts/env.list
 }
+
+if [[ -f "scripts/env.list" ]]; then
+    checkClusterEndpoint
+fi
 
 if [[ $CREATE_ENV == 1 ]] || [[ ! -f "scripts/env.list" ]]; then
     createEnvironment
