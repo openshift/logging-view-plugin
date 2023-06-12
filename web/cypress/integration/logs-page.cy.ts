@@ -212,6 +212,12 @@ describe('Logs Page', () => {
 
     cy.getByTestId(TestIds.ExecuteQueryButton).click();
 
+    cy.getByTestId(TestIds.LogsHistogram)
+      .should('exist')
+      .within(() => {
+        cy.get('svg g > path').should('have.length.above', 0);
+      });
+
     cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
     cy.get('@queryRangeMatrix.all').should('have.length.at.least', 1);
     cy.get('@queryRangeStreamsInfrastructure.all').should('have.length.at.least', 1);
@@ -462,6 +468,8 @@ describe('Logs Page', () => {
     }).as('queryRangeStreams');
 
     cy.visit(LOGS_PAGE_URL);
+
+    cy.getByTestId(TestIds.ExecuteQueryButton).click();
 
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
