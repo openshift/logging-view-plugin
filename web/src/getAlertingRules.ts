@@ -3,14 +3,14 @@ import { getRules } from './loki-client';
 
 const abortControllers: Map<string, null | (() => void)> = new Map();
 
-export const getAlertingRules = async (tenants: Array<string>) => {
+export const getAlertingRules = async (tenants: Array<string>, namespace?: string) => {
   const rulesResponses = await Promise.allSettled(
     tenants.map((tenant) => {
       if (abortControllers.has(tenant)) {
         abortControllers.get(tenant)?.();
       }
 
-      const { abort, request } = getRules({ tenant });
+      const { abort, request } = getRules({ tenant, namespace });
       abortControllers.set(tenant, abort);
 
       return request();

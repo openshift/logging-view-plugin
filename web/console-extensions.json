@@ -57,6 +57,14 @@
     }
   },
   {
+    "type": "console.alerts/rules-source",
+    "properties": {
+      "id": "user",
+      "contextId": "dev-observe-alerting",
+      "getAlertingRules": { "$codeRef": "getUserAlertingRules" }
+    }
+  },
+  {
     "type": "console.alerts/rules-chart",
     "properties": {
       "sourceId": "user",
@@ -68,6 +76,14 @@
     "properties": {
       "id": "platform",
       "contextId": "observe-alerting",
+      "getAlertingRules": { "$codeRef": "getPlatformAlertingRules" }
+    }
+  },
+  {
+    "type": "console.alerts/rules-source",
+    "properties": {
+      "id": "platform",
+      "contextId": "dev-observe-alerting",
       "getAlertingRules": { "$codeRef": "getPlatformAlertingRules" }
     }
   },

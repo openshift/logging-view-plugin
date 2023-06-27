@@ -1,5 +1,5 @@
 import { getAlertingRules } from './getAlertingRules';
 
-const getUserAlertingRules = () => getAlertingRules(['application']);
+const getUserAlertingRules = (namespace?: string) => getAlertingRules(['application'], namespace);
 
 export default getUserAlertingRules;

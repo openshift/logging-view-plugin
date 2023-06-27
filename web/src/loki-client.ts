@@ -151,11 +151,28 @@ export const connectToTailSocket = ({ query, config, tenant, namespace }: LokiTa
   });
 };
 
-export const getRules = ({ config, tenant }: { config?: Config; tenant: string }) => {
+export const getRules = ({
+  config,
+  tenant,
+  namespace,
+}: {
+  config?: Config;
+  tenant: string;
+  namespace?: string;
+}) => {
   const { endpoint, requestInit } = getFetchConfig({
     config,
     tenant,
   });
 
-  return cancellableFetch<RulesResponse>(`${endpoint}/prometheus/api/v1/rules`, requestInit);
+  let url = `${endpoint}/prometheus/api/v1/rules`;
+
+  const alertingRulesNamespaceLabelKey =
+    config?.alertingRuleNamespaceLabelKey || 'kubernetes_namespace_name';
+
+  if (namespace) {
+    url = `${url}?${alertingRulesNamespaceLabelKey}=${namespace}`;
+  }
+
+  return cancellableFetch<RulesResponse>(url, requestInit);
 };
