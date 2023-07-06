@@ -138,8 +138,12 @@ const LogsDetailPage: React.FunctionComponent = () => {
               onToggle={() => setIsHistogramVisible(!isHistogramVisible)}
               data-test={TestIds.ToggleHistogramButton}
             />
-            <TimeRangeDropdown onChange={setTimeRangeInURL} />
-            <RefreshIntervalDropdown onRefresh={runQuery} />
+            <TimeRangeDropdown
+              value={timeRange}
+              onChange={setTimeRangeInURL}
+              isDisabled={isQueryEmpty}
+            />
+            <RefreshIntervalDropdown onRefresh={runQuery} isDisabled={isQueryEmpty} />
             <Tooltip content={<div>Refresh</div>}>
               <Button
                 onClick={runQuery}

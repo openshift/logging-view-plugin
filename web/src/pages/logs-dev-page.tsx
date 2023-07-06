@@ -160,7 +160,7 @@ const LogsDevPage: React.FunctionComponent = () => {
               onChange={setTimeRangeInURL}
               isDisabled={isQueryEmpty}
             />
-            <RefreshIntervalDropdown onRefresh={runQuery} />
+            <RefreshIntervalDropdown onRefresh={runQuery} isDisabled={isQueryEmpty} />
             <Tooltip content={<div>Refresh</div>}>
               <Button
                 onClick={handleRefreshClick}
