@@ -1,0 +1,47 @@
+version: "3.9"
+
+networks:
+  inner:
+
+services:
+  loki:
+    image: grafana/loki:2.8.0
+    ports:
+      - 3200:3100
+    restart: unless-stopped
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/local-config.yml
+      - ./docker-compose-logs:/var/log
+      - ./loki/rules:/loki/rules
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - inner
+
+  promtail:
+    image: grafana/promtail:2.5.0
+    volumes:
+      - ./docker-compose-logs:/var/log
+      - ./loki/promtail-config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    restart: unless-stopped
+    networks:
+      - inner
+
+  log-generator:
+    image: quay.io/rojacob/cluster-logging-load-client:0.0.1-db25b80
+    restart: unless-stopped
+    volumes:
+      - ./docker-compose-logs:/var/log
+    command: generate --output-format=json --destination=file --file=/var/log/generated.log --log-lines-rate=5000 --threads=3
+    networks:
+      - inner
+
+  loki-proxy:
+    image: nginx:alpine
+    ports:
+      - 3100:80
+    volumes:
+      - ./proxy.conf:/etc/nginx/templates/default.conf.template
+    restart: unless-stopped
+    networks:
+      - inner

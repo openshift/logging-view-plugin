@@ -1,0 +1,43 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: system
+    pipeline_stages:
+      - regex:
+          expression: '.*"lvl":"(?P<level>[a-zA-Z]+)"'
+      - labels:
+          level:
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: varlogs
+          log_type: infrastructure
+          kubernetes_pod_name: alertmanager-main-0
+          kubernetes_container_name: test-container
+          kubernetes_namespace_name: openshift-monitoring
+          __path__: /var/log/*log
+  - job_name: system2
+    pipeline_stages:
+      - regex:
+          expression: '.*"lvl":"(?P<level>[a-zA-Z]+)"'
+      - labels:
+          level:
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: varlogs-duplicate
+          kubernetes_namespace_name: log-test
+          log_type: application
+          __path__: /var/log/*log
+          kubernetes_pod_name: alertmanager-main-0
+          kubernetes_container_name: test-container
