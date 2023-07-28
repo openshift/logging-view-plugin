@@ -34,7 +34,7 @@ to `http://localhost:3100`. You can disable this by re-running the console with
 
 Navigate to <http://localhost:9000/monitoring/logs> to see the running plugin.
 
-### Runing tests
+### Running tests
 
 #### Unit tests
 
@@ -157,19 +157,19 @@ make build-image
 
 ## Features
 
-From 5.6.1+, appart from the core functionality, the plugin offers additional features that can be enabled using the `-features` flag with comma separated values. For example:
+From 5.6.1+, apart from the core functionality, the plugin offers additional features that can be enabled using the `-features` flag with comma separated values. For example:
 
 `-features=dev-console,alerts`
 
-In Openshift console, these features will be enabled by the Cluster Logging Operator based on the cluster version.
+In OpenShift console, these features will be enabled by the Cluster Logging Operator based on the cluster version.
 
 ### Feature list
 
 | Feature       | Description                                                                                                                                                                |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `dev-console` | Adds the logging view to the developer perspective                                                                                                                         |
-| `alerts`      | Merges the Openshift console alerts with log-based alerts defined in the Loki ruler. Adds a log-based metrics chart in the alert detail view                               |
-| `dev-alerts`  | Merges the Openshift console alerts with log-based alerts defined in the Loki ruler. Adds a log-based metrics chart in the alert detail view for the developer perspective |
+| `alerts`      | Merges the OpenShift console alerts with log-based alerts defined in the Loki ruler. Adds a log-based metrics chart in the alert detail view                               |
+| `dev-alerts`  | Merges the OpenShift console alerts with log-based alerts defined in the Loki ruler. Adds a log-based metrics chart in the alert detail view for the developer perspective |
 
 ### Compatibility matrix
 

@@ -2,7 +2,7 @@
   "name": "logging-view-plugin",
   "version": "0.0.1",
   "displayName": "Logging View Plugin",
-  "description": "This plugin adds the logs UI to Openshift console",
+  "description": "This plugin adds the logs UI to OpenShift console",
   "dependencies": {
     "@console/pluginAPI": "*"
   },

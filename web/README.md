@@ -51,7 +51,7 @@ rpm-ostree install qemu-user-static
 systemctl reboot
 ```
 
-### Runing tests
+### Running tests
 
 #### Unit tests
 
