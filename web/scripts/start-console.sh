@@ -82,6 +82,8 @@ function createEnvironment(){
 
 if [[ $CREATE_ENV == 1 ]] || [[ ! -f "scripts/env.list" ]]; then
     createEnvironment
+else
+  echo "Using existing environment file: ./scripts/env.list"
 fi
 
 echo "Console Image: $CONSOLE_IMAGE"
