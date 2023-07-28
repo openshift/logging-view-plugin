@@ -14,7 +14,11 @@ to build and run the plugin. To run OpenShift console in a container, either
 
 ### Running locally
 
-Make sure you have loki running on `http://localhost:3100`
+Use the testing docker-compose to spin up loki, promtail and the proper tenant based routing that [LokiStack](https://docs.openshift.com/container-platform/4.13/logging/cluster-logging-loki.html) uses.
+
+```sh
+docker-compose -f hack/docker-compose/docker-compose.test.yml up
+```
 
 In one terminal window, run:
 

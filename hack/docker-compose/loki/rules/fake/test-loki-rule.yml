@@ -1,0 +1,39 @@
+groups:
+  - name: should_fire
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum(rate({job=~".+"}[5m])) by (job) > 0.0
+        for: 1m
+        labels:
+          severity: page
+          source: lokistack
+          tenantId: application
+        annotations:
+          summary: High error rate
+          description: This is a test alert from loki stack to be firing
+  - name: should_not_fire
+    rules:
+      - alert: HighRequestCount
+        expr: |
+          sum(rate({job=~"test"}[5m])) by (job) > 0.0
+        for: 1m
+        labels:
+          severity: page
+          source: lokistack
+          tenantId: application
+        annotations:
+          summary: High request count
+  - name: should_be_pending
+    rules:
+      - alert: HighRequestCountPending
+        expr: |
+          sum(rate({job=~".+"}[5m])) by (job) > 0.0
+        for: 1w
+        labels:
+          severity: page
+          source: lokistack
+          tenantId: application
+        annotations:
+          summary: High request count
+          description: This is a test alert from loki stack that should be pending
