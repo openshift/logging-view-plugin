@@ -219,6 +219,7 @@ export const queryFromFilters = ({
 };
 
 const removeQuotes = (value?: string) => (value ? value.replace(/"/g, '') : '');
+const removeBacktick = (value?: string) => (value ? value.replace(/`/g, '') : '');
 
 export const filtersFromQuery = ({
   query,
@@ -253,7 +254,7 @@ export const filtersFromQuery = ({
         .filter(notUndefined);
       filters.severity = new Set(severityValues);
     } else if (pipelineStage.operator === '|=' && !filters.content) {
-      filters.content = new Set([removeQuotes(pipelineStage.value)]);
+      filters.content = new Set([removeBacktick(pipelineStage.value)]);
     }
   }
 
@@ -345,7 +346,7 @@ export const getContentPipelineStage = (filters?: Filters): PipelineStage | unde
     return undefined;
   }
 
-  return { operator: '|=', value: `"${textValue}"` };
+  return { operator: '|=', value: `\`${textValue}\`` };
 };
 
 export const getSeverityFilterPipelineStage = (filters?: Filters): PipelineStage | undefined => {
