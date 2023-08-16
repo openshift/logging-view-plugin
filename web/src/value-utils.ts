@@ -72,12 +72,15 @@ export const padLeadingZero = (value: number, length = 2): string =>
 const DEFAULT_TENANT = 'application';
 
 export const getInitialTenantFromNamespace = (namespace?: string): string => {
-  if (namespace && /^openshift-|^openshift$|^default$|^kube-/.test(namespace)) {
+  if (namespace && namespaceBelongsToInfrastructureTenant(namespace)) {
     return 'infrastructure';
   }
 
   return DEFAULT_TENANT;
 };
+
+export const namespaceBelongsToInfrastructureTenant = (namespace: string): boolean =>
+  /^openshift-|^openshift$|^default$|^kube-/.test(namespace);
 
 export const capitalize = (str?: string): string => {
   if (!str) {

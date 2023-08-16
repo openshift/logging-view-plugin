@@ -1,9 +1,27 @@
 import { RulesResponse } from './logs.types';
 import { getRules } from './loki-client';
+import { namespaceBelongsToInfrastructureTenant } from './value-utils';
 
 const abortControllers: Map<string, null | (() => void)> = new Map();
 
 export const getAlertingRules = async (tenants: Array<string>, namespace?: string) => {
+  let tenansToConsider = tenants;
+
+  // If namespace is provided, filter the provided tenants according to the namespace
+  if (namespace) {
+    if (namespaceBelongsToInfrastructureTenant(namespace)) {
+      tenansToConsider = tenants.filter(
+        (tenant) => tenant === 'infrastructure' || tenant === 'audit',
+      );
+    } else {
+      tenansToConsider = tenants.filter((tenant) => tenant === 'application');
+    }
+  }
+
+  if (tenansToConsider.length === 0) {
+    return null;
+  }
+
   const rulesResponses = await Promise.allSettled(
     tenants.map((tenant) => {
       if (abortControllers.has(tenant)) {
