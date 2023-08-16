@@ -80,10 +80,38 @@ function createEnvironment(){
     echo BRIDGE_PLUGINS=$BRIDGE_PLUGINS >> scripts/env.list
 }
 
+function checkEndpoints(){
+    previous_endpoint="$(grep 'BRIDGE_K8S_MODE_OFF_CLUSTER_ENDPOINT=' scripts/env.list | cut -d= -f2-)"
+    current_endpoint="$(oc whoami --show-server)"
+
+    if [[ "$previous_endpoint" != "$current_endpoint" ]]; then
+        RED='\033[0;31m'
+        NO_COLOR='\033[0m' 
+        echo -e "${RED}
+        WARNING: Your previous and current cluster-endpoints don't match.
+        You may need to update your env.list. 
+        previous endpoint = ${previous_endpoint} 
+        current endpoint = ${current_endpoint} 
+        ${NO_COLOR}"
+        
+        read -n 1 -p "Would you like to update your env.list (Y/n)?" answer
+        case ${answer:0:1} in
+            y|Y )
+                echo  -e "${RED}\nYes, recreate env.list. \n${NO_COLOR}"
+                createEnvironment
+            ;;
+            * )
+                echo  -e "${RED}\nNo, keep previous env.list. \n${NO_COLOR}"
+                echo "Using existing environment file: ./scripts/env.list"
+            ;;
+        esac
+    fi
+}
+
 if [[ $CREATE_ENV == 1 ]] || [[ ! -f "scripts/env.list" ]]; then
     createEnvironment
 else
-  echo "Using existing environment file: ./scripts/env.list"
+  checkEndpoints
 fi
 
 echo "Console Image: $CONSOLE_IMAGE"
