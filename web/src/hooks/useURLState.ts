@@ -42,11 +42,15 @@ export const useURLState = ({
   const initialTimeRangeStart = queryParams.get(TIME_RANGE_START);
   const initialTimeRangeEnd = queryParams.get(TIME_RANGE_END);
   const initialDirection = queryParams.get(DIRECTION);
+  const initialResorcesShown =
+    (queryParams.get(SHOW_RESOURCES_PARAM_KEY) ?? DEFAULT_SHOW_RESOURCES) === '1';
 
   const [query, setQuery] = React.useState(initialQuery);
   const [tenant, setTenant] = React.useState(initialTenant);
-  const [filters, setFilters] = React.useState<Filters | undefined>({});
-  const [areResourcesShown, setAreResourcesShown] = React.useState(false);
+  const [filters, setFilters] = React.useState<Filters | undefined>(
+    filtersFromQuery({ query: initialQuery, attributes }),
+  );
+  const [areResourcesShown, setAreResourcesShown] = React.useState<boolean>(initialResorcesShown);
   const [direction, setDirection] = React.useState<Direction>(getDirectionValue(initialDirection));
   const [timeRange, setTimeRange] = React.useState<TimeRange | undefined>(
     initialTimeRangeStart && initialTimeRangeEnd
