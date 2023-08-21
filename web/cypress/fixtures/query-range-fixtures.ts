@@ -8,29 +8,34 @@ const generateStreamValues = ({
   nValues,
   startTime,
   message = 'loki_1      | level=info ts=2022-07-01T08:21:47.5874835Z caller=table.go:443 msg="cleaning up unwanted dbs from table index_19172"',
+  value,
 }: {
   message?: string;
   nValues: number;
   startTime: number;
-}) => Array.from({ length: nValues }, (_, i) => [startTime * 1e6 + i, message]);
+  value?: string;
+}) => Array.from({ length: nValues }, (_, i) => [startTime * 1e6 + i, value || message]);
 
 const generateStream = ({
   level,
   nValues,
   startTime,
   message,
+  value,
 }: {
   level: string;
   startTime: number;
   nValues: number;
   message?: string;
+  value?: string;
 }) => ({
   stream: {
     filename: '/var/log/out.log',
     job: 'varlogs',
     level,
+    message,
   },
-  values: generateStreamValues({ nValues, startTime, message }),
+  values: generateStreamValues({ nValues, startTime, message, value }),
 });
 
 export const queryRangeStreamsValidResponse = ({ message }: { message?: string }) => {
@@ -260,4 +265,140 @@ export const queryRangeStreamsInvalidResponse = () => {
 
 export const queryRangeStreamsErrorResponse = () => {
   return 'max entries limit';
+};
+
+export const queryRangeStreamsWithLineFormatting = () => {
+  const startTime = Date.now();
+
+  const message = `formatted string`;
+  const value = `formatted string`;
+
+  return {
+    status: 'success',
+    data: {
+      resultType: 'streams',
+      result: [
+        generateStream({
+          level: 'info',
+          nValues: 50,
+          startTime,
+          message,
+          value,
+        }),
+      ],
+      stats: {
+        summary: {
+          bytesProcessedPerSecond: 269479887,
+          linesProcessedPerSecond: 859141,
+          totalBytesProcessed: 28840573,
+          totalLinesProcessed: 91948,
+          execTime: 0.1070231,
+          queueTime: 0.0000893,
+          subqueries: 1,
+        },
+        querier: {
+          store: {
+            totalChunksRef: 0,
+            totalChunksDownloaded: 0,
+            chunksDownloadTime: 0,
+            chunk: {
+              headChunkBytes: 0,
+              headChunkLines: 0,
+              decompressedBytes: 0,
+              decompressedLines: 0,
+              compressedBytes: 0,
+              totalDuplicates: 0,
+            },
+          },
+        },
+        ingester: {
+          totalReached: 1,
+          totalChunksMatched: 8,
+          totalBatches: 2,
+          totalLinesSent: 200,
+          store: {
+            totalChunksRef: 8,
+            totalChunksDownloaded: 8,
+            chunksDownloadTime: 1248200,
+            chunk: {
+              headChunkBytes: 990544,
+              headChunkLines: 5782,
+              decompressedBytes: 27850029,
+              decompressedLines: 86166,
+              compressedBytes: 2935987,
+              totalDuplicates: 0,
+            },
+          },
+        },
+      },
+    },
+  };
+};
+
+export const queryRangeStreamsWithMessage = () => {
+  const startTime = Date.now();
+
+  const message = `a message`;
+  const value = `{ json:"object" }`;
+
+  return {
+    status: 'success',
+    data: {
+      resultType: 'streams',
+      result: [
+        generateStream({
+          level: 'info',
+          nValues: 50,
+          startTime,
+          message,
+          value,
+        }),
+      ],
+      stats: {
+        summary: {
+          bytesProcessedPerSecond: 269479887,
+          linesProcessedPerSecond: 859141,
+          totalBytesProcessed: 28840573,
+          totalLinesProcessed: 91948,
+          execTime: 0.1070231,
+          queueTime: 0.0000893,
+          subqueries: 1,
+        },
+        querier: {
+          store: {
+            totalChunksRef: 0,
+            totalChunksDownloaded: 0,
+            chunksDownloadTime: 0,
+            chunk: {
+              headChunkBytes: 0,
+              headChunkLines: 0,
+              decompressedBytes: 0,
+              decompressedLines: 0,
+              compressedBytes: 0,
+              totalDuplicates: 0,
+            },
+          },
+        },
+        ingester: {
+          totalReached: 1,
+          totalChunksMatched: 8,
+          totalBatches: 2,
+          totalLinesSent: 200,
+          store: {
+            totalChunksRef: 8,
+            totalChunksDownloaded: 8,
+            chunksDownloadTime: 1248200,
+            chunk: {
+              headChunkBytes: 990544,
+              headChunkLines: 5782,
+              decompressedBytes: 27850029,
+              decompressedLines: 86166,
+              compressedBytes: 2935987,
+              totalDuplicates: 0,
+            },
+          },
+        },
+      },
+    },
+  };
 };

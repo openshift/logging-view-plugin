@@ -69,6 +69,12 @@ type LogRowProps = {
   showResources: boolean;
 };
 
+const isJSONObject = (value: string): boolean => {
+  const trimmedValue = value.trim();
+
+  return trimmedValue.startsWith('{') && trimmedValue.endsWith('}');
+};
+
 const parseResources = (data: Record<string, string>): Array<Resource> => {
   const container = data['kubernetes_container_name']
     ? {
@@ -96,7 +102,8 @@ const streamToTableData = (stream: StreamLogData): Array<LogTableData> => {
   const values = stream.values;
 
   return values.map((value) => {
-    const message = String(stream.stream['message'] || value[1]);
+    const logValue = String(value[1]);
+    const message = isJSONObject(logValue) ? stream.stream['message'] || logValue : logValue;
     const timestamp = parseFloat(String(value[0]));
     const time = timestamp / 1e6;
     const formattedTime = dateToFormat(time, DateFormat.Full);
