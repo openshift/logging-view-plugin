@@ -5,6 +5,8 @@ import {
   queryRangeStreamsErrorResponse,
   queryRangeStreamsInvalidResponse,
   queryRangeStreamsValidResponse,
+  queryRangeStreamsWithLineFormatting,
+  queryRangeStreamsWithMessage,
 } from '../fixtures/query-range-fixtures';
 import { namespaceListResponse } from '../fixtures/resource-api-fixtures';
 import { formatTimeRange } from '../../src/time-range';
@@ -475,6 +477,42 @@ describe('Logs Page', () => {
       .should('exist')
       .within(() => {
         cy.contains('Select a smaller time range to reduce the number of results');
+      });
+
+    cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
+  });
+
+  it('displays the content of a log entry if the stream result is already formatted', () => {
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeStreamsWithLineFormatting()).as(
+      'queryRangeStreams',
+    );
+
+    cy.visit(LOGS_PAGE_URL);
+
+    cy.getByTestId(TestIds.ExecuteQueryButton).click();
+
+    cy.getByTestId(TestIds.LogsTable)
+      .should('exist')
+      .within(() => {
+        cy.get('.co-logs-table__message').first().contains('formatted string');
+      });
+
+    cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
+  });
+
+  it('displays the message of a log entry if the streams result is an object', () => {
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeStreamsWithMessage()).as(
+      'queryRangeStreams',
+    );
+
+    cy.visit(LOGS_PAGE_URL);
+
+    cy.getByTestId(TestIds.ExecuteQueryButton).click();
+
+    cy.getByTestId(TestIds.LogsTable)
+      .should('exist')
+      .within(() => {
+        cy.get('.co-logs-table__message').first().contains('a message');
       });
 
     cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
