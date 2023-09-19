@@ -34,6 +34,7 @@ describe('Logs Dev Page', () => {
 
     cy.getByTestId(TestIds.ShowQueryToggle).click();
     cy.getByTestId(TestIds.LogsQueryInput).should('exist');
+    cy.getByTestId(TestIds.SearchAllNamespacesToggle).should('exist');
 
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
