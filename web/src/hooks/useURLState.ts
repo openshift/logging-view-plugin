@@ -18,9 +18,11 @@ const TIME_RANGE_END = 'end';
 const DIRECTION = 'direction';
 const TENANT_PARAM_KEY = 'tenant';
 const SHOW_RESOURCES_PARAM_KEY = 'showResources';
+const SEARCH_ALL_NAMESPACES_PARAM_KEY = 'searchAllNamespaces';
 
 const DEFAULT_TENANT = 'application';
 const DEFAULT_SHOW_RESOURCES = '0';
+const DEFAULT_SEARCH_ALL_NAMESPACES = '0';
 export const defaultQueryFromTenant = (tenant: string = DEFAULT_TENANT) =>
   `{ log_type="${tenant}" } | json`;
 
@@ -44,6 +46,8 @@ export const useURLState = ({
   const initialDirection = queryParams.get(DIRECTION);
   const initialResorcesShown =
     (queryParams.get(SHOW_RESOURCES_PARAM_KEY) ?? DEFAULT_SHOW_RESOURCES) === '1';
+  const initialSearchInAllNamespaces =
+    (queryParams.get(SEARCH_ALL_NAMESPACES_PARAM_KEY) ?? DEFAULT_SEARCH_ALL_NAMESPACES) === '1';
 
   const [query, setQuery] = React.useState(initialQuery);
   const [tenant, setTenant] = React.useState(initialTenant);
@@ -51,6 +55,9 @@ export const useURLState = ({
     filtersFromQuery({ query: initialQuery, attributes }),
   );
   const [areResourcesShown, setAreResourcesShown] = React.useState<boolean>(initialResorcesShown);
+  const [searchAllNamespaces, setSearchAllNamespaces] = React.useState<boolean>(
+    initialSearchInAllNamespaces,
+  );
   const [direction, setDirection] = React.useState<Direction>(getDirectionValue(initialDirection));
   const [timeRange, setTimeRange] = React.useState<TimeRange | undefined>(
     initialTimeRangeStart && initialTimeRangeEnd
@@ -68,6 +75,11 @@ export const useURLState = ({
 
   const setShowResourcesInURL = (showResources: boolean) => {
     queryParams.set(SHOW_RESOURCES_PARAM_KEY, showResources ? '1' : '0');
+    history.push(`${location.pathname}?${queryParams.toString()}`);
+  };
+
+  const setSearchAllNamespacesInURL = (enableSearchAllNamespacesValue: boolean) => {
+    queryParams.set(SEARCH_ALL_NAMESPACES_PARAM_KEY, enableSearchAllNamespacesValue ? '1' : '0');
     history.push(`${location.pathname}?${queryParams.toString()}`);
   };
 
@@ -96,6 +108,8 @@ export const useURLState = ({
     const queryValue = queryParams.get(QUERY_PARAM_KEY) ?? initialQuery;
     const tenantValue = queryParams.get(TENANT_PARAM_KEY) ?? DEFAULT_TENANT;
     const showResourcesValue = queryParams.get(SHOW_RESOURCES_PARAM_KEY) ?? DEFAULT_SHOW_RESOURCES;
+    const searchAllNamespacesValue =
+      queryParams.get(SEARCH_ALL_NAMESPACES_PARAM_KEY) ?? DEFAULT_SEARCH_ALL_NAMESPACES;
     const timeRangeStartValue = queryParams.get(TIME_RANGE_START);
     const timeRangeEndValue = queryParams.get(TIME_RANGE_END);
     const directionValue = queryParams.get(DIRECTION);
@@ -104,6 +118,7 @@ export const useURLState = ({
     setTenant(tenantValue);
     setDirection(getDirectionValue(directionValue));
     setAreResourcesShown(showResourcesValue === '1');
+    setSearchAllNamespaces(searchAllNamespacesValue === '1');
     setFilters(filtersFromQuery({ query: queryValue, attributes }));
     setTimeRange((prevTimeRange) => {
       if (!timeRangeStartValue || !timeRangeEndValue) {
@@ -130,7 +145,9 @@ export const useURLState = ({
     tenant,
     setTenantInURL,
     areResourcesShown,
+    searchAllNamespaces,
     setShowResourcesInURL,
+    setSearchAllNamespacesInURL,
     filters,
     setFilters,
     timeRange,

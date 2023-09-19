@@ -1,4 +1,5 @@
 import {
+  Checkbox,
   Select,
   SelectOption,
   SelectOptionObject,
@@ -37,8 +38,11 @@ interface LogsToolbarProps {
   onStreamingToggle?: (e: React.MouseEvent) => void;
   onSeverityChange?: (severityFilter: Set<Severity>) => void;
   onShowResourcesToggle?: (showResources: boolean) => void;
+  onSearchInAllNamespacesToggle?: (searchInAllNamespaces: boolean) => void;
   showResources?: boolean;
   enableTenantDropdown?: boolean;
+  enableSearchInAllNamespaces?: boolean;
+  searchInAllNamespaces?: boolean;
   isDisabled?: boolean;
   onFiltersChange?: (filters: Filters) => void;
   filters?: Filters;
@@ -63,10 +67,13 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
   onTenantSelect,
   onStreamingToggle,
   onShowResourcesToggle,
+  onSearchInAllNamespacesToggle,
   showResources = false,
   enableStreaming = false,
   isStreaming = false,
   enableTenantDropdown = true,
+  enableSearchInAllNamespaces = false,
+  searchInAllNamespaces = false,
   isDisabled = false,
   filters,
   onFiltersChange,
@@ -163,6 +170,18 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
               onTenantSelected={onTenantSelect}
               selectedTenant={tenant}
               isDisabled={isDisabled}
+            />
+          </ToolbarGroup>
+        )}
+
+        {enableSearchInAllNamespaces && (
+          <ToolbarGroup>
+            <Checkbox
+              isChecked={searchInAllNamespaces}
+              onChange={(checked) => onSearchInAllNamespacesToggle?.(checked)}
+              id="search-all-namespaces-checkbox"
+              label={t('Search all namespaces')}
+              data-test={TestIds.SearchAllNamespacesToggle}
             />
           </ToolbarGroup>
         )}
