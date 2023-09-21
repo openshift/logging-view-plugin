@@ -1,7 +1,9 @@
 import { Action, Alert, ExtensionHook } from '@openshift-console/dynamic-plugin-sdk';
 import { ListIcon } from '@patternfly/react-icons';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { listGoals } from '../korrel8r-client';
+import { Korrel8rResponse } from '../korrel8r.types';
 
 type LogActionsExtensionOptions = {
   alert?: Alert;
@@ -11,21 +13,70 @@ const useLogActionsExtension: ExtensionHook<Array<Action>, LogActionsExtensionOp
   options,
 ) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
+  const [actions, setActions] = React.useState<Action[]>([]);
 
-  // TODO: transform promQL into logQL
-  const alertQuery = options.alert?.rule?.query ?? '';
-  const href = `/monitoring/logs?q=${alertQuery}`;
-  const [actions] = React.useState([
-    {
-      id: 'link-to-logs',
-      label: (
-        <>
-          <ListIcon /> {t('See related logs')}
-        </>
-      ),
-      cta: { href },
-    },
-  ]);
+  const alertingRuleName = options.alert?.rule.name;
+
+  useEffect(() => {
+    if (alertingRuleName) {
+      const { request, abort } = listGoals({
+        goalsRequest: {
+          start: {
+            class: 'alert.alert',
+            queries: [{ Labels: { alertname: alertingRuleName } }],
+          },
+          goals: ['audit.log', 'application.log', 'infrastructure.log'],
+        },
+      });
+
+      request()
+        .then((response: Korrel8rResponse) => {
+          response.some((goal) => {
+            let tenant: string | undefined;
+            if (goal?.class === 'audit.log') {
+              tenant = 'audit';
+            } else if (goal?.class === 'application.log') {
+              tenant = 'application';
+            } else if (goal?.class === 'infrastructure.log') {
+              tenant = 'infrastructure';
+            }
+
+            // Use the first goal query that has results and a logQL query
+            const logQL = goal?.queries?.find((q) => q?.count > 0 && q?.query?.LogQL)?.query?.LogQL;
+
+            if (logQL && tenant) {
+              const params = new URLSearchParams();
+              params.set('q', logQL);
+              params.set('tenant', tenant);
+              const href = `/monitoring/logs?${params.toString()}`;
+
+              setActions([
+                {
+                  id: 'link-to-logs',
+                  label: (
+                    <>
+                      <ListIcon /> {t('See related logs')}
+                    </>
+                  ),
+                  cta: { href },
+                },
+              ]);
+
+              // Exit early (ignore any remaining goals)
+              return true;
+            }
+          });
+        })
+        .catch((error) => {
+          // eslint-disable-next-line no-console
+          console.warn('Error fetching korrel8r goals: ', error);
+        });
+
+      return () => {
+        abort();
+      };
+    }
+  }, [alertingRuleName]);
 
   return [actions, true, null];
 };
