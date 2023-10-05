@@ -61,4 +61,4 @@ start-backend: build-backend
 
 .PHONY: build-image
 build-image: install-backend build-backend install-frontend build-frontend
-	cd web && ./scripts/image.sh -t latest
+	./scripts/image.sh -t latest
