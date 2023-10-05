@@ -38,8 +38,6 @@ const LogsDevPage: React.FunctionComponent = () => {
     setQueryInURL,
     areResourcesShown,
     setShowResourcesInURL,
-    searchAllNamespaces,
-    setSearchAllNamespacesInURL,
     filters,
     setFilters,
     setTimeRangeInURL,
@@ -83,19 +81,14 @@ const LogsDevPage: React.FunctionComponent = () => {
   const runQuery = ({ queryToUse }: { queryToUse?: string } = {}) => {
     getLogs({
       query: queryToUse ?? query,
-      namespace: searchAllNamespaces ? undefined : namespace,
+      namespace,
       timeRange,
       direction,
       tenant,
     });
 
     if (isHistogramVisible) {
-      getHistogram({
-        query: queryToUse ?? query,
-        namespace: searchAllNamespaces ? undefined : namespace,
-        timeRange,
-        tenant,
-      });
+      getHistogram({ query: queryToUse ?? query, namespace, timeRange, tenant });
     }
   };
 
@@ -148,7 +141,7 @@ const LogsDevPage: React.FunctionComponent = () => {
     const queryToUse = updateQuery(filters, tenant);
 
     runQuery({ queryToUse });
-  }, [timeRange, isHistogramVisible, namespace, searchAllNamespaces, direction]);
+  }, [timeRange, isHistogramVisible, namespace, direction]);
 
   const isQueryEmpty = query === '';
 
@@ -219,9 +212,6 @@ const LogsDevPage: React.FunctionComponent = () => {
             attributeList={attributeList}
             filters={filters}
             onFiltersChange={handleFiltersChange}
-            searchInAllNamespaces={searchAllNamespaces}
-            onSearchInAllNamespacesToggle={setSearchAllNamespacesInURL}
-            enableSearchInAllNamespaces
           />
         </LogsTable>
       </Grid>
