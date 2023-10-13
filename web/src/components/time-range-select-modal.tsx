@@ -110,6 +110,30 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
     }
   };
 
+  /* As the patternfly version used in OCP 4.12-4.14 varies,
+   * we need to handle both cases until we can build different images per OCP version
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleStartDateChange = (event: any, value: any) => {
+    if (typeof event === 'string') {
+      setStartDate(event);
+    } else if (typeof value === 'string') {
+      setStartDate(value);
+    }
+  };
+
+  /* As the patternfly version used in OCP 4.12-4.14 varies,
+   * we need to handle both cases until we can build different images per OCP version
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleEndDateChange = (event: any, value: any) => {
+    if (typeof event === 'string') {
+      setEndDate(event);
+    } else if (typeof value === 'string') {
+      setEndDate(value);
+    }
+  };
+
   return (
     <Modal
       id="date-time-picker-modal"
@@ -148,14 +172,14 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
         <div>
           <label>{t('From')}</label>
           <div className="co-logs-time-range-modal__field">
-            <DatePicker onChange={setStartDate} value={startDate} />
+            <DatePicker onChange={handleStartDateChange} value={startDate} />
             <PrecisionTimePicker time={startTime} onChange={handleStartTimeChange} />
           </div>
         </div>
         <div>
           <label>{t('To')}</label>
           <div className="co-logs-time-range-modal__field">
-            <DatePicker onChange={setEndDate} value={endDate} />
+            <DatePicker onChange={handleEndDateChange} value={endDate} />
             <PrecisionTimePicker time={endTime} onChange={handleEndTimeChange} />
           </div>
           {!isRangeValid && (
