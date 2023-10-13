@@ -10,3 +10,5 @@ web/.nyc_output/
 /plugin-backend
 env.list
 .vscode
+hack/docker-compose/docker-compose-logs
+test-certs
