@@ -1,10 +1,10 @@
-FROM registry.redhat.io/ubi8/ubi-minimal:8.6 as web-builder
+FROM registry.redhat.io/ubi9/ubi-minimal as web-builder
 
 ENV APP_ROOT=/opt/app-root \
     HOME=/opt/app-root/src \
     NPM_RUN=start \
     PLATFORM="el8" \
-    NODEJS_VERSION=16 \
+    NODEJS_VERSION=18 \
     NPM_RUN=start \
     NAME=nodejs
 
@@ -12,9 +12,9 @@ ENV NPM_CONFIG_PREFIX=$HOME/.npm-global \
     PATH=$HOME/node_modules/.bin/:$HOME/.npm-global/bin/:$PATH
 
 RUN INSTALL_PKGS="nodejs nodejs-nodemon npm findutils tar make" && \
-    microdnf module disable nodejs && \
-    microdnf module enable nodejs:$NODEJS_VERSION && \
-    microdnf --nodocs install $INSTALL_PKGS && \
+    microdnf module disable nodejs -y && \
+    microdnf module enable nodejs:$NODEJS_VERSION -y && \
+    microdnf --nodocs install $INSTALL_PKGS -y && \
     microdnf clean all && \
     rm -rf /mnt/rootfs/var/cache/* /mnt/rootfs/var/log/dnf* /mnt/rootfs/var/log/yum.*
 
@@ -28,7 +28,7 @@ RUN make install-frontend-ci
 COPY web/ ${HOME}/web
 RUN make build-frontend
 
-FROM registry.access.redhat.com/ubi8/go-toolset:1.18 as go-builder
+FROM registry.redhat.io/ubi9/go-toolset:1.19 as go-builder
 
 WORKDIR /opt/app-root
 
@@ -44,7 +44,7 @@ COPY pkg/ pkg/
 
 RUN make build-backend
 
-FROM registry.redhat.io/ubi8/ubi-minimal:8.6
+FROM registry.redhat.io/ubi9/ubi-minimal
 
 USER 1001
 
