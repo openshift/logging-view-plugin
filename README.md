@@ -179,6 +179,7 @@ In OpenShift console, these features will be enabled by the Cluster Logging Oper
 | 5.6.1+      | 4.10 (tech preview), 4.11       | _No additional features, just core functionallity_    |
 | 5.6.1+      | 4.12, 4.13                      | `dev-console`                                         |
 | 5.7         | 4.11                            | _No additional features, just core functionallity_    |
+| 5.7         | 4.11.52+                        | `dev-console`                                         |
 | 5.7         | 4.12                            | `dev-console`                                         |
 | 5.7         | 4.13                            | `dev-console`, `alerts`                               |
 | 5.8         | 4.14                            | `dev-console`, `alerts`, `dev-alerts`                 |
