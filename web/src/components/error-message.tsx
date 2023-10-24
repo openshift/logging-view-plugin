@@ -16,15 +16,19 @@ interface ErrorMessageProps {
   error: unknown | Error;
 }
 
-const ruleCode = `rules:
-- apiGroups:
-  - loki.grafana.com
-  resources:
-  - application # infrastructure and/or audit
-  resourceNames:
-  - logs
-  verbs:
-  - get
+const roleCode = `apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: view-application-logs
+  namespace: <project-name>
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-logging-application-view
+subjects:
+- kind: User
+  name: <testuser>
+  apiGroup: rbac.authorization.k8s.io
 `;
 
 const Suggestion: React.FC = ({ children }) => (
@@ -80,17 +84,11 @@ const messages: (t: TFunction) => Record<string, React.ReactElement> = (t) => ({
   ),
   forbidden: (
     <Suggestion>
-      <p>
-        {t('Make sure you have the required role to get audit, application or infrastructure logs')}
-      </p>
-      <p>
-        {t(
-          'Ask your administrator to create a role or cluster role that includes the following rule',
-        )}
-      </p>
+      <p>{t('Make sure you have the required role to get application logs in this namespace.')}</p>
+      <p>{t('Ask your administrator to grant you this role')}:</p>
       <p>
         <CodeBlock>
-          <CodeBlockCode id="code-content">{ruleCode}</CodeBlockCode>
+          <CodeBlockCode id="code-content">{roleCode}</CodeBlockCode>
         </CodeBlock>
       </p>
     </Suggestion>
