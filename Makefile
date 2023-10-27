@@ -1,5 +1,10 @@
 FEATURES?=
 
+BUILD_OPTS?=-mod=mod
+export GOROOT=$(shell go env GOROOT)
+export GOFLAGS=
+export GODEBUG=x509ignoreCN=0
+
 .PHONY: install-frontend
 install-frontend:
 	cd web && npm install
@@ -38,7 +43,7 @@ install-backend:
 
 .PHONY: build-backend
 build-backend:
-	go build -o plugin-backend cmd/plugin-backend.go
+	go build $(BUILD_OPTS) -o plugin-backend cmd/plugin-backend.go
 
 .PHONY: test-unit-backend
 test-unit-backend:
