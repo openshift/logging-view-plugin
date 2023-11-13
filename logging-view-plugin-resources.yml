@@ -106,13 +106,22 @@ spec:
     basePath: "/"
     port: 9443
   proxy:
-    - type: Service
-      alias: backend
-      authorize: true
-      service:
-        name: lokistack-sample-gateway-http
-        namespace: openshift-logging
-        port: 8080
+    - alias: backend
+      authorization: UserToken
+      endpoint:
+        service:
+          name: logging-loki-gateway-http
+          namespace: openshift-logging
+          port: 8080
+        type: Service
+    - alias: korrel8r
+      authorization: None
+      endpoint:
+        service:
+          name: korrel8r
+          namespace: korrel8r
+          port: 443
+        type: Service
 
 ---
 apiVersion: v1
