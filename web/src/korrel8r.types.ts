@@ -3,20 +3,13 @@ export type Node = {
   count: number;
   queries?: Array<{
     count: number;
-    query: {
-      LogQL: string;
-      LogType: string;
-    };
+    query: string;
   }>;
 };
 
 export type Start = {
   class: string;
-  queries: Array<{
-    Labels: {
-      alertname: string;
-    };
-  }>;
+  queries: string[];
 };
 
 export type GoalsRequest = {
