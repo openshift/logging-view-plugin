@@ -1,7 +1,7 @@
 import {
   filtersFromQuery,
   getContentPipelineStage,
-  getMatcherFromSet,
+  getK8sMatcherFromSet,
   getMatchersFromFilters,
   getNamespaceMatcher,
   getSeverityFilterPipelineStage,
@@ -140,7 +140,7 @@ describe('Attribute filters', () => {
         expected: { label: 'test', operator: '=~', value: '"value-1|value-2"' },
       },
     ].forEach(({ set, label, expected }) => {
-      const selectors = getMatcherFromSet(label, set);
+      const selectors = getK8sMatcherFromSet(label, set);
       expect(selectors).toEqual(expected);
     });
   });
@@ -363,6 +363,60 @@ describe('Attribute filters', () => {
 
   test('query from filters', () => {
     [
+      {
+        initialQuery: '{ kubernetes_pod_name=~"a-pod|b-pod" }',
+        // If a regex is provided as a value, the operator must be =~
+        filters: {
+          pod: new Set(['.*etcd.*']),
+        },
+        expectedQuery: '{ kubernetes_pod_name=~".*etcd.*" }',
+      },
+      {
+        initialQuery: '{ kubernetes_pod_name=~"a-pod|b-pod" }',
+        // Single dots are not considered regex as they are valid DNS names:
+        // https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+        filters: {
+          pod: new Set(['openshift.pod']),
+        },
+        expectedQuery: '{ kubernetes_pod_name="openshift.pod" }',
+      },
+      {
+        initialQuery: '{ kubernetes_pod_name=~"a-pod|b-pod" }',
+        // A regex including a dot must have a quantifier (* or + or ?)
+        // as regex match in LogQL is fully anchored
+        // https://grafana.com/docs/loki/latest/query/log_queries/#log-stream-selector
+        filters: {
+          pod: new Set(['openshift.*pod']),
+        },
+        expectedQuery: '{ kubernetes_pod_name=~"openshift.*pod" }',
+      },
+      {
+        initialQuery: '{ kubernetes_pod_name=~"a-pod|b-pod" }',
+        // A regex including a dot must have a quantifier (* or + or ?)
+        // as regex match in LogQL is fully anchored
+        // https://grafana.com/docs/loki/latest/query/log_queries/#log-stream-selector
+        filters: {
+          pod: new Set(['openshift.+pod']),
+        },
+        expectedQuery: '{ kubernetes_pod_name=~"openshift.+pod" }',
+      },
+      {
+        initialQuery: '{ kubernetes_pod_name=~"a-pod|b-pod" }',
+        // A regex including a dot must have a quantifier (* or + or ?)
+        // as regex match in LogQL is fully anchored
+        // https://grafana.com/docs/loki/latest/query/log_queries/#log-stream-selector
+        filters: {
+          pod: new Set(['openshift.?pod']),
+        },
+        expectedQuery: '{ kubernetes_pod_name=~"openshift.?pod" }',
+      },
+      {
+        initialQuery: '{ kubernetes_pod_name=~"a-pod|b-pod" }',
+        filters: {
+          pod: new Set(['ns-1']),
+        },
+        expectedQuery: '{ kubernetes_pod_name="ns-1" }',
+      },
       {
         initialQuery:
           '{ kubernetes_pod_name=~"a-pod|b-pod", kubernetes_namespace_name=~"ns-1|ns-2", label="test", kubernetes_container_name="container-1" } |="some line content" | other="filter" | level="err|eror" or level="unknown" or level=""',

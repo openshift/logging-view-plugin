@@ -273,6 +273,12 @@ export const getNamespaceMatcher = (namespace?: string): LabelMatcher | undefine
   };
 };
 
+const isK8sValueARegex = (value: string) => {
+  // Regex to test if a string contains a regex matching a k8s name value
+  const testRegex = /[{}()[\]^$*+?|/\\]|\.[*+?]/;
+  return testRegex.test(value);
+};
+
 export const queryWithNamespace = ({ query, namespace }: { query: string; namespace?: string }) => {
   const logQLQuery = new LogQLQuery(query ?? '');
 
@@ -281,17 +287,22 @@ export const queryWithNamespace = ({ query, namespace }: { query: string; namesp
   return logQLQuery.toString();
 };
 
-export const getMatcherFromSet = (label: string, values: Set<string>): LabelMatcher | undefined => {
+export const getK8sMatcherFromSet = (
+  label: string,
+  values: Set<string>,
+): LabelMatcher | undefined => {
   const valuesArray = Array.from(values);
   if (valuesArray.length === 0) {
     return undefined;
   }
 
   if (valuesArray.length === 1) {
+    const value = valuesArray[0];
+
     return {
       label,
-      operator: '=',
-      value: `"${valuesArray[0]}"`,
+      operator: isK8sValueARegex(value) ? '=~' : '=',
+      value: `"${value}"`,
     };
   }
 
@@ -314,13 +325,13 @@ export const getMatchersFromFilters = (filters?: Filters): Array<LabelMatcher> =
     if (value) {
       switch (key) {
         case 'namespace':
-          matchers.push(getMatcherFromSet('kubernetes_namespace_name', value));
+          matchers.push(getK8sMatcherFromSet('kubernetes_namespace_name', value));
           break;
         case 'pod':
-          matchers.push(getMatcherFromSet('kubernetes_pod_name', value));
+          matchers.push(getK8sMatcherFromSet('kubernetes_pod_name', value));
           break;
         case 'container':
-          matchers.push(getMatcherFromSet('kubernetes_container_name', value));
+          matchers.push(getK8sMatcherFromSet('kubernetes_container_name', value));
           break;
       }
     }
