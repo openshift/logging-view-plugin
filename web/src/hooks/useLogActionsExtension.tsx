@@ -22,10 +22,10 @@ const useLogActionsExtension: ExtensionHook<Array<Action>, LogActionsExtensionOp
       const { request, abort } = listGoals({
         goalsRequest: {
           start: {
-            class: 'alert.alert',
-            queries: [{ Labels: { alertname: alertingRuleName } }],
+            class: 'alert:alert',
+            queries: [`alert:alert:{"alertname":"${alertingRuleName}"}`],
           },
-          goals: ['audit.log', 'application.log', 'infrastructure.log'],
+          goals: ['log:application', 'log:audit', 'log:infrastructure'],
         },
       });
 
@@ -33,18 +33,21 @@ const useLogActionsExtension: ExtensionHook<Array<Action>, LogActionsExtensionOp
         .then((response: Korrel8rResponse) => {
           response.some((goal) => {
             let tenant: string | undefined;
-            if (goal?.class === 'audit.log') {
-              tenant = 'audit';
-            } else if (goal?.class === 'application.log') {
+            if (goal?.class === 'log:application') {
               tenant = 'application';
-            } else if (goal?.class === 'infrastructure.log') {
+            } else if (goal?.class === 'log:audit') {
+              tenant = 'audit';
+            } else if (goal?.class === 'log:infrastructure') {
               tenant = 'infrastructure';
             }
 
             // Use the first goal query that has results and a logQL query
-            const logQL = goal?.queries?.find((q) => q?.count > 0 && q?.query?.LogQL)?.query?.LogQL;
+            const query = goal?.queries?.find((q) => q?.count > 0 && q?.query)?.query;
 
-            if (logQL && tenant) {
+            if (query && tenant) {
+              // Strip korrel8r class off the beginning of the query string
+              const logQL = query.replace(/^log:(application|audit|infrastructure):/, '');
+
               const params = new URLSearchParams();
               params.set('q', logQL);
               params.set('tenant', tenant);
