@@ -22,23 +22,32 @@ const generateStream = ({
   startTime,
   message,
   value,
+  labels,
 }: {
   level: string;
   startTime: number;
   nValues: number;
   message?: string;
   value?: string;
+  labels?: Record<string, string>;
 }) => ({
   stream: {
     filename: '/var/log/out.log',
     job: 'varlogs',
     level,
     message,
+    ...labels,
   },
   values: generateStreamValues({ nValues, startTime, message, value }),
 });
 
-export const queryRangeStreamsValidResponse = ({ message }: { message?: string }) => {
+export const queryRangeStreamsValidResponse = ({
+  message,
+  labels,
+}: {
+  message?: string;
+  labels?: Record<string, string>;
+}) => {
   const startTime = Date.now();
 
   return {
@@ -46,10 +55,10 @@ export const queryRangeStreamsValidResponse = ({ message }: { message?: string }
     data: {
       resultType: 'streams',
       result: [
-        generateStream({ level: 'info', nValues: 50, startTime, message }),
-        generateStream({ level: 'error', nValues: 50, startTime, message }),
-        generateStream({ level: 'warning', nValues: 50, startTime, message }),
-        generateStream({ level: 'critical', nValues: 50, startTime, message }),
+        generateStream({ level: 'info', nValues: 50, startTime, message, labels }),
+        generateStream({ level: 'error', nValues: 50, startTime, message, labels }),
+        generateStream({ level: 'warning', nValues: 50, startTime, message, labels }),
+        generateStream({ level: 'critical', nValues: 50, startTime, message, labels }),
       ],
       stats: {
         summary: {

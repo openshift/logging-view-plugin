@@ -30,3 +30,11 @@ export const listGoals = ({
 
   return cancellableFetch<Korrel8rResponse>(`${endpoint}/api/v1alpha1/lists/goals`, requestData);
 };
+
+export const listDomains = ({ config }: { config?: Config } = {}) => {
+  const { endpoint, requestInit } = getFetchConfig({ config });
+
+  const requestData = { ...requestInit, method: 'GET' };
+
+  return cancellableFetch<Korrel8rResponse>(`${endpoint}/api/v1alpha1/domains`, requestData);
+};
