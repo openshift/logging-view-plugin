@@ -1,5 +1,5 @@
 import { ResourceLink } from '@openshift-console/dynamic-plugin-sdk';
-import { Alert, Split, SplitItem } from '@patternfly/react-core';
+import { Alert, Button, Split, SplitItem, TextVariants, Text } from '@patternfly/react-core';
 import {
   ExpandableRowContent,
   ISortBy,
@@ -7,22 +7,25 @@ import {
   Tbody,
   Td,
   Th,
-  Thead,
   ThProps,
+  Thead,
   Tr,
 } from '@patternfly/react-table';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { notUndefined } from '../value-utils';
 import { DateFormat, dateToFormat } from '../date-utils';
-import { Direction, isStreamsResult, QueryRangeResponse, StreamLogData } from '../logs.types';
+import { useKorrel8r } from '../hooks/useKorrel8r';
+import { listGoals } from '../korrel8r-client';
+import { Korrel8rResponse } from '../korrel8r.types';
+import { Direction, QueryRangeResponse, StreamLogData, isStreamsResult } from '../logs.types';
 import { severityFromString } from '../severity';
 import { TestIds } from '../test-ids';
+import { notUndefined } from '../value-utils';
 import { CenteredContainer } from './centered-container';
+import { ErrorMessage } from './error-message';
 import { LogDetail } from './log-detail';
 import './logs-table.css';
-import { ErrorMessage } from './error-message';
-import { useTranslation } from 'react-i18next';
 
 interface LogsTableProps {
   logsData?: QueryRangeResponse;
@@ -67,6 +70,13 @@ type LogRowProps = {
   data: LogTableData;
   title: string;
   showResources: boolean;
+};
+
+type MetricsLinkProps = {
+  container: string;
+  logType: string;
+  namespace: string;
+  pod: string;
 };
 
 const isJSONObject = (value: string): boolean => {
@@ -240,6 +250,107 @@ const LogRow: React.FC<LogRowProps> = ({ data, title, showResources }) => {
   return null;
 };
 
+const MetricsLink: React.FC<MetricsLinkProps> = ({ container, logType, namespace, pod }) => {
+  const { t } = useTranslation('plugin__logging-view-plugin');
+
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const [error, setError] = React.useState<Error | undefined>();
+  const [correlationFound, setCorrelationFound] = React.useState<boolean | undefined>(undefined);
+
+  const queryLabels = React.useMemo(() => {
+    const labels: string[] = [];
+    if (container) {
+      labels.push(`kubernetes_container_name="${container}"`);
+    }
+    if (namespace) {
+      labels.push(`kubernetes_namespace_name="${namespace}"`);
+    }
+    if (pod) {
+      labels.push(`kubernetes_pod_name="${pod}"`);
+    }
+
+    return labels;
+  }, [container, namespace, pod]);
+
+  // We require a log type and at least one search label value to get related metrics
+  const canFetchCorrelation = !!logType && queryLabels.length > 0;
+
+  const checkForMetrics = React.useCallback(() => {
+    setError(undefined);
+    setCorrelationFound(undefined);
+
+    if (canFetchCorrelation) {
+      setIsLoading(true);
+
+      const { request } = listGoals({
+        goalsRequest: {
+          start: {
+            class: `log:${logType}`,
+            queries: [`log:${logType}:{${queryLabels.join(',')}}`],
+          },
+          goals: ['metric:metric'],
+        },
+      });
+
+      request()
+        .then((response: Korrel8rResponse) => {
+          setIsLoading(false);
+
+          const metricGoalFound = response.some((goal) => {
+            if (goal?.class === 'metric:metric') {
+              // Use the first goal query that has results and a query
+              const query = goal?.queries?.find((q) => q?.count > 0 && q?.query)?.query;
+
+              if (query) {
+                // Strip korrel8r class off the beginning of the query string
+                const promQL = query.replace(/^metric:metric:/, '');
+
+                const metricsUrl = new URL(window.location.href);
+
+                const params = new URLSearchParams();
+                params.set('query0', promQL);
+                metricsUrl.pathname = '/monitoring/query-browser';
+                metricsUrl.search = params.toString();
+
+                // open the metrics page in a new tab
+                window.open(metricsUrl, '_blank');
+
+                // Exit early (ignore any remaining goals)
+                return true;
+              }
+            }
+          });
+
+          setCorrelationFound(metricGoalFound);
+        })
+        .catch((err) => {
+          setIsLoading(false);
+          setError(err);
+          // eslint-disable-next-line no-console
+          console.warn('Error fetching korrel8r goals: ', err);
+        });
+    }
+  }, [container, logType, namespace, pod]);
+
+  return canFetchCorrelation ? (
+    <>
+      <Button
+        variant="link"
+        onClick={checkForMetrics}
+        isLoading={isLoading}
+        disabled={isLoading}
+        isInline
+      >
+        {isLoading ? t('Correlating') : t('Metrics')}
+      </Button>
+      {error && <ErrorMessage error={t('Error fetching related metrics')} />}
+      {correlationFound === false && (
+        <Text component={TextVariants.p}>{t('No correlation found')}</Text>
+      )}
+    </>
+  ) : null;
+};
+
 export const LogsTable: React.FC<LogsTableProps> = ({
   logsData,
   isLoading,
@@ -261,6 +372,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
     direction: direction === 'backward' ? 'desc' : 'asc',
   });
   const tableData = React.useMemo(() => aggregateStreamLogData(logsData), [logsData]);
+  const { isKorrel8rReachable } = useKorrel8r();
 
   const handleRowToggle = (_event: React.MouseEvent, rowIndex: number) => {
     if (expandedItems.has(rowIndex)) {
@@ -310,6 +422,8 @@ export const LogsTable: React.FC<LogsTableProps> = ({
     onLoadMore?.(tableData[tableData.length - 1].timestamp / 1e6);
   };
 
+  const colSpan = isKorrel8rReachable ? columns.length + 3 : columns.length + 2;
+
   return (
     <div data-test={TestIds.LogsTable}>
       {children}
@@ -335,13 +449,14 @@ export const LogsTable: React.FC<LogsTableProps> = ({
                 }
               </Th>
             ))}
+            {isKorrel8rReachable && <Th width={20}>{t('Correlation')}</Th>}
           </Tr>
         </Thead>
 
         {error ? (
           <Tbody>
             <Tr className="co-logs-table__row-info">
-              <Td colSpan={columns.length + 2} key="error-row">
+              <Td colSpan={colSpan} key="error-row">
                 <div className="co-logs-table__row-error">
                   <ErrorMessage error={error} />
                 </div>
@@ -351,7 +466,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
         ) : isStreaming ? (
           <Tbody>
             <Tr className="co-logs-table__row-info">
-              <Td colSpan={columns.length + 2} key="streaming-row">
+              <Td colSpan={colSpan} key="streaming-row">
                 <div className="co-logs-table__row-streaming">
                   <Alert variant="info" isInline isPlain title={t('Streaming Logs...')} />
                 </div>
@@ -361,7 +476,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
         ) : isLoading ? (
           <Tbody>
             <Tr className="co-logs-table__row-info">
-              <Td colSpan={columns.length + 2} key="loading-row">
+              <Td colSpan={colSpan} key="loading-row">
                 {t('Loading...')}
               </Td>
             </Tr>
@@ -370,7 +485,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
           dataIsEmpty && (
             <Tbody>
               <Tr className="co-logs-table__row-info">
-                <Td colSpan={columns.length + 2} key="data-empty-row">
+                <Td colSpan={colSpan} key="data-empty-row">
                   <CenteredContainer>
                     <Alert variant="warning" isInline isPlain title={t('No datapoints found')} />
                   </CenteredContainer>
@@ -408,6 +523,17 @@ export const LogsTable: React.FC<LogsTableProps> = ({
                     </Td>
                   ) : null;
                 })}
+
+                {isKorrel8rReachable && (
+                  <Td>
+                    <MetricsLink
+                      container={value.data.kubernetes_container_name}
+                      logType={value.data.log_type}
+                      namespace={value.data.kubernetes_namespace_name}
+                      pod={value.data.kubernetes_pod_name}
+                    />
+                  </Td>
+                )}
               </Tr>
             );
 
@@ -417,7 +543,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
                 isExpanded={true}
                 key={`${value.timestamp}-${rowIndex}-child`}
               >
-                <Td colSpan={columns.length + 2}>
+                <Td colSpan={colSpan}>
                   <ExpandableRowContent>
                     <LogDetail data={value.data} />
                   </ExpandableRowContent>
@@ -442,7 +568,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
               className="co-logs-table__row-info co-logs-table__row-more-data"
               onClick={handleLoadMore}
             >
-              <Td colSpan={columns.length + 2} key="more-data-row">
+              <Td colSpan={colSpan} key="more-data-row">
                 {t('More data available')}, {isLoadingMore ? t('Loading...') : t('Click to load')}
               </Td>
             </Tr>

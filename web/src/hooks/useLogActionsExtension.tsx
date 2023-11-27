@@ -45,7 +45,7 @@ const useLogActionsExtension: ExtensionHook<Array<Action>, LogActionsExtensionOp
             const query = goal?.queries?.find((q) => q?.count > 0 && q?.query)?.query;
 
             if (query && tenant) {
-              // Strip domain & class off the beginning of the query string
+              // Strip korrel8r class off the beginning of the query string
               const logQL = query.replace(/^log:(application|audit|infrastructure):/, '');
 
               const params = new URLSearchParams();
