@@ -38,7 +38,7 @@ install-backend:
 
 .PHONY: build-backend
 build-backend:
-	go build -o plugin-backend cmd/plugin-backend.go
+	go build -mod=readonly -o plugin-backend cmd/plugin-backend.go
 
 .PHONY: test-unit-backend
 test-unit-backend:
