@@ -1,6 +1,12 @@
 reviewers:
   - jgbernalp
   - kyoto
+  - zhuje
 approvers:
   - jgbernalp
   - kyoto
+  - jcantrill
+  - alanconway
+  - periklis
+  - xperimental
+  - zhuje
