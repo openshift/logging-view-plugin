@@ -9,6 +9,42 @@ import './index.css';
 import LogsDetailPage from './pages/logs-detail-page';
 import LogsDevPage from './pages/logs-dev-page';
 import LogsPage from './pages/logs-page';
+import useLogActionsExtension from './hooks/useLogActionsExtension';
+import { AlertStates, RuleStates } from '@openshift-console/dynamic-plugin-sdk';
+
+const testAlert = {
+  alert: {
+    annotations: {},
+    labels: {
+      alertname: 'test alert',
+    },
+    state: AlertStates.Firing,
+    rule: {
+      name: 'test alert',
+      alerts: [],
+      annotations: {},
+      duration: 0,
+      labels: {},
+      query: '',
+      state: RuleStates.Firing,
+      type: 'alerting',
+      id: 'test-alert-id',
+    },
+  },
+};
+
+const AlertDetail = () => {
+  const [actions] = useLogActionsExtension(testAlert);
+  return (
+    <div>
+      {actions.map((action) => (
+        <a href={typeof action.cta !== 'function' ? action.cta.href : ''} key={action.id}>
+          {action.label}
+        </a>
+      ))}
+    </div>
+  );
+};
 
 const DevConsole = () => {
   const { ns: namespace } = useParams<{ ns: string }>();
@@ -109,6 +145,7 @@ const EndToEndTestsApp = () => {
             <LogsDetailPage />
           </Route>
           <Route path="/monitoring/alerts/:alertname">
+            <AlertDetail />
             <LogsAlertMetrics
               rule={{
                 labels: { tenantId: 'application' },

@@ -5,8 +5,6 @@ module.exports = {
   transform: {
     '\\.[jt]sx?$': 'ts-jest',
   },
-  transformIgnorePatterns: [
-    '<rootDir>/node_modules/(?!(@openshift-console|@patternfly))',
-  ],
+  transformIgnorePatterns: ['<rootDir>/node_modules/(?!(@openshift-console|@patternfly))'],
   coverageDirectory: '<rootDir>/coverage/cov-jest',
 };

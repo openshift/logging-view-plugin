@@ -8,6 +8,8 @@ import {
 const LOGS_ALERTS_PAGE_URL = '/monitoring/alerts/test-alert';
 const QUERY_RANGE_MATRIX_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/query_range?query=sum*';
+const KORREL8R_GOALS_URL =
+  '/api/proxy/plugin/logging-view-plugin/korrel8r/api/v1alpha1/lists/goals';
 
 describe('Alerts logs metrics', () => {
   it('renders correctly with an expected response', () => {
@@ -77,5 +79,53 @@ describe('Alerts logs metrics', () => {
     cy.wait(200);
 
     cy.get('@queryRangeMatrix.all').should('have.length.at.least', 2);
+  });
+
+  it('loads a link to correlated logs when a correlation is found', () => {
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrix',
+    );
+    cy.intercept(KORREL8R_GOALS_URL, (req) => {
+      req.continue((res) =>
+        res.send({
+          statusCode: 200,
+          body: JSON.stringify([
+            {
+              class: 'log:application',
+              queries: [{ count: 1, query: `log:application:{namespace="test"}` }],
+            },
+          ]),
+        }),
+      );
+    });
+
+    cy.visit(LOGS_ALERTS_PAGE_URL);
+
+    // The link contains a query from korrel8r that includes a JSON pipeline stage
+    cy.contains('See related logs')
+      .first()
+      .should(
+        'have.attr',
+        'href',
+        '/monitoring/logs?q=%7B+namespace%3D%22test%22+%7D+%7C+json&tenant=application',
+      );
+  });
+
+  it('does not display a link to correlated logs when a correlation is not found', () => {
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrix',
+    );
+    cy.intercept(KORREL8R_GOALS_URL, (req) => {
+      req.continue((res) =>
+        res.send({
+          statusCode: 200,
+          body: JSON.stringify([]),
+        }),
+      );
+    });
+
+    cy.visit(LOGS_ALERTS_PAGE_URL);
+
+    cy.contains('See related logs').should('not.exist');
   });
 });
