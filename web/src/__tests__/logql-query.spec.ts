@@ -316,6 +316,12 @@ describe('LogQL query', () => {
         pipeline: { operator: '|', value: 'level="err|error"' },
         expected: '{ foo="var" } | json | level="err|error"',
       },
+      // Should not add a pipeline stage if already present
+      {
+        query: '{ foo="var" } | json',
+        pipeline: { operator: '|', value: 'json' },
+        expected: '{ foo="var" } | json',
+      },
       {
         query: '{ foo="var" }| json | level="err|error"',
         pipeline: { operator: '|', value: 'level="err|error"' },

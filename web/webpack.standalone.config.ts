@@ -1,9 +1,10 @@
 /* eslint-env node */
 
+import CopyWebpackPlugin from 'copy-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import * as path from 'path';
-import webpack from 'webpack';
-import { Configuration as WebpackConfiguration } from 'webpack';
+import webpack, { Configuration as WebpackConfiguration } from 'webpack';
+
 import { Configuration as WebpackDevServerConfiguration } from 'webpack-dev-server';
 
 interface Configuration extends WebpackConfiguration {
@@ -79,6 +80,9 @@ const config: Configuration = {
   plugins: [
     new webpack.NormalModuleReplacementPlugin(/dynamic-plugin-sdk/, function (resource) {
       resource.request = path.resolve(__dirname, 'mockModules/dummy');
+    }),
+    new CopyWebpackPlugin({
+      patterns: [{ from: path.resolve(__dirname, 'locales'), to: 'locales' }],
     }),
     new HtmlWebpackPlugin({
       template: path.join(__dirname, 'src', 'index.html'),
