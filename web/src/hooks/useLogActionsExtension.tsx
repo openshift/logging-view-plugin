@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { listGoals } from '../korrel8r-client';
 import { Korrel8rResponse } from '../korrel8r.types';
+import { LogQLQuery } from '../logql-query';
 
 type LogActionsExtensionOptions = {
   alert?: Alert;
@@ -48,8 +49,15 @@ const useLogActionsExtension: ExtensionHook<Array<Action>, LogActionsExtensionOp
               // Strip korrel8r class off the beginning of the query string
               const logQL = query.replace(/^log:(application|audit|infrastructure):/, '');
 
+              // Add a json pipeline stage to the query
+              const parsedQuery = new LogQLQuery(logQL);
+              parsedQuery.addPipelineStage({
+                operator: '|',
+                value: 'json',
+              });
+
               const params = new URLSearchParams();
-              params.set('q', logQL);
+              params.set('q', parsedQuery.toString());
               params.set('tenant', tenant);
               const href = `/monitoring/logs?${params.toString()}`;
 
