@@ -20,11 +20,29 @@ const useLogActionsExtension: ExtensionHook<Array<Action>, LogActionsExtensionOp
 
   useEffect(() => {
     if (alertingRuleName) {
+      const alertNamespace = options.alert?.labels?.namespace;
+      const alertPod = options.alert?.labels?.pod;
+      const alertContainer = options.alert?.labels?.container;
+
+      const alertQuery: Record<string, string> = { alertname: alertingRuleName };
+
+      if (alertNamespace) {
+        alertQuery.namespace = alertNamespace;
+      }
+
+      if (alertPod) {
+        alertQuery.pod = alertPod;
+      }
+
+      if (alertContainer) {
+        alertQuery.container = alertContainer;
+      }
+
       const { request, abort } = listGoals({
         goalsRequest: {
           start: {
             class: 'alert:alert',
-            queries: [`alert:alert:{"alertname":"${alertingRuleName}"}`],
+            queries: [`alert:alert:${JSON.stringify(alertQuery)}`],
           },
           goals: ['log:application', 'log:audit', 'log:infrastructure'],
         },
