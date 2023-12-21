@@ -1,10 +1,20 @@
-import { Button, Flex, Grid, PageSection, Title, Tooltip } from '@patternfly/react-core';
+import {
+  Button,
+  Card,
+  CardBody,
+  Flex,
+  Grid,
+  PageSection,
+  Title,
+  Tooltip,
+} from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { availableAttributes, filtersFromQuery, queryFromFilters } from '../attribute-filters';
 import { Filters } from '../components/filters/filter.types';
 import { LogsHistogram } from '../components/logs-histogram';
+import { LogsMetrics } from '../components/logs-metrics';
 import { LogsTable } from '../components/logs-table';
 import { LogsToolbar } from '../components/logs-toolbar';
 import { RefreshIntervalDropdown } from '../components/refresh-interval-dropdown';
@@ -12,8 +22,9 @@ import { TimeRangeDropdown } from '../components/time-range-dropdown';
 import { ToggleHistogramButton } from '../components/toggle-histogram-button';
 import { useLogs } from '../hooks/useLogs';
 import { defaultQueryFromTenant, useURLState } from '../hooks/useURLState';
-import { Direction } from '../logs.types';
+import { Direction, isMatrixResult } from '../logs.types';
 import { TestIds } from '../test-ids';
+import { CenteredContainer } from '../components/centered-container';
 
 const LogsPage: React.FC = () => {
   const { t } = useTranslation('plugin__logging-view-plugin');
@@ -123,6 +134,8 @@ const LogsPage: React.FC = () => {
 
   const isQueryEmpty = query === '';
 
+  const resultIsMetric = isMatrixResult(logsData?.data);
+
   return (
     <PageSection>
       <Grid hasGutter>
@@ -135,6 +148,7 @@ const LogsPage: React.FC = () => {
               isToggled={isHistogramVisible}
               onToggle={() => setIsHistogramVisible(!isHistogramVisible)}
               data-test={TestIds.ToggleHistogramButton}
+              isDisabled={resultIsMetric}
             />
             <TimeRangeDropdown
               value={timeRange}
@@ -167,35 +181,52 @@ const LogsPage: React.FC = () => {
           />
         )}
 
-        <LogsTable
-          logsData={logsData}
-          onLoadMore={handleLoadMoreData}
-          onSortByDate={handleSortByDate}
-          isLoading={isLoadingLogsData}
-          isLoadingMore={isLoadingMoreLogsData}
-          hasMoreLogsData={hasMoreLogsData}
-          showResources={areResourcesShown}
-          direction={direction}
+        <LogsToolbar
+          query={query}
+          onQueryChange={handleQueryChange}
+          onQueryRun={runQuery}
+          onTenantSelect={setTenantInURL}
+          tenant={tenant}
           isStreaming={isStreaming}
-          error={logsError}
-        >
-          <LogsToolbar
-            query={query}
-            onQueryChange={handleQueryChange}
-            onQueryRun={runQuery}
-            onTenantSelect={setTenantInURL}
-            tenant={tenant}
-            isStreaming={isStreaming}
-            onStreamingToggle={handleToggleStreaming}
-            enableStreaming={config.isStreamingEnabledInDefaultPage}
+          onStreamingToggle={handleToggleStreaming}
+          enableStreaming={config.isStreamingEnabledInDefaultPage}
+          showResources={areResourcesShown}
+          onShowResourcesToggle={setShowResourcesInURL}
+          isDisabled={isQueryEmpty}
+          attributeList={availableAttributes}
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+        />
+
+        {isLoadingLogsData ? (
+          <CenteredContainer>{t('Loading...')}</CenteredContainer>
+        ) : resultIsMetric ? (
+          <Card>
+            <CardBody>
+              <LogsMetrics
+                logsData={logsData}
+                timeRange={timeRange}
+                isLoading={isLoadingLogsData}
+                error={logsError}
+                height={350}
+                displayLegendTable
+              />
+            </CardBody>
+          </Card>
+        ) : (
+          <LogsTable
+            logsData={logsData}
+            onLoadMore={handleLoadMoreData}
+            onSortByDate={handleSortByDate}
+            isLoading={isLoadingLogsData}
+            isLoadingMore={isLoadingMoreLogsData}
+            hasMoreLogsData={hasMoreLogsData}
             showResources={areResourcesShown}
-            onShowResourcesToggle={setShowResourcesInURL}
-            isDisabled={isQueryEmpty}
-            attributeList={availableAttributes}
-            filters={filters}
-            onFiltersChange={handleFiltersChange}
+            direction={direction}
+            isStreaming={isStreaming}
+            error={logsError}
           />
-        </LogsTable>
+        )}
       </Grid>
     </PageSection>
   );

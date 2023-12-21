@@ -3,12 +3,13 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ToggleButton } from './toggle-button';
 
-interface ToggleButtonProps {
+interface ToggleHistogramButtonProps {
   isToggled: boolean;
+  isDisabled?: boolean;
   onToggle?: (isToggled: boolean) => void;
 }
 
-export const ToggleHistogramButton: React.FC<ToggleButtonProps> = (props) => {
+export const ToggleHistogramButton: React.FC<ToggleHistogramButtonProps> = (props) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
   return (
