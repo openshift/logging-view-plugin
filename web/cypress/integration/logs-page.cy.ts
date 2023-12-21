@@ -517,4 +517,12 @@ describe('Logs Page', () => {
 
     cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
   });
+
+  it('displays log based metrics when query results are matrix type', () => {
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeMatrixValidResponse());
+
+    cy.visit(LOGS_PAGE_URL);
+
+    cy.getByTestId(TestIds.LogsMetrics).should('exist');
+  });
 });
