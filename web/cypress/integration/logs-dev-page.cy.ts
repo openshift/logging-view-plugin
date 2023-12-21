@@ -330,4 +330,12 @@ describe('Logs Dev Page', () => {
       cy.contains('You are not authorized to list pods in this namespace');
     });
   });
+
+  it('displays log based metrics when query results are matrix type', () => {
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeMatrixValidResponse());
+
+    cy.visit(LOGS_DEV_PAGE_URL);
+
+    cy.getByTestId(TestIds.LogsMetrics).should('exist');
+  });
 });

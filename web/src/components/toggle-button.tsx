@@ -2,8 +2,9 @@ import { Button } from '@patternfly/react-core';
 import React from 'react';
 import './toggle-button.css';
 
-interface ToggleButtonProps {
+export interface ToggleButtonProps {
   isToggled: boolean;
+  isDisabled?: boolean;
   onToggle?: (isToggled: boolean) => void;
   toggledIcon?: React.ReactElement;
   untoggledIcon?: React.ReactElement;
@@ -19,6 +20,7 @@ export const ToggleButton: React.FC<ToggleButtonProps> = ({
   onToggle,
   toggledText,
   untoggledText,
+  isDisabled,
   'data-test': dataTest,
 }) => {
   const icon = isToggled ? toggledIcon : untoggledIcon;
@@ -35,6 +37,7 @@ export const ToggleButton: React.FC<ToggleButtonProps> = ({
       onClick={handleToggle}
       variant="link"
       data-test={dataTest}
+      isDisabled={isDisabled}
     >
       {icon ?? null} {text}
     </Button>
