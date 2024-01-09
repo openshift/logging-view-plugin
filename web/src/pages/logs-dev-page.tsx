@@ -28,8 +28,13 @@ t('plugin__logging-view-plugin~Logs')
 
 */
 
-const LogsDevPage: React.FunctionComponent = () => {
-  const { ns: namespace } = useParams<{ ns: string }>();
+interface LogsDevPageProps {
+  ns?: string;
+}
+
+const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => {
+  const { ns: namespaceFromParams } = useParams<{ ns: string }>();
+  const namespace = namespaceFromParams || namespaceFromProps;
   const [isHistogramVisible, setIsHistogramVisible] = React.useState(false);
   let tenant = getInitialTenantFromNamespace(namespace);
 
@@ -133,7 +138,10 @@ const LogsDevPage: React.FunctionComponent = () => {
     }
   };
 
-  const attributeList = React.useMemo(() => availableDevConsoleAttributes(namespace), [namespace]);
+  const attributeList = React.useMemo(
+    () => (namespace ? availableDevConsoleAttributes(namespace) : []),
+    [namespace],
+  );
 
   React.useEffect(() => {
     tenant = getInitialTenantFromNamespace(namespace);

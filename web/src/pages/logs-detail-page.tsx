@@ -24,15 +24,26 @@ t('plugin__logging-view-plugin~Aggregated Logs')
 
 */
 
-const LogsDetailPage: React.FunctionComponent = () => {
+interface LogsDetailPageProps {
+  ns?: string;
+  name?: string;
+}
+
+const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
+  ns: namespaceFromProps,
+  name: podNameFromProps,
+}) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
-  const { name: podname, ns: namespace } = useParams<{ name: string; ns: string }>();
+  const { name: podnameFromParams, ns: namespaceFromParams } =
+    useParams<{ name: string; ns: string }>();
+  const namespace = namespaceFromParams || namespaceFromProps;
+  const podname = podnameFromParams || podNameFromProps;
   const defaultQuery = `{ kubernetes_pod_name = "${podname}" } | json`;
   const [isHistogramVisible, setIsHistogramVisible] = React.useState(false);
 
   const attributesForPod: AttributeList = React.useMemo(
-    () => availablePodAttributes(namespace, podname),
+    () => (namespace && podname ? availablePodAttributes(namespace, podname) : []),
     [podname],
   );
 
