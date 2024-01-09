@@ -10,9 +10,17 @@ interface LogsQueryInputProps {
   value: string;
   onChange?: (expression: string) => void;
   onRun?: () => void;
+  isDisabled?: boolean;
+  invalidQueryErrorMessage?: string | null;
 }
 
-export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({ value = '', onChange, onRun }) => {
+export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
+  value = '',
+  onChange,
+  onRun,
+  isDisabled,
+  invalidQueryErrorMessage,
+}) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
   const [internalValue, setInternalValue] = React.useState(value);
@@ -39,16 +47,23 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({ value = '', onCh
     onChange?.(text);
   };
 
+  const hasError =
+    !isValid || (invalidQueryErrorMessage !== undefined && invalidQueryErrorMessage !== null);
+
   return (
     <div className="co-logs-expression-input" data-test={TestIds.LogsQueryInput}>
       <Form className="co-logs-expression-input__form">
         <FormGroup
           type="string"
-          helperTextInvalid={`${t(
-            'Invalid log stream selector. Please select a namespace, pod or container as filter, or add a log stream selector like: ',
-          )} { log_type =~ ".+" } | json`}
+          helperTextInvalid={
+            !isValid
+              ? `${t(
+                  'Invalid log stream selector. Please select a namespace, pod or container as filter, or add a log stream selector like: ',
+                )} { log_type =~ ".+" } | json`
+              : invalidQueryErrorMessage
+          }
           fieldId="selection"
-          validated={!isValid ? 'error' : undefined}
+          validated={hasError ? 'error' : undefined}
         >
           <TextArea
             className="co-logs-expression-input__searchInput"
@@ -57,14 +72,14 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({ value = '', onCh
             onChange={handleOnChange}
             onKeyDown={handleKeyDown}
             aria-label="LogQL Query"
-            validated={!isValid ? 'error' : undefined}
+            validated={hasError ? 'error' : undefined}
           />
         </FormGroup>
       </Form>
       {onRun && (
         <ExecuteQueryButton
           onClick={onRun}
-          isDisabled={value === undefined || value.length === 0}
+          isDisabled={value === undefined || value.length === 0 || isDisabled}
         />
       )}
     </div>
