@@ -114,10 +114,17 @@ export const availableDevConsoleAttributes = (namespace: string): AttributeList 
     valueType: 'text',
   },
   {
+    name: 'Namespaces',
+    label: 'kubernetes_namespace_name',
+    id: 'namespace',
+    options: resourceDataSource({ resource: 'namespaces' }),
+    valueType: 'checkbox-select',
+  },
+  {
     name: 'Pods',
     label: 'kubernetes_pod_name',
     id: 'pod',
-    options: resourceDataSource({ resource: 'pods', namespace }),
+    options: resourceDataSource({ resource: 'pods' }),
     valueType: 'checkbox-select',
   },
   {
