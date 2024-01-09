@@ -7,7 +7,7 @@
       "properties": {
         "contextId": "dev-console-observe",
         "name": "%plugin__logging-view-plugin~Logs%",
-        "href": "/logs",
+        "href": "logs",
         "component": {
           "$codeRef": "LogsDevPage"
         }
