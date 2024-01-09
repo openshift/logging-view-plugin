@@ -1,4 +1,5 @@
 import {
+  Alert,
   Select,
   SelectOption,
   SelectOptionObject,
@@ -29,6 +30,7 @@ interface LogsToolbarProps {
   query: string;
   onQueryChange?: (query: string) => void;
   onQueryRun?: () => void;
+  invalidQueryErrorMessage?: string | null;
   tenant?: string;
   onTenantSelect?: (tenant: string) => void;
   enableStreaming?: boolean;
@@ -59,6 +61,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
   query,
   onQueryChange,
   onQueryRun,
+  invalidQueryErrorMessage,
   tenant = 'application',
   onTenantSelect,
   onStreamingToggle,
@@ -177,9 +180,16 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
         </ToolbarGroup>
 
         {!isQueryShown && (
-          <ToolbarGroup>
-            <ExecuteQueryButton onClick={onQueryRun} isDisabled={isDisabled} />
-          </ToolbarGroup>
+          <>
+            <ToolbarGroup>
+              <ExecuteQueryButton onClick={onQueryRun} isDisabled={isDisabled} />
+            </ToolbarGroup>
+            {invalidQueryErrorMessage && (
+              <ToolbarGroup>
+                <Alert variant="danger" isInline isPlain title={invalidQueryErrorMessage} />
+              </ToolbarGroup>
+            )}
+          </>
         )}
 
         <Spacer />
@@ -201,7 +211,15 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
         )}
       </ToolbarContent>
 
-      {isQueryShown && <LogsQueryInput value={query} onRun={onQueryRun} onChange={onQueryChange} />}
+      {isQueryShown && (
+        <LogsQueryInput
+          value={query}
+          onRun={onQueryRun}
+          onChange={onQueryChange}
+          invalidQueryErrorMessage={invalidQueryErrorMessage}
+          isDisabled={isDisabled}
+        />
+      )}
     </Toolbar>
   );
 };

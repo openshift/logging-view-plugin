@@ -1,6 +1,7 @@
 import { Button, Card, CardBody, Flex, Grid, PageSection, Tooltip } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 import {
   availableAttributes,
@@ -8,8 +9,10 @@ import {
   filtersFromQuery,
   queryFromFilters,
 } from '../attribute-filters';
+import { CenteredContainer } from '../components/centered-container';
 import { Filters } from '../components/filters/filter.types';
 import { LogsHistogram } from '../components/logs-histogram';
+import { LogsMetrics } from '../components/logs-metrics';
 import { LogsTable } from '../components/logs-table';
 import { LogsToolbar } from '../components/logs-toolbar';
 import { RefreshIntervalDropdown } from '../components/refresh-interval-dropdown';
@@ -20,9 +23,6 @@ import { defaultQueryFromTenant, useURLState } from '../hooks/useURLState';
 import { Direction, isMatrixResult } from '../logs.types';
 import { TestIds } from '../test-ids';
 import { getInitialTenantFromNamespace } from '../value-utils';
-import { CenteredContainer } from '../components/centered-container';
-import { t } from 'i18next';
-import { LogsMetrics } from '../components/logs-metrics';
 
 /*
 This comment creates an entry in the translations catalogue for console extensions
@@ -36,6 +36,7 @@ interface LogsDevPageProps {
 }
 
 const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => {
+  const { t } = useTranslation('plugin__logging-view-plugin');
   const { ns: namespaceFromParams } = useParams<{ ns: string }>();
   const namespace = namespaceFromParams || namespaceFromProps;
   const [isHistogramVisible, setIsHistogramVisible] = React.useState(false);
@@ -73,12 +74,12 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
   } = useLogs();
 
   const handleToggleStreaming = () => {
-    toggleStreaming({ query, namespace });
+    toggleStreaming({ query });
   };
 
   const handleLoadMoreData = (lastTimestamp: number) => {
     if (!isLoadingMoreLogsData) {
-      getMoreLogs({ lastTimestamp, query, namespace });
+      getMoreLogs({ lastTimestamp, query });
     }
   };
 
@@ -89,14 +90,13 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
   const runQuery = ({ queryToUse }: { queryToUse?: string } = {}) => {
     getLogs({
       query: queryToUse ?? query,
-      namespace,
       timeRange,
       direction,
       tenant,
     });
 
     if (isHistogramVisible) {
-      getHistogram({ query: queryToUse ?? query, namespace, timeRange, tenant });
+      getHistogram({ query: queryToUse ?? query, timeRange, tenant });
     }
   };
 
@@ -121,12 +121,19 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
   };
 
   const updateQuery = (selectedFilters?: Filters, selectedTenant?: string): string => {
-    if (!selectedFilters || Object.keys(selectedFilters).length === 0) {
-      const defaultQuery = defaultQueryFromTenant(selectedTenant);
+    const hasNoSelectedfilters = !selectedFilters || Object.keys(selectedFilters).length === 0;
 
-      setQueryInURL(defaultQuery);
+    if (hasNoSelectedfilters) {
+      const updatedQuery = queryFromFilters({
+        existingQuery: defaultQueryFromTenant(selectedTenant),
+        filters: { namespace: new Set(namespace ? [namespace] : []) },
+        attributes: availableAttributes,
+        tenant: selectedTenant,
+      });
 
-      return defaultQuery;
+      setQueryInURL(updatedQuery);
+
+      return updatedQuery;
     } else {
       const updatedQuery = queryFromFilters({
         existingQuery: query,
@@ -152,9 +159,23 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
     const queryToUse = updateQuery(filters, tenant);
 
     runQuery({ queryToUse });
-  }, [timeRange, isHistogramVisible, namespace, direction]);
+  }, [timeRange, isHistogramVisible, direction]);
+
+  React.useEffect(() => {
+    tenant = getInitialTenantFromNamespace(namespace);
+
+    const filtersWithNamespace = filters ?? {};
+
+    filtersWithNamespace['namespace'] = new Set(namespace ? [namespace] : []);
+    const queryToUse = updateQuery(filtersWithNamespace, tenant);
+
+    runQuery({ queryToUse });
+  }, [namespace]);
 
   const isQueryEmpty = query === '';
+  const isNamespaceFilterEmpty =
+    filters?.['namespace'] === undefined || filters['namespace'].size === 0;
+  const isRunQueryDisabled = isQueryEmpty || isNamespaceFilterEmpty;
 
   const resultIsMetric = isMatrixResult(logsData?.data);
 
@@ -171,16 +192,16 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
             <TimeRangeDropdown
               value={timeRange}
               onChange={setTimeRangeInURL}
-              isDisabled={isQueryEmpty}
+              isDisabled={isRunQueryDisabled}
             />
-            <RefreshIntervalDropdown onRefresh={runQuery} isDisabled={isQueryEmpty} />
+            <RefreshIntervalDropdown onRefresh={runQuery} isDisabled={isRunQueryDisabled} />
             <Tooltip content={<div>Refresh</div>}>
               <Button
                 onClick={handleRefreshClick}
                 aria-label="Refresh"
                 variant="primary"
                 data-test={TestIds.SyncButton}
-                isDisabled={isQueryEmpty}
+                isDisabled={isRunQueryDisabled}
               >
                 <SyncAltIcon />
               </Button>
@@ -203,13 +224,16 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
           query={query}
           onQueryChange={handleQueryChange}
           onQueryRun={runQuery}
+          invalidQueryErrorMessage={
+            isNamespaceFilterEmpty ? t('Please select a namespace') : undefined
+          }
           isStreaming={isStreaming}
           onStreamingToggle={handleToggleStreaming}
           enableStreaming={config.isStreamingEnabledInDefaultPage}
           showResources={areResourcesShown}
           onShowResourcesToggle={setShowResourcesInURL}
           enableTenantDropdown={false}
-          isDisabled={isQueryEmpty}
+          isDisabled={isRunQueryDisabled}
           attributeList={attributeList}
           filters={filters}
           onFiltersChange={handleFiltersChange}
