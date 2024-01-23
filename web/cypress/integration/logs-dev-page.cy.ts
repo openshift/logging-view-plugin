@@ -290,7 +290,7 @@ describe('Logs Dev Page', () => {
 
     cy.wait('@resourceQuery').then(({ request }) => {
       const url = new URL(request.url);
-      expect(url.pathname).to.equal('/api/kubernetes/api/v1/namespaces/my-namespace/pods');
+      expect(url.pathname).to.equal('/api/kubernetes/api/v1/pods');
     });
   });
 
@@ -337,5 +337,56 @@ describe('Logs Dev Page', () => {
     cy.visit(LOGS_DEV_PAGE_URL);
 
     cy.getByTestId(TestIds.LogsMetrics).should('exist');
+  });
+
+  it('loads the current namespace as a filter in the query', () => {
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeMatrixValidResponse());
+
+    cy.visit(LOGS_DEV_PAGE_URL);
+
+    cy.getByTestId(TestIds.ShowQueryToggle).click();
+
+    cy.getByTestId(TestIds.LogsQueryInput).within(() => {
+      cy.get('textarea').contains('kubernetes_namespace_name="my-namespace"');
+    });
+  });
+
+  it('updates the query to include the current selected namespace as a filter', () => {
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeMatrixValidResponse());
+
+    cy.visit(LOGS_DEV_PAGE_URL);
+
+    cy.getByTestId(TestIds.ShowQueryToggle).click();
+
+    cy.getByTestId(TestIds.LogsQueryInput).within(() => {
+      cy.get('textarea').contains('kubernetes_namespace_name="my-namespace"');
+    });
+
+    cy.getByTestId('namespace-toggle' as TestIds).click();
+    cy.getByTestId('namespace-dropdown' as TestIds)
+      .contains('my-namespace-two')
+      .click();
+
+    cy.getByTestId(TestIds.LogsQueryInput).within(() => {
+      cy.get('textarea').contains('kubernetes_namespace_name="my-namespace-two"');
+    });
+  });
+
+  it('disables the run query button when there is no selected namespace', () => {
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeMatrixValidResponse());
+
+    cy.visit(LOGS_DEV_PAGE_URL);
+
+    cy.getByTestId(TestIds.ShowQueryToggle).click();
+
+    cy.getByTestId(TestIds.LogsQueryInput).within(() => {
+      cy.get('textarea').type('{selectAll}').type('{backspace}').type('{ job = "some_job" }', {
+        parseSpecialCharSequences: false,
+      });
+    });
+
+    cy.getByTestId(TestIds.ExecuteQueryButton).should('be.disabled');
+
+    cy.contains('Please select a namespace');
   });
 });
