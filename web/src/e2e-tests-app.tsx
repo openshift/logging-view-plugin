@@ -129,6 +129,11 @@ const EndToEndTestsApp = () => {
                     Logs
                   </Link>
                 </li>
+                <li className="pf-c-nav__item">
+                  <Link className="pf-c-nav__link" to="/monitoring/alerts/test-alert">
+                    Alerts
+                  </Link>
+                </li>
               </ul>
             </nav>
           </div>

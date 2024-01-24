@@ -1,5 +1,8 @@
 import { TestIds } from '../../src/test-ids';
-import { queryRangeStreamsValidResponse } from '../fixtures/query-range-fixtures';
+import {
+  queryRangeMatrixValidResponse,
+  queryRangeStreamsValidResponse,
+} from '../fixtures/query-range-fixtures';
 
 const LOGS_DETAIL_PAGE_URL = '/k8s/ns/my-namespace/pods/test-pod-name';
 const LOGS_DETAIL_PAGE_URL_OPENSHIFT_NS = '/k8s/ns/openshift-api/pods/test-pod-name';
@@ -136,5 +139,13 @@ describe('Logs Detail Page', () => {
       });
 
     cy.get('@queryRangeStreamsInfrastructure.all').should('have.length.at.least', 1);
+  });
+
+  it('displays log based metrics when query results are matrix type', () => {
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeMatrixValidResponse());
+
+    cy.visit(LOGS_DETAIL_PAGE_URL);
+
+    cy.getByTestId(TestIds.LogsMetrics).should('exist');
   });
 });
