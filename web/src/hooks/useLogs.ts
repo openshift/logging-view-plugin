@@ -224,6 +224,10 @@ export const useLogs = (
   const currentTenant = React.useRef<string>(initialTenant);
   const currentTimeRange = React.useRef<TimeRange>(initialTimeRange);
   const currentTime = React.useRef<number>(Date.now());
+  const lastExecutionTime = React.useRef<{ logs?: number; histogram?: number }>({
+    logs: undefined,
+    histogram: undefined,
+  });
   const currentDirection = React.useRef<Direction>('backward');
   const logsAbort = React.useRef<() => void | undefined>();
   const histogramAbort = React.useRef<() => void | undefined>();
@@ -353,10 +357,16 @@ export const useLogs = (
       return;
     }
 
+    // Throttle requests
+    if (lastExecutionTime.current.logs && Date.now() - lastExecutionTime.current.logs < 50) {
+      return;
+    }
+
     try {
       currentQuery.current = query;
       currentTenant.current = tenant ?? currentTenant.current;
       currentTime.current = Date.now();
+      lastExecutionTime.current.logs = Date.now();
       currentTimeRange.current = timeRange ?? currentTimeRange.current;
       currentDirection.current = direction ?? currentDirection.current;
 
@@ -485,10 +495,19 @@ export const useLogs = (
       return;
     }
 
+    // Throttle histogram requests
+    if (
+      lastExecutionTime.current.histogram &&
+      Date.now() - lastExecutionTime.current.histogram < 50
+    ) {
+      return;
+    }
+
     try {
       currentQuery.current = query;
       currentTenant.current = tenant ?? currentTenant.current;
       currentTime.current = Date.now();
+      lastExecutionTime.current.histogram = Date.now();
       currentTimeRange.current = timeRange ?? currentTimeRange.current;
 
       // TODO split on multiple/parallel queries for long timespans and concat results
