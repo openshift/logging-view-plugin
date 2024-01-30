@@ -26,6 +26,27 @@ type ResourceOptionMapper = (resource: K8sResource) => Option | Array<Option>;
 
 const resourceAbort: Record<string, null | (() => void)> = {};
 
+const projectsDataSource = () => async (): Promise<Array<{ option: string; value: string }>> => {
+  const { request, abort } = cancellableFetch<K8sResourceListResponse>(
+    `/api/kubernetes/apis/project.openshift.io/v1/projects`,
+  );
+
+  if (resourceAbort.projects) {
+    resourceAbort.projects();
+  }
+
+  resourceAbort.projects = abort;
+
+  const response = await request();
+
+  return response.items
+    .map((project) => ({
+      option: project?.metadata?.name ?? '',
+      value: project?.metadata?.name ?? '',
+    }))
+    .filter(({ value }) => notEmptyString(value));
+};
+
 const resourceDataSource =
   ({
     resource,
@@ -117,7 +138,7 @@ export const availableDevConsoleAttributes = (namespace: string): AttributeList 
     name: 'Namespaces',
     label: 'kubernetes_namespace_name',
     id: 'namespace',
-    options: resourceDataSource({ resource: 'namespaces' }),
+    options: projectsDataSource(),
     valueType: 'checkbox-select',
   },
   {
