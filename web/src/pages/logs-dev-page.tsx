@@ -149,8 +149,8 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
   };
 
   const attributeList = React.useMemo(
-    () => (namespace ? availableDevConsoleAttributes(namespace) : []),
-    [namespace],
+    () => (namespace ? availableDevConsoleAttributes(namespace, config) : []),
+    [namespace, config],
   );
 
   React.useEffect(() => {
