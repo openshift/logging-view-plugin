@@ -3,7 +3,7 @@ import {
   queryRangeMatrixValidResponse,
   queryRangeStreamsValidResponse,
 } from '../fixtures/query-range-fixtures';
-import { podsListResponse } from '../fixtures/resource-api-fixtures';
+import { podsLabelValuesResponse } from '../fixtures/resource-api-fixtures';
 
 const LOGS_DEV_PAGE_URL = '/dev-monitoring/ns/my-namespace/logs';
 const QUERY_RANGE_STREAMS_URL_MATCH =
@@ -15,7 +15,8 @@ const QUERY_RANGE_STREAMS_INFRASTRUCTURE_URL_MATCH =
 const QUERY_RANGE_MATRIX_INFRASTRUCTURE_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/infrastructure/loki/api/v1/query_range?query=sum*';
 const TEST_MESSAGE = "loki_1 | level=info msg='test log'";
-const RESOURCE_URL_MATCH = 'api/kubernetes/api/v1/**';
+const LABEL_POD_VALUES_URL_MATCH =
+  '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/label/kubernetes_pod_name/values?*';
 
 describe('Logs Dev Page', () => {
   it('renders correctly with an expected response', () => {
@@ -263,7 +264,7 @@ describe('Logs Dev Page', () => {
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
       'queryRangeMatrix',
     );
-    cy.intercept(RESOURCE_URL_MATCH, podsListResponse).as('resourceQuery');
+    cy.intercept(LABEL_POD_VALUES_URL_MATCH, podsLabelValuesResponse).as('resourceQuery');
 
     cy.visit(LOGS_DEV_PAGE_URL);
 
@@ -290,7 +291,9 @@ describe('Logs Dev Page', () => {
 
     cy.wait('@resourceQuery').then(({ request }) => {
       const url = new URL(request.url);
-      expect(url.pathname).to.equal('/api/kubernetes/api/v1/pods');
+      expect(url.pathname).to.equal(
+        '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/label/kubernetes_pod_name/values',
+      );
     });
   });
 
@@ -302,7 +305,7 @@ describe('Logs Dev Page', () => {
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
       'queryRangeMatrix',
     );
-    cy.intercept(RESOURCE_URL_MATCH, {
+    cy.intercept(LABEL_POD_VALUES_URL_MATCH, {
       statusCode: 403,
       body: 'You are not authorized to list pods in this namespace',
     }).as('resourceQuery');

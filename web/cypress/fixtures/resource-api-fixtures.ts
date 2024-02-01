@@ -44,6 +44,10 @@ export const namespaceListResponse = {
   ],
 };
 
+export const podsLabelValuesResponse = {
+  data: ['my-pod', 'default', 'gitops', 'gitops-service-argocd'],
+};
+
 export const podsListResponse = {
   kind: 'PodList',
   apiVersion: 'v1',
