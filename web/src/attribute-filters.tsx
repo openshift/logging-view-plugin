@@ -1,9 +1,11 @@
 import { K8sResourceCommon } from '@openshift-console/dynamic-plugin-sdk';
-import { notEmptyString, notUndefined } from './value-utils';
+import { getInitialTenantFromNamespace, notEmptyString, notUndefined } from './value-utils';
 import { cancellableFetch } from './cancellable-fetch';
 import { AttributeList, Filters, Option } from './components/filters/filter.types';
 import { LogQLQuery, LabelMatcher, PipelineStage } from './logql-query';
 import { Severity, severityAbbreviations, severityFromString } from './severity';
+import { executeLabelValue } from './loki-client';
+import { Config } from './logs.types';
 
 const RESOURCES_ENDPOINT = '/api/kubernetes/api/v1';
 
@@ -46,6 +48,40 @@ const projectsDataSource = () => async (): Promise<Array<{ option: string; value
     }))
     .filter(({ value }) => notEmptyString(value));
 };
+
+const lokiLabelValuesDataSource =
+  ({
+    config,
+    query,
+    labelName,
+    tenant,
+  }: {
+    config: Config;
+    query?: string;
+    labelName: string;
+    tenant: string;
+  }) =>
+  async (): Promise<Array<{ option: string; value: string }>> => {
+    const { abort, request } = executeLabelValue({ query, labelName, tenant, config });
+
+    if (resourceAbort.lokiLabels) {
+      resourceAbort.lokiLabels();
+    }
+
+    resourceAbort.lokiLabels = abort;
+
+    const response = await request();
+
+    const uniqueValues = new Set<string>(response.data);
+    const sortedValues = Array.from(uniqueValues).sort();
+
+    return sortedValues
+      .map((label) => ({
+        option: label,
+        value: label,
+      }))
+      .filter(({ value }) => notEmptyString(value));
+  };
 
 const resourceDataSource =
   ({
@@ -128,7 +164,7 @@ export const availableAttributes: AttributeList = [
   },
 ];
 
-export const availableDevConsoleAttributes = (namespace: string): AttributeList => [
+export const availableDevConsoleAttributes = (namespace: string, config: Config): AttributeList => [
   {
     name: 'Content',
     id: 'content',
@@ -145,27 +181,31 @@ export const availableDevConsoleAttributes = (namespace: string): AttributeList 
     name: 'Pods',
     label: 'kubernetes_pod_name',
     id: 'pod',
-    options: resourceDataSource({ resource: 'pods' }),
+    options: lokiLabelValuesDataSource({
+      config,
+      labelName: 'kubernetes_pod_name',
+      tenant: getInitialTenantFromNamespace(namespace),
+    }),
     valueType: 'checkbox-select',
   },
   {
     name: 'Containers',
     label: 'kubernetes_container_name',
     id: 'container',
-    options: resourceDataSource({
-      resource: 'pods',
-      namespace,
-      mapper: (resource) =>
-        resource?.spec?.containers.map((container) => ({
-          option: `${resource?.metadata?.name} / ${container.name}`,
-          value: container.name,
-        })) ?? [],
+    options: lokiLabelValuesDataSource({
+      config,
+      labelName: 'kubernetes_container_name',
+      tenant: getInitialTenantFromNamespace(namespace),
     }),
     valueType: 'checkbox-select',
   },
 ];
 
-export const availablePodAttributes = (namespace: string, podId: string): AttributeList => [
+export const availablePodAttributes = (
+  namespace: string,
+  podId: string,
+  config: Config,
+): AttributeList => [
   {
     name: 'Content',
     id: 'content',
@@ -175,13 +215,11 @@ export const availablePodAttributes = (namespace: string, podId: string): Attrib
     name: 'Containers',
     label: 'kubernetes_container_name',
     id: 'container',
-    options: resourceDataSource({
-      resource: `namespaces/${namespace}/pods/${podId}`,
-      mapper: (resource) =>
-        resource?.spec?.containers.map((container) => ({
-          option: `${resource?.metadata?.name} / ${container.name}`,
-          value: container.name,
-        })) ?? [],
+    options: lokiLabelValuesDataSource({
+      config,
+      query: `{ kubernetes_pod_name="${podId}" }`,
+      labelName: 'kubernetes_container_name',
+      tenant: getInitialTenantFromNamespace(namespace),
     }),
     valueType: 'checkbox-select',
   },

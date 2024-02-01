@@ -12,3 +12,4 @@ env.list
 .vscode
 hack/docker-compose/docker-compose-logs
 test-certs
+web/cypress/downloads/

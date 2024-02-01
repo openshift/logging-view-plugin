@@ -73,3 +73,7 @@ export type RulesResponse = {
     }>;
   };
 };
+
+export type LabelValueResponse = {
+  data: Array<string>;
+};
