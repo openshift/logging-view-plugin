@@ -53,9 +53,26 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
   const defaultQuery = `{ kubernetes_pod_name = "${podname}" } | json`;
   const [isHistogramVisible, setIsHistogramVisible] = React.useState(false);
 
+  const {
+    isLoadingLogsData,
+    isLoadingMoreLogsData,
+    isStreaming,
+    logsData,
+    logsError,
+    getLogs,
+    getMoreLogs,
+    hasMoreLogsData,
+    toggleStreaming,
+    getHistogram,
+    histogramData,
+    isLoadingHistogramData,
+    histogramError,
+    config,
+  } = useLogs();
+
   const attributesForPod: AttributeList = React.useMemo(
-    () => (namespace && podname ? availablePodAttributes(namespace, podname) : []),
-    [podname],
+    () => (namespace && podname ? availablePodAttributes(namespace, podname, config) : []),
+    [podname, config],
   );
 
   const {
@@ -76,22 +93,6 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
   });
   const initialTenant = getInitialTenantFromNamespace(namespace);
   const tenant = React.useRef(initialTenant);
-
-  const {
-    isLoadingLogsData,
-    isLoadingMoreLogsData,
-    isStreaming,
-    logsData,
-    logsError,
-    getLogs,
-    getMoreLogs,
-    hasMoreLogsData,
-    toggleStreaming,
-    getHistogram,
-    histogramData,
-    isLoadingHistogramData,
-    histogramError,
-  } = useLogs();
 
   const handleToggleStreaming = () => {
     toggleStreaming({ query });

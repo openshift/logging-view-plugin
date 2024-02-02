@@ -1,7 +1,13 @@
 import { WSFactory } from '@openshift-console/dynamic-plugin-sdk/lib/utils/k8s/ws-factory';
 import { queryWithNamespace } from './attribute-filters';
 import { CancellableFetch, cancellableFetch, RequestInitWithTimeout } from './cancellable-fetch';
-import { Config, Direction, QueryRangeResponse, RulesResponse } from './logs.types';
+import {
+  Config,
+  Direction,
+  LabelValueResponse,
+  QueryRangeResponse,
+  RulesResponse,
+} from './logs.types';
 import { durationFromTimestamp } from './value-utils';
 
 const LOKI_ENDPOINT = '/api/proxy/plugin/logging-view-plugin/backend';
@@ -60,6 +66,31 @@ export const getFetchConfig = ({
     },
     endpoint: `${LOKI_ENDPOINT}/api/logs/v1/${tenant}`,
   };
+};
+
+export const executeLabelValue = ({
+  query,
+  labelName,
+  config,
+  tenant,
+}: {
+  query?: string;
+  labelName: string;
+  config?: Config;
+  tenant: string;
+}): CancellableFetch<LabelValueResponse> => {
+  const { endpoint, requestInit } = getFetchConfig({ config, tenant });
+
+  const params: Record<string, string> = {};
+
+  if (query) {
+    params.query = query;
+  }
+
+  return cancellableFetch<LabelValueResponse>(
+    `${endpoint}/loki/api/v1/label/${labelName}/values?${new URLSearchParams(params)}`,
+    requestInit,
+  );
 };
 
 export const executeQueryRange = ({
