@@ -136,6 +136,12 @@ const LogsPage: React.FC = () => {
 
   const resultIsMetric = isMatrixResult(logsData?.data);
 
+  React.useEffect(() => {
+    if (resultIsMetric) {
+      setIsHistogramVisible(false);
+    }
+  }, [resultIsMetric]);
+
   return (
     <PageSection>
       <Grid hasGutter>
@@ -170,7 +176,7 @@ const LogsPage: React.FC = () => {
           </Flex>
         </Flex>
 
-        {isHistogramVisible && (
+        {isHistogramVisible && !resultIsMetric && (
           <LogsHistogram
             histogramData={histogramData}
             timeRange={timeRange}
