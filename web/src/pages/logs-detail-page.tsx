@@ -150,6 +150,12 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
 
   const resultIsMetric = isMatrixResult(logsData?.data);
 
+  React.useEffect(() => {
+    if (resultIsMetric) {
+      setIsHistogramVisible(false);
+    }
+  }, [resultIsMetric]);
+
   return (
     <PageSection>
       <Grid hasGutter>
@@ -162,6 +168,7 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
               isToggled={isHistogramVisible}
               onToggle={() => setIsHistogramVisible(!isHistogramVisible)}
               data-test={TestIds.ToggleHistogramButton}
+              isDisabled={resultIsMetric}
             />
             <TimeRangeDropdown
               value={timeRange}
@@ -182,7 +189,7 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
           </Flex>
         </Flex>
 
-        {isHistogramVisible && (
+        {isHistogramVisible && !resultIsMetric && (
           <LogsHistogram
             histogramData={histogramData}
             timeRange={timeRange}
