@@ -6,9 +6,6 @@ ENV CYPRESS_CACHE_FOLDER=/usr/src/app/.cache
 
 USER 1001
 
-RUN mkdir -p /.cache
-RUN chmod 775 -R /.cache
-
 ENV HUSKY=0
 
 COPY web/package*.json .
