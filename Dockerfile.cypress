@@ -21,4 +21,6 @@ RUN chmod 775 -R /.config
 
 RUN npm run build:standalone
 
+USER 1001
+
 ENTRYPOINT ["npm", "run", "test:e2e"]
