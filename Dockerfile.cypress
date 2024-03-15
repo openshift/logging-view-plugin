@@ -1,5 +1,7 @@
 FROM cypress/included:13.6.5
 
+USER 1001
+
 WORKDIR /usr/src/app
 
 ENV CYPRESS_CACHE_FOLDER=/usr/src/app/.cache
