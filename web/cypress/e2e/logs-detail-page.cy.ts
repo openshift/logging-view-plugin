@@ -55,7 +55,7 @@ describe('Logs Detail Page', () => {
         .type('{selectAll}')
         .type('{ job = "some_job" }', {
           parseSpecialCharSequences: false,
-          delay: 1,
+          delay: 0,
         })
         .type('{enter}');
     });
