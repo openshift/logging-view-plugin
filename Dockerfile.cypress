@@ -2,6 +2,11 @@ FROM cypress/included:9.6.0
 
 WORKDIR /usr/src/app
 
+ENV CYPRESS_CACHE_FOLDER=/usr/src/app/.cache
+
+RUN mkdir -p /.cache
+RUN chmod 775 -R /.cache
+
 ENV HUSKY=0
 
 COPY web/package*.json .
