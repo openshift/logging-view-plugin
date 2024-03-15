@@ -4,7 +4,8 @@ WORKDIR /usr/src/app
 
 ENV CYPRESS_CACHE_FOLDER=/usr/src/app/.cache
 
-RUN chmod 777 -R /.cache
+RUN mkdir -p /usr/src/app/.cache
+RUN chmod 775 -R /usr/src/app/.cache
 
 ENV HUSKY=0
 
