@@ -4,8 +4,6 @@ WORKDIR /usr/src/app
 
 ENV CYPRESS_CACHE_FOLDER=/usr/src/app/.cache
 
-USER 1001
-
 ENV HUSKY=0
 
 COPY web/package*.json .
