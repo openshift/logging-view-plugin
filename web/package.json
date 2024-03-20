@@ -79,7 +79,8 @@
     "qs": "6.11.0",
     "glob-parent": "^6.0.2",
     "tough-cookie": "^4.1.3",
-    "@babel/traverse": "^7.23.2"
+    "@babel/traverse": "^7.23.2",
+    "follow-redirects": "^1.15.6"
   },
   "consolePlugin": {
     "name": "logging-view-plugin",
