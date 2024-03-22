@@ -1,6 +1,13 @@
-FROM cypress/included:9.6.0
+FROM cypress/browsers:node-18.16.0-chrome-112.0.5615.121-1-ff-112.0.1-edge-112.0.1722.48-1
+
+# USER 1001
 
 WORKDIR /usr/src/app
+
+ENV CYPRESS_CACHE_FOLDER=/usr/src/app/.cache
+
+RUN mkdir -p /usr/src/app/.cache
+RUN chmod 775 -R /usr/src/app/.cache
 
 ENV HUSKY=0
 
@@ -13,5 +20,7 @@ RUN mkdir -p /.config
 RUN chmod 775 -R /.config
 
 RUN npm run build:standalone
+
+USER 1001
 
 ENTRYPOINT ["npm", "run", "test:e2e"]
