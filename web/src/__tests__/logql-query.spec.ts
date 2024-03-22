@@ -231,6 +231,48 @@ describe('LogQL query', () => {
           ],
         },
       },
+      {
+        query:
+          '{ log_type=~".+" } | json | level="unknown" or level="" != "tekton" |= "TLS handshake error from 10." != "10.128"',
+        expected: {
+          selectorMatchers: [{ label: 'log_type', operator: '=~', value: '".+"' }],
+          pipeline: [
+            {
+              operator: '|',
+              value: 'json',
+              labelsInFilter: undefined,
+            },
+            {
+              operator: '|',
+              value: 'level="unknown" or level=""',
+              labelsInFilter: [
+                {
+                  label: 'level',
+                  operator: '=',
+                  value: '"unknown"',
+                },
+                {
+                  label: 'level',
+                  operator: '=',
+                  value: '""',
+                },
+              ],
+            },
+            {
+              operator: '!=',
+              value: '"tekton"',
+            },
+            {
+              operator: '|=',
+              value: '"TLS handshake error from 10."',
+            },
+            {
+              operator: '!=',
+              value: '"10.128"',
+            },
+          ],
+        },
+      },
     ].forEach(({ query, expected }) => {
       const logql = new LogQLQuery(query);
       expect(logql.streamSelector).toEqual(expected.selectorMatchers);
@@ -464,6 +506,18 @@ describe('LogQL query', () => {
           'sum by (level) (count_over_time({ log_type =~ ".+" } | json | level="unknown" or level="" or level=~"emerg|fatal|alert|crit|critical|err|error|eror|warn|warning|inf|info|information|notice" [1m]))',
         expected:
           'sum by (level) (count_over_time({ log_type=~".+" } | json | level="unknown" or level="" or level=~"emerg|fatal|alert|crit|critical|err|error|eror|warn|warning|inf|info|information|notice" [1m]))',
+      },
+      {
+        query:
+          '{ log_type=~".+" } | json != "tekton" |= "TLS handshake error from 10." != "10.128"',
+        expected:
+          '{ log_type=~".+" } | json != "tekton" |= "TLS handshake error from 10." != "10.128"',
+      },
+      {
+        query:
+          '{ log_type=~".+" } | json | level="unknown" or level="" != "tekton" |= "TLS handshake error from 10." !~ "10.128" |~ "10.128"',
+        expected:
+          '{ log_type=~".+" } | json | level="unknown" or level="" != "tekton" |= "TLS handshake error from 10." !~ "10.128" |~ "10.128"',
       },
     ].forEach(({ query, expected }) => {
       const logql = new LogQLQuery(query);
