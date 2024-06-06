@@ -128,7 +128,30 @@ const resourceDataSource =
     return listItems.flatMap(mapper).filter(({ value }) => notEmptyString(value));
   };
 
-export const availableAttributes: AttributeList = [
+// The logs-page and the logs-dev-page both need a default set of attributes to pass
+// to queryFromFilters and filtersFromQuery which only need id and label
+export const initialAvailableAttributes: AttributeList = [
+  {
+    name: 'Namespaces',
+    label: 'kubernetes_namespace_name',
+    id: 'namespace',
+    valueType: 'checkbox-select',
+  },
+  {
+    name: 'Pods',
+    label: 'kubernetes_pod_name',
+    id: 'pod',
+    valueType: 'checkbox-select',
+  },
+  {
+    name: 'Containers',
+    label: 'kubernetes_container_name',
+    id: 'container',
+    valueType: 'checkbox-select',
+  },
+];
+
+export const availableAttributes = (tenant: string, config: Config): AttributeList => [
   {
     name: 'Content',
     id: 'content',
@@ -145,7 +168,11 @@ export const availableAttributes: AttributeList = [
     name: 'Pods',
     label: 'kubernetes_pod_name',
     id: 'pod',
-    options: resourceDataSource({ resource: 'pods' }),
+    options: lokiLabelValuesDataSource({
+      config,
+      tenant,
+      labelName: 'kubernetes_pod_name',
+    }),
     valueType: 'checkbox-select',
   },
   {
@@ -164,7 +191,7 @@ export const availableAttributes: AttributeList = [
   },
 ];
 
-export const availableDevConsoleAttributes = (namespace: string, config: Config): AttributeList => [
+export const availableDevConsoleAttributes = (tenant: string, config: Config): AttributeList => [
   {
     name: 'Content',
     id: 'content',
@@ -183,8 +210,8 @@ export const availableDevConsoleAttributes = (namespace: string, config: Config)
     id: 'pod',
     options: lokiLabelValuesDataSource({
       config,
+      tenant,
       labelName: 'kubernetes_pod_name',
-      tenant: getInitialTenantFromNamespace(namespace),
     }),
     valueType: 'checkbox-select',
   },
@@ -194,8 +221,8 @@ export const availableDevConsoleAttributes = (namespace: string, config: Config)
     id: 'container',
     options: lokiLabelValuesDataSource({
       config,
+      tenant,
       labelName: 'kubernetes_container_name',
-      tenant: getInitialTenantFromNamespace(namespace),
     }),
     valueType: 'checkbox-select',
   },
