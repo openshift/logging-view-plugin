@@ -168,11 +168,7 @@ export const availableAttributes = (tenant: string, config: Config): AttributeLi
     name: 'Pods',
     label: 'kubernetes_pod_name',
     id: 'pod',
-    options: lokiLabelValuesDataSource({
-      config,
-      tenant,
-      labelName: 'kubernetes_pod_name',
-    }),
+    options: getPodAttributeOptions(tenant, config),
     valueType: 'checkbox-select',
   },
   {
@@ -479,4 +475,30 @@ export const getSeverityFilterPipelineStage = (filters?: Filters): PipelineStage
   const allFilters = [unknownFilter, levelsfilter].filter(notEmptyString);
 
   return allFilters.length > 0 ? { operator: '|', value: allFilters.join(' or ') } : undefined;
+};
+
+const getPodAttributeOptions = (tenant: string, config: Config): (() => Promise<Option[]>) => {
+  return () =>
+    Promise.allSettled<Promise<Option[]>>([
+      lokiLabelValuesDataSource({
+        config,
+        tenant,
+        labelName: 'kubernetes_pod_name',
+      })(),
+      resourceDataSource({ resource: 'pods' })(),
+    ])
+      .then((results) => {
+        const podsAsStrings = new Set<string>();
+        results.forEach((result) => {
+          if (result.status === 'fulfilled') {
+            result.value.forEach((option) => {
+              podsAsStrings.add(JSON.stringify(option));
+            });
+          }
+        });
+        return Array.from(podsAsStrings).map((stringOption) => JSON.parse(stringOption) as Option);
+      })
+      .catch(() => {
+        return [] as Option[];
+      });
 };
