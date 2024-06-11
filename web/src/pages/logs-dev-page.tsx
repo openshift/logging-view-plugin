@@ -4,8 +4,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 import {
-  availableAttributes,
   availableDevConsoleAttributes,
+  initialAvailableAttributes,
   filtersFromQuery,
   queryFromFilters,
 } from '../attribute-filters';
@@ -54,7 +54,7 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
     interval,
     direction,
     setDirectionInURL,
-  } = useURLState({ attributes: availableAttributes, defaultTenant: tenant });
+  } = useURLState({ attributes: initialAvailableAttributes, defaultTenant: tenant });
 
   const {
     histogramData,
@@ -110,7 +110,7 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
 
     const updatedFilters = filtersFromQuery({
       query: queryFromInput,
-      attributes: availableAttributes,
+      attributes: initialAvailableAttributes,
     });
 
     setFilters(updatedFilters);
@@ -127,7 +127,7 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
       const updatedQuery = queryFromFilters({
         existingQuery: defaultQueryFromTenant(selectedTenant),
         filters: { namespace: new Set(namespace ? [namespace] : []) },
-        attributes: availableAttributes,
+        attributes: initialAvailableAttributes,
         tenant: selectedTenant,
       });
 
@@ -138,7 +138,7 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
       const updatedQuery = queryFromFilters({
         existingQuery: query,
         filters: selectedFilters,
-        attributes: availableAttributes,
+        attributes: initialAvailableAttributes,
         tenant: selectedTenant,
       });
 
@@ -149,7 +149,10 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
   };
 
   const attributeList = React.useMemo(
-    () => (namespace ? availableDevConsoleAttributes(namespace, config) : []),
+    () =>
+      namespace
+        ? availableDevConsoleAttributes(getInitialTenantFromNamespace(namespace), config)
+        : [],
     [namespace, config],
   );
 
