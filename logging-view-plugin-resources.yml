@@ -45,7 +45,7 @@ spec:
     spec:
       containers:
         - name: logging-view-plugin
-          image: "quay.io/gbernal/logging-view-plugin:latest"
+          image: "quay.io/openshift-logging/logging-view-plugin:latest"
           args:
             - "-port=9443"
             - "-cert=/var/serving-cert/tls.crt"
@@ -77,7 +77,7 @@ spec:
           secret:
             secretName: plugin-serving-cert
             defaultMode: 420
-        - name: plugin-conf
+        - name: plugin-config
           configMap:
             name: logging-view-plugin-config
             defaultMode: 420
@@ -94,17 +94,19 @@ spec:
       maxSurge: 25%
 
 ---
-apiVersion: console.openshift.io/v1alpha1
+apiVersion: console.openshift.io/v1
 kind: ConsolePlugin
 metadata:
   name: logging-view-plugin
 spec:
   displayName: "Logging view plugin"
-  service:
-    name: logging-view-plugin
-    namespace: openshift-logging
-    basePath: "/"
-    port: 9443
+  backend:
+    type: Service
+    service:
+      name: logging-view-plugin
+      namespace: openshift-logging
+      basePath: "/"
+      port: 9443
   proxy:
     - alias: backend
       authorization: UserToken
