@@ -6,7 +6,7 @@
   "Ensure Loki config contains 'parallelise_shardable_queries: true' and 'max_outstanding_requests_per_tenant: 2048'": "Ensure Loki config contains 'parallelise_shardable_queries: true' and 'max_outstanding_requests_per_tenant: 2048'",
   "Reduce the time range to decrease the number of results": "Reduce the time range to decrease the number of results",
   "Increase Loki &quot;max_query_length&quot; entry in configuration file": "Increase Loki &quot;max_query_length&quot; entry in configuration file",
-  "Make sure you have an instance of LokiStack runnning": "Make sure you have an instance of LokiStack runnning",
+  "Make sure you have an instance of LokiStack running": "Make sure you have an instance of LokiStack running",
   "Select a namespace filter to improve the query performance": "Select a namespace filter to improve the query performance",
   "Make sure you have the required role to get application logs in this namespace.": "Make sure you have the required role to get application logs in this namespace.",
   "Ask your administrator to grant you this role": "Ask your administrator to grant you this role",
