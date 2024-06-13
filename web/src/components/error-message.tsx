@@ -77,7 +77,7 @@ const messages: (t: TFunction) => Record<string, React.ReactElement> = (t) => ({
     </>
   ),
   'cannot connect to LokiStack': (
-    <Suggestion>{t('Make sure you have an instance of LokiStack runnning')}</Suggestion>
+    <Suggestion>{t('Make sure you have an instance of LokiStack running')}</Suggestion>
   ),
   'input size too long': (
     <Suggestion>{t('Select a namespace filter to improve the query performance')}</Suggestion>
