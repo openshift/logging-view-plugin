@@ -11,6 +11,20 @@ class TimeoutError extends Error {
   }
 }
 
+const getCSRFToken = () => {
+  const cookiePrefix = 'csrf-token=';
+  return (
+    document &&
+    document.cookie &&
+    document.cookie
+      .split(';')
+      .map((c) => c.trim())
+      .filter((c) => c.startsWith(cookiePrefix))
+      .map((c) => c.slice(cookiePrefix.length))
+      .pop()
+  );
+};
+
 class FetchError extends Error {
   status: number;
   name: string;
@@ -34,7 +48,11 @@ export const cancellableFetch = <T>(
 
   const fetchPromise = fetch(url, {
     ...init,
-    headers: { ...init?.headers, Accept: 'application/json' },
+    headers: {
+      ...init?.headers,
+      Accept: 'application/json',
+      ...(init?.method === 'POST' ? { 'X-CSRFToken': getCSRFToken() } : {}),
+    },
     signal: abortController.signal,
   }).then(async (response) => {
     if (!response.ok) {
