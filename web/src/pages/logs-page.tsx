@@ -11,7 +11,12 @@ import {
 import { SyncAltIcon } from '@patternfly/react-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { availableAttributes, filtersFromQuery, queryFromFilters } from '../attribute-filters';
+import {
+  availableAttributes,
+  initialAvailableAttributes,
+  filtersFromQuery,
+  queryFromFilters,
+} from '../attribute-filters';
 import { Filters } from '../components/filters/filter.types';
 import { LogsHistogram } from '../components/logs-histogram';
 import { LogsMetrics } from '../components/logs-metrics';
@@ -44,7 +49,7 @@ const LogsPage: React.FC = () => {
     interval,
     direction,
     setDirectionInURL,
-  } = useURLState({ attributes: availableAttributes });
+  } = useURLState({ attributes: initialAvailableAttributes });
 
   const {
     histogramData,
@@ -95,7 +100,7 @@ const LogsPage: React.FC = () => {
 
     const updatedFilters = filtersFromQuery({
       query: queryFromInput,
-      attributes: availableAttributes,
+      attributes: initialAvailableAttributes,
     });
 
     setFilters(updatedFilters);
@@ -112,7 +117,7 @@ const LogsPage: React.FC = () => {
       const updatedQuery = queryFromFilters({
         existingQuery: query,
         filters: selectedFilters,
-        attributes: availableAttributes,
+        attributes: initialAvailableAttributes,
         tenant: selectedTenant,
       });
 
@@ -121,6 +126,11 @@ const LogsPage: React.FC = () => {
       return updatedQuery;
     }
   };
+
+  const attributeList = React.useMemo(
+    () => (tenant ? availableAttributes(tenant, config) : []),
+    [tenant, config],
+  );
 
   const handleRefreshClick = () => {
     runQuery();
@@ -199,7 +209,7 @@ const LogsPage: React.FC = () => {
           showResources={areResourcesShown}
           onShowResourcesToggle={setShowResourcesInURL}
           isDisabled={isQueryEmpty}
-          attributeList={availableAttributes}
+          attributeList={attributeList}
           filters={filters}
           onFiltersChange={handleFiltersChange}
         />
