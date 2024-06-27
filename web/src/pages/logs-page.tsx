@@ -217,92 +217,92 @@ const LogsPage: React.FC = () => {
           onFiltersChange={handleFiltersChange}
         />
 
-      {isLoadingLogsData ? (
-        <CenteredContainer>{t('Loading Stats...')}</CenteredContainer>
-      ) : areStatsShown ? (
+        {isLoadingLogsData ? (
+          <CenteredContainer>{t('Loading Stats...')}</CenteredContainer>
+        ) : areStatsShown ? (
           <Flex>
-          <table>
-            <tr>
-            <div>Summary</div>
+            <table>
               <tr>
-                Bytes Processed Per Second <td>0 MB/s</td>
+                <div>Summary</div>
+                <tr>
+                  Bytes Processed Per Second <td>0 MB/s</td>
+                </tr>
+                <tr>
+                  Execution Time <td>0 s</td>
+                </tr>
+                <tr>
+                  Lines Processed Per Second <td>0</td>
+                </tr>
+                <tr>
+                  Queue Time <td>0 s</td>
+                </tr>
+                <tr>
+                  Total Bytes Processed <td>0 MB/s</td>
+                </tr>
+                <tr>
+                  Total Lines Processed <td>0 </td>
+                </tr>
               </tr>
+              <div>Ingester</div>
               <tr>
-                Execution Time <td>0 s</td>
+                <tr>
+                  Compressed Bytes <td>0 MB</td>
+                </tr>
+                <tr>
+                  Decompressed Bytes <td>0 MB</td>
+                </tr>
+                <tr>
+                  Decompressed Lines <td>0 </td>
+                </tr>
+                <tr>
+                  Head Chunk Bytes <td>0 B</td>
+                </tr>
+                <tr>
+                  Head Chunk Lines <td>0 </td>
+                </tr>
+                <tr>
+                  Total Batches<td>0 </td>
+                </tr>
+                <tr>
+                  Total Chunks Matched <td>0 </td>
+                </tr>
+                <tr>
+                  Total Dupilcated <td>0 </td>
+                </tr>
+                <tr>
+                  Total Lines Sent <td> 0</td>
+                </tr>
+                <tr>
+                  Total Reached <td>0 </td>
+                </tr>
               </tr>
+              <div>Store</div>
               <tr>
-                Lines Processed Per Second <td>0</td>
+                <tr>
+                  Compressed Bytes<td>0 MB</td>
+                </tr>
+                <tr>
+                  Decompressed Bytes<td>0 MB</td>
+                </tr>
+                <tr>
+                  Decompressed Lines<td>0 </td>
+                </tr>
+                <tr>
+                  Chunks Download Time<td>0 s</td>
+                </tr>
+                <tr>
+                  Total Chunks Ref<td>0 </td>
+                </tr>
+                <tr>
+                  Total Chunks Downloaded<td>0 </td>
+                </tr>
+                <tr>
+                  Total Duplicates<td>0 </td>
+                </tr>
               </tr>
-              <tr>
-                Queue Time <td>0 s</td>
-              </tr>
-              <tr>
-                Total Bytes Processed <td>0 MB/s</td>
-              </tr>
-              <tr>
-                Total Lines Processed <td>0 </td>
-              </tr>
-            </tr>
-            <div>Ingester</div>
-            <tr>
-              <tr>
-                Compressed Bytes <td>0 MB</td>
-              </tr>
-              <tr>
-                Decompressed Bytes <td>0 MB</td>
-              </tr>
-              <tr>
-                Decompressed Lines <td>0 </td>
-              </tr>
-              <tr>
-                Head Chunk Bytes <td>0 B</td>
-              </tr>
-              <tr>
-                Head Chunk Lines <td>0 </td>
-              </tr>
-              <tr>
-                Total Batches<td>0 </td>
-              </tr>
-              <tr>
-                Total Chunks Matched <td>0 </td>
-              </tr>
-              <tr>
-                Total Dupilcated <td>0 </td>
-              </tr>
-              <tr>
-                Total Lines Sent <td> 0</td>
-              </tr>
-              <tr>
-                Total Reached <td>0 </td>
-              </tr>
-            </tr>
-            <div>Store</div>
-            <tr>
-              <tr>
-                Compressed Bytes<td>0 MB</td>
-              </tr>
-              <tr>
-                Decompressed Bytes<td>0 MB</td>
-              </tr>
-              <tr>
-                Decompressed Lines<td>0 </td>
-              </tr>
-              <tr>
-                Chunks Download Time<td>0 s</td>
-              </tr>
-              <tr>
-                Total Chunks Ref<td>0 </td>
-              </tr>
-              <tr>
-                Total Chunks Downloaded<td>0 </td>
-              </tr>
-              <tr>
-                Total Duplicates<td>0 </td>
-              </tr>
-            </tr>
-          </table>
-        </Flex>
-      ) : null}
+            </table>
+          </Flex>
+        ) : null}
 
         {isLoadingLogsData ? (
           <CenteredContainer>{t('Loading...')}</CenteredContainer>
