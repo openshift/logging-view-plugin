@@ -125,7 +125,7 @@ if [[ -x "$(command -v podman)" && $PREFER_PODMAN == 1 ]]; then
         podman run --pull always --rm --network=host  --env-file ./scripts/env.list $CONSOLE_IMAGE
     else
         echo "Using podman..."
-        podman run --pull always --rm -p "$CONSOLE_PORT":9000 --env-file ./scripts/env.list --arch=amd64 $CONSOLE_IMAGE
+        podman run --pull always --rm -p "$CONSOLE_PORT":9000 --env-file ./scripts/env.list $CONSOLE_IMAGE
     fi
 else
     echo "Using docker..."
