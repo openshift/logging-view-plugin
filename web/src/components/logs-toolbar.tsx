@@ -39,6 +39,8 @@ interface LogsToolbarProps {
   onStreamingToggle?: (e: React.MouseEvent) => void;
   onSeverityChange?: (severityFilter: Set<Severity>) => void;
   onShowResourcesToggle?: (showResources: boolean) => void;
+  onShowStatsToggle?: (showStats: boolean) => void;
+  showStats?: boolean;
   showResources?: boolean;
   enableTenantDropdown?: boolean;
   isDisabled?: boolean;
@@ -67,6 +69,8 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
   onStreamingToggle,
   onShowResourcesToggle,
   showResources = false,
+  onShowStatsToggle,
+  showStats = false,
   enableStreaming = false,
   isStreaming = false,
   enableTenantDropdown = true,
@@ -176,6 +180,15 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
             onToggle={onShowResourcesToggle}
             untoggledText={t('Show Resources')}
             toggledText={t('Hide Resources')}
+          />
+        </ToolbarGroup>
+
+        <ToolbarGroup>
+          <ToggleButton
+            isToggled={showStats}
+            onToggle={onShowStatsToggle}
+            untoggledText={t('Show Stats')}
+            toggledText={t('Hide Stats')}
           />
         </ToolbarGroup>
 

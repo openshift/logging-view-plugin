@@ -36,6 +36,7 @@ interface LogsTableProps {
   onSortByDate?: (direction?: Direction) => void;
   direction?: Direction;
   showResources?: boolean;
+  showStats?: boolean;
   isStreaming?: boolean;
   error?: unknown;
 }
