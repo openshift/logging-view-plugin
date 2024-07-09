@@ -58,9 +58,9 @@ export type QueryRangeResponse<T = MatrixResult | StreamsResult> = {
   status: string;
   data: T & {
     stats: {
-      ingester: Ingester;
-      querier: Querier;
-      summary: Record<string, number>;
+      ingester?: Ingester;
+      querier?: Querier;
+      summary?: Record<string, number>;
     };
   };
 };
