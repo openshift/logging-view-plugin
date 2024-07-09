@@ -4,6 +4,7 @@ import { Tooltip } from '@patternfly/react-core';
 import { Tbody, Table, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { TestIds } from '../test-ids';
 import './stats-table.css';
+
 interface StatsTableProps {
   logsData?: QueryRangeResponse;
 }
