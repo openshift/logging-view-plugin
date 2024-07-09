@@ -18,9 +18,11 @@ const TIME_RANGE_END = 'end';
 const DIRECTION = 'direction';
 const TENANT_PARAM_KEY = 'tenant';
 const SHOW_RESOURCES_PARAM_KEY = 'showResources';
+const SHOW_STATS_PARAM_KEY = 'showStats';
 
 const DEFAULT_TENANT = 'application';
 const DEFAULT_SHOW_RESOURCES = '0';
+const DEFAULT_SHOW_STATS = '0';
 export const defaultQueryFromTenant = (tenant: string = DEFAULT_TENANT) =>
   `{ log_type="${tenant}" } | json`;
 
@@ -45,12 +47,15 @@ export const useURLState = ({
   const initialResorcesShown =
     (queryParams.get(SHOW_RESOURCES_PARAM_KEY) ?? DEFAULT_SHOW_RESOURCES) === '1';
 
+  const intitalStatsShown = (queryParams.get(SHOW_STATS_PARAM_KEY) ?? DEFAULT_SHOW_STATS) === '1';
+
   const [query, setQuery] = React.useState(initialQuery);
   const [tenant, setTenant] = React.useState(initialTenant);
   const [filters, setFilters] = React.useState<Filters | undefined>(
     filtersFromQuery({ query: initialQuery, attributes }),
   );
   const [areResourcesShown, setAreResourcesShown] = React.useState<boolean>(initialResorcesShown);
+  const [areStatsShown, setAreStatsShown] = React.useState<boolean>(intitalStatsShown);
   const [direction, setDirection] = React.useState<Direction>(getDirectionValue(initialDirection));
   const [timeRange, setTimeRange] = React.useState<TimeRange | undefined>(
     initialTimeRangeStart && initialTimeRangeEnd
@@ -68,6 +73,11 @@ export const useURLState = ({
 
   const setShowResourcesInURL = (showResources: boolean) => {
     queryParams.set(SHOW_RESOURCES_PARAM_KEY, showResources ? '1' : '0');
+    history.push(`${location.pathname}?${queryParams.toString()}`);
+  };
+
+  const setShowStatsInURL = (showStats: boolean) => {
+    queryParams.set(SHOW_STATS_PARAM_KEY, showStats ? '1' : '0');
     history.push(`${location.pathname}?${queryParams.toString()}`);
   };
 
@@ -96,6 +106,7 @@ export const useURLState = ({
     const queryValue = queryParams.get(QUERY_PARAM_KEY) ?? initialQuery;
     const tenantValue = queryParams.get(TENANT_PARAM_KEY) ?? DEFAULT_TENANT;
     const showResourcesValue = queryParams.get(SHOW_RESOURCES_PARAM_KEY) ?? DEFAULT_SHOW_RESOURCES;
+    const showStatsValue = queryParams.get(SHOW_STATS_PARAM_KEY) ?? DEFAULT_SHOW_STATS;
     const timeRangeStartValue = queryParams.get(TIME_RANGE_START);
     const timeRangeEndValue = queryParams.get(TIME_RANGE_END);
     const directionValue = queryParams.get(DIRECTION);
@@ -104,6 +115,7 @@ export const useURLState = ({
     setTenant(tenantValue);
     setDirection(getDirectionValue(directionValue));
     setAreResourcesShown(showResourcesValue === '1');
+    setAreStatsShown(showStatsValue === '1');
     setFilters(filtersFromQuery({ query: queryValue, attributes }));
     setTimeRange((prevTimeRange) => {
       if (!timeRangeStartValue || !timeRangeEndValue) {
@@ -131,6 +143,8 @@ export const useURLState = ({
     setTenantInURL,
     areResourcesShown,
     setShowResourcesInURL,
+    areStatsShown,
+    setShowStatsInURL,
     filters,
     setFilters,
     timeRange,
