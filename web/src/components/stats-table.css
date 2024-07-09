@@ -1,0 +1,11 @@
+.co-stats__content{
+    padding: 20px;
+    padding-bottom: 40px;
+}
+.co-stats-table{
+    background: none;
+}
+
+.co-stats-table__header{
+    width: 205px;
+}
