@@ -459,6 +459,26 @@ describe('LogQL query', () => {
         expected:
           'sum by (level) (count_over_time({ log_type=~".+" } | json | level="unknown" or level="" or level=~"emerg|fatal|alert|crit|critical|err|error|eror|warn|warning|inf|info|information|notice" [1m]))',
       },
+      {
+        query:
+          '{ log_type=~".+" } | json != "tekton" |= "TLS handshake error from 10." != "10.128"',
+        expected:
+          '{ log_type=~".+" } | json != "tekton" |= "TLS handshake error from 10." != "10.128"',
+      },
+      {
+        query:
+          '{ log_type=~".+" } | json | level="unknown" or level="" != "tekton" |= "TLS handshake error from 10." !~ "10.128" |~ "10.128"',
+        expected:
+          '{ log_type=~".+" } | json | level="unknown" or level="" != "tekton" |= "TLS handshake error from 10." !~ "10.128" |~ "10.128"',
+      },
+      {
+        query: '{ app="foobar" } |> "I <_>" | json',
+        expected: '{ app="foobar" } |> "I <_>" | json',
+      },
+      {
+        query: '{ app="foobar" } !> "I <_>" | json',
+        expected: '{ app="foobar" } !> "I <_>" | json',
+      },
     ].forEach(({ query, expected }) => {
       const logql = new LogQLQuery(query);
       expect(logql.toString()).toEqual(expected);
