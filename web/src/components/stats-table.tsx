@@ -55,7 +55,7 @@ export const StatsTable: React.FC<StatsTableProps> = ({ logsData }) => {
 
   return (
     <div data-test={TestIds.LogsStats}>
-      <div className='co-stats-title'>{t('Statistics')}</div>
+      <div className="co-stats-title">{t('Statistics')}</div>
       <div className="co-stats__content">
         <Table className="co-stats-table" variant="compact" aria-label={t('Statistics')}>
           <Thead>
@@ -72,7 +72,7 @@ export const StatsTable: React.FC<StatsTableProps> = ({ logsData }) => {
               <Td>
                 <strong>{t('Summary')}</strong>
               </Td>
-              
+
               <Td></Td>
 
               <Td>
@@ -80,15 +80,14 @@ export const StatsTable: React.FC<StatsTableProps> = ({ logsData }) => {
               </Td>
 
               <Td></Td>
-              
+
               <Td>
                 <strong>{t('Storage')}</strong>
               </Td>
-
             </Tr>
 
             <Tr>
-              <Tooltip content={t('Total of bytes processed per second')} className='pf-c-tooltip'>
+              <Tooltip content={t('Total of bytes processed per second')} className="pf-c-tooltip">
                 <Td>Bytes Processed Per Second:</Td>
               </Tooltip>
               <Td>
@@ -149,7 +148,7 @@ export const StatsTable: React.FC<StatsTableProps> = ({ logsData }) => {
                 </strong>
               </Td>
 
-              <Tooltip content={t('Total batches sent by ingesters')} >
+              <Tooltip content={t('Total batches sent by ingesters')}>
                 <Td>Total Batches:</Td>
               </Tooltip>
               <Td>
