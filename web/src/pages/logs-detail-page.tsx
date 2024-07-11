@@ -80,6 +80,8 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
     setQueryInURL,
     areResourcesShown,
     setShowResourcesInURL,
+    areStatsShown,
+    setShowStatsInURL,
     filters,
     setFilters,
     setTimeRangeInURL,
@@ -208,6 +210,8 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
           onStreamingToggle={handleToggleStreaming}
           showResources={areResourcesShown}
           onShowResourcesToggle={setShowResourcesInURL}
+          showStats={areStatsShown}
+          onShowStatsToggle={setShowStatsInURL}
           enableStreaming
           enableTenantDropdown={false}
           isDisabled={isQueryEmpty}
@@ -241,6 +245,7 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
             isLoadingMore={isLoadingMoreLogsData}
             hasMoreLogsData={hasMoreLogsData}
             showResources={areResourcesShown}
+            showStats={areStatsShown}
             direction={direction}
             error={logsError}
           />

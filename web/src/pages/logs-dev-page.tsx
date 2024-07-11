@@ -47,6 +47,8 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
     setQueryInURL,
     areResourcesShown,
     setShowResourcesInURL,
+    areStatsShown,
+    setShowStatsInURL,
     filters,
     setFilters,
     setTimeRangeInURL,
@@ -242,6 +244,8 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
           enableStreaming={config.isStreamingEnabledInDefaultPage}
           showResources={areResourcesShown}
           onShowResourcesToggle={setShowResourcesInURL}
+          showStats={areStatsShown}
+          onShowStatsToggle={setShowStatsInURL}
           enableTenantDropdown={false}
           isDisabled={isRunQueryDisabled}
           attributeList={attributeList}
@@ -274,6 +278,7 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
             hasMoreLogsData={hasMoreLogsData}
             direction={direction}
             showResources={areResourcesShown}
+            showStats={areStatsShown}
             isStreaming={isStreaming}
             error={logsError}
           />

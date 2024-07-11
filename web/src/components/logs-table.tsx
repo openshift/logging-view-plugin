@@ -25,6 +25,7 @@ import { notUndefined } from '../value-utils';
 import { CenteredContainer } from './centered-container';
 import { ErrorMessage } from './error-message';
 import { LogDetail } from './log-detail';
+import { StatsTable } from './stats-table';
 import './logs-table.css';
 
 interface LogsTableProps {
@@ -36,6 +37,7 @@ interface LogsTableProps {
   onSortByDate?: (direction?: Direction) => void;
   direction?: Direction;
   showResources?: boolean;
+  showStats?: boolean;
   isStreaming?: boolean;
   error?: unknown;
 }
@@ -359,6 +361,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   onSortByDate,
   hasMoreLogsData,
   showResources = false,
+  showStats = false,
   direction,
   isStreaming,
   children,
@@ -423,9 +426,9 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   };
 
   const colSpan = isKorrel8rReachable ? columns.length + 3 : columns.length + 2;
-
   return (
     <div data-test={TestIds.LogsTable}>
+      {showStats && <StatsTable logsData={logsData} />}
       {children}
       <TableComposable
         aria-label="Logs Table"
