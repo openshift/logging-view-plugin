@@ -50,6 +50,42 @@ const parseMatchers = (
   return matchers;
 };
 
+const parseLineFilters = (
+  syntaxTree: Tree,
+  node: SyntaxNodeRef,
+  query: string,
+): Array<PipelineStage> => {
+  const lineFilters: Array<PipelineStage> = [];
+  let operator: string, value: string;
+
+  syntaxTree.iterate({
+    from: node.from,
+    to: node.to,
+    enter(selectorsNode) {
+      if (
+        ['PipeExact', 'PipeMatch', 'PipePattern', 'Npa', 'Eq', 'Neq', 'Re', 'Nre'].includes(
+          selectorsNode.name,
+        )
+      ) {
+        operator = query.slice(selectorsNode.from, selectorsNode.to);
+
+        return false;
+      } else if (selectorsNode.name === 'String') {
+        value = query.slice(selectorsNode.from, selectorsNode.to);
+
+        return false;
+      }
+    },
+    leave(selectorsNode) {
+      if (selectorsNode.name === 'LineFilter') {
+        lineFilters.push({ operator, value });
+      }
+    },
+  });
+
+  return lineFilters;
+};
+
 const parsePipelineStages = (
   syntaxTree: Tree,
   node: SyntaxNodeRef,
@@ -57,16 +93,15 @@ const parsePipelineStages = (
 ): Array<PipelineStage> => {
   const pipelineStages: Array<PipelineStage> = [];
   let operator: string, value: string, labelsInFilter: Array<LabelMatcher> | undefined;
+  let lineFilters: Array<PipelineStage> = [];
 
   syntaxTree.iterate({
     from: node.from,
     to: node.to,
     enter(selectorsNode) {
-      if (selectorsNode.name === 'Pipe') {
-        operator = query.slice(selectorsNode.from, selectorsNode.to);
-
-        return false;
-      } else if (['PipeExact', 'PipeMatch', 'Nre', 'Neq'].includes(selectorsNode.name)) {
+      if (
+        ['Pipe', 'PipeExact', 'PipeMatch', 'Eq', 'Neq', 'Re', 'Nre'].includes(selectorsNode.name)
+      ) {
         operator = query.slice(selectorsNode.from, selectorsNode.to);
 
         return false;
@@ -76,6 +111,7 @@ const parsePipelineStages = (
           'JsonExpressionParser',
           'LabelFilter',
           'LineFormatExpr',
+          'LineFilters',
           'LabelFormatExpr',
           'String',
         ].includes(selectorsNode.name)
@@ -84,6 +120,8 @@ const parsePipelineStages = (
 
         if (selectorsNode.name === 'LabelFilter') {
           labelsInFilter = parseMatchers(syntaxTree, selectorsNode, query);
+        } else if (selectorsNode.name === 'LineFilters') {
+          lineFilters = parseLineFilters(syntaxTree, selectorsNode, query);
         }
 
         return false;
@@ -91,9 +129,14 @@ const parsePipelineStages = (
     },
     leave(selectorsNode) {
       if (selectorsNode.name === 'PipelineStage') {
-        pipelineStages.push({ operator, value, labelsInFilter });
-        labelsInFilter = undefined;
+        if (lineFilters.length > 0) {
+          pipelineStages.push(...lineFilters);
+        } else {
+          pipelineStages.push({ operator, value, labelsInFilter });
+        }
       }
+      labelsInFilter = undefined;
+      lineFilters = [];
     },
   });
 
