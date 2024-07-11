@@ -55,21 +55,40 @@ export const StatsTable: React.FC<StatsTableProps> = ({ logsData }) => {
 
   return (
     <div data-test={TestIds.LogsStats}>
-      <div>{t('Statistics')}</div>
+      <div className='co-stats-title'>{t('Statistics')}</div>
       <div className="co-stats__content">
         <Table className="co-stats-table" variant="compact" aria-label={t('Statistics')}>
           <Thead>
-            <Th className="co-stats-table__header">{t('Summary')}</Th>
+            <Th className="co-stats-table__header"></Th>
             <Th></Th>
-            <Th className="co-stats-table__header">{t('Ingester')}</Th>
+            <Th className="co-stats-table__header"></Th>
             <Th></Th>
-            <Th className="co-stats-table__header">{t('Storage')}</Th>
+            <Th className="co-stats-table__header"></Th>
             <Th></Th>
           </Thead>
 
           <Tbody>
             <Tr>
-              <Tooltip content={t('Total of bytes processed per second')}>
+              <Td>
+                <strong>{t('Summary')}</strong>
+              </Td>
+              
+              <Td></Td>
+
+              <Td>
+                <strong>{t('Ingester')}</strong>
+              </Td>
+
+              <Td></Td>
+              
+              <Td>
+                <strong>{t('Storage')}</strong>
+              </Td>
+
+            </Tr>
+
+            <Tr>
+              <Tooltip content={t('Total of bytes processed per second')} className='pf-c-tooltip'>
                 <Td>Bytes Processed Per Second:</Td>
               </Tooltip>
               <Td>
@@ -82,7 +101,9 @@ export const StatsTable: React.FC<StatsTableProps> = ({ logsData }) => {
                 <Td>Total Reached:</Td>
               </Tooltip>
               <Td>
-                <strong>{convertBytes(logsData?.data.stats.ingester?.totalReached) ?? 'NA'} </strong>
+                <strong>
+                  {convertBytes(logsData?.data.stats.ingester?.totalReached) ?? 'NA'}{' '}
+                </strong>
               </Td>
 
               <Tooltip content={t('Total chunks found in the index for the current query')}>
@@ -112,7 +133,9 @@ export const StatsTable: React.FC<StatsTableProps> = ({ logsData }) => {
                 <Td>Total Chunks Downloaded:</Td>
               </Tooltip>
               <Td>
-                <strong>{logsData?.data.stats.querier?.store?.totalChunksDownloaded ?? 'NA'}</strong>
+                <strong>
+                  {logsData?.data.stats.querier?.store?.totalChunksDownloaded ?? 'NA'}
+                </strong>
               </Td>
             </Tr>
 
@@ -126,7 +149,7 @@ export const StatsTable: React.FC<StatsTableProps> = ({ logsData }) => {
                 </strong>
               </Td>
 
-              <Tooltip content={t('Total batches sent by ingesters')}>
+              <Tooltip content={t('Total batches sent by ingesters')} >
                 <Td>Total Batches:</Td>
               </Tooltip>
               <Td>
@@ -176,7 +199,9 @@ export const StatsTable: React.FC<StatsTableProps> = ({ logsData }) => {
                 <strong>{convertTime(logsData?.data.stats.summary?.execTime) ?? 'NA'}</strong>
               </Td>
 
-              <Tooltip content={t('Total chunks found in the index for the current query by ingesters')}>
+              <Tooltip
+                content={t('Total chunks found in the index for the current query by ingesters')}
+              >
                 <Td>Total Chunks Referenced:</Td>
               </Tooltip>
               <Td>
@@ -187,7 +212,9 @@ export const StatsTable: React.FC<StatsTableProps> = ({ logsData }) => {
                 <Td>Head Chunk Lines:</Td>
               </Tooltip>
               <Td>
-                <strong>{logsData?.data.stats.querier?.store?.chunk?.headChunkLines ?? 'NA'}</strong>
+                <strong>
+                  {logsData?.data.stats.querier?.store?.chunk?.headChunkLines ?? 'NA'}
+                </strong>
               </Td>
             </Tr>
 
@@ -259,16 +286,20 @@ export const StatsTable: React.FC<StatsTableProps> = ({ logsData }) => {
               </Tooltip>
               <Td>
                 <strong>
-                  {convertBytes(logsData?.data.stats.ingester?.store?.chunk?.headChunkBytes) ?? 'NA'}
+                  {convertBytes(logsData?.data.stats.ingester?.store?.chunk?.headChunkBytes) ??
+                    'NA'}
                 </strong>
               </Td>
 
-              <Tooltip content={t('Total bytes of compressed chunks (blocks) processed by the store')}>
+              <Tooltip
+                content={t('Total bytes of compressed chunks (blocks) processed by the store')}
+              >
                 <Td>Compressed Bytes:</Td>
               </Tooltip>
               <Td>
                 <strong>
-                  {convertBytes(logsData?.data.stats.querier?.store?.chunk?.compressedBytes) ?? 'NA'}
+                  {convertBytes(logsData?.data.stats.querier?.store?.chunk?.compressedBytes) ??
+                    'NA'}
                 </strong>
               </Td>
             </Tr>
@@ -339,7 +370,9 @@ export const StatsTable: React.FC<StatsTableProps> = ({ logsData }) => {
             <Tr>
               <Td></Td>
               <Td></Td>
-              <Tooltip content={t('Total bytes of compressed chunks (blocks) processed by ingesters')}>
+              <Tooltip
+                content={t('Total bytes of compressed chunks (blocks) processed by ingesters')}
+              >
                 <Td>Compressed Bytes:</Td>
               </Tooltip>
               <Td>
