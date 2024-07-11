@@ -101,7 +101,7 @@
     }
   },
   "dependencies": {
-    "@grafana/lezer-logql": "^0.1.1",
+    "@grafana/lezer-logql": "^0.2.6",
     "@patternfly/patternfly": "4.215.1",
     "@patternfly/react-charts": "6.92.0",
     "@patternfly/react-core": "4.239.0",

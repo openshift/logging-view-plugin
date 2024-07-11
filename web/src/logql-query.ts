@@ -62,7 +62,11 @@ const parseLineFilters = (
     from: node.from,
     to: node.to,
     enter(selectorsNode) {
-      if (['PipeExact', 'PipeMatch', 'Eq', 'Neq', 'Re', 'Nre'].includes(selectorsNode.name)) {
+      if (
+        ['PipeExact', 'PipeMatch', 'PipePattern', 'Npa', 'Eq', 'Neq', 'Re', 'Nre'].includes(
+          selectorsNode.name,
+        )
+      ) {
         operator = query.slice(selectorsNode.from, selectorsNode.to);
 
         return false;
