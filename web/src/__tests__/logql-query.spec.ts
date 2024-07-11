@@ -519,6 +519,14 @@ describe('LogQL query', () => {
         expected:
           '{ log_type=~".+" } | json | level="unknown" or level="" != "tekton" |= "TLS handshake error from 10." !~ "10.128" |~ "10.128"',
       },
+      {
+        query: '{ app="foobar" } |> "I <_>" | json',
+        expected: '{ app="foobar" } |> "I <_>" | json',
+      },
+      {
+        query: '{ app="foobar" } !> "I <_>" | json',
+        expected: '{ app="foobar" } !> "I <_>" | json',
+      },
     ].forEach(({ query, expected }) => {
       const logql = new LogQLQuery(query);
       expect(logql.toString()).toEqual(expected);
