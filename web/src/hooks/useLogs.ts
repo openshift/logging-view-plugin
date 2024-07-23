@@ -450,7 +450,7 @@ export const useLogs = (
           logsData: {
             status: 'success',
             data: {
-              stats: { ingester: {}, store: {}, summary: {} },
+              stats: { ingester: {}, querier: {}, summary: {} },
               resultType: 'streams',
               result: data.streams,
             },
