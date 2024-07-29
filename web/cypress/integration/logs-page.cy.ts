@@ -43,6 +43,9 @@ describe('Logs Page', () => {
     cy.getByTestId(TestIds.ShowQueryToggle).click();
     cy.getByTestId(TestIds.LogsQueryInput).should('exist');
 
+    cy.getByTestId(TestIds.ShowStatsToggle).click();
+    cy.getByTestId(TestIds.LogsStats).click();
+
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
       .within(() => {
@@ -57,6 +60,23 @@ describe('Logs Page', () => {
         cy.get('svg g > path').should('have.length.above', 0);
       });
   });
+    
+  it('tests if the stats table is enabled and is viewable', () => {
+    cy.intercept(
+      QUERY_RANGE_STREAMS_URL_MATCH,
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
+    ).as('queryRangeStreams');
+
+    cy.visit(LOGS_PAGE_URL);
+
+    cy.getByTestId(TestIds.ShowStatsToggle).click();
+    cy.getByTestId(TestIds.LogsStats).should('exist');
+
+    cy.getByTestId(TestIds.ShowStatsToggle).click();
+    cy.getByTestId(TestIds.LogsStats).should('not.exist');
+
+  });
+
 
   it('handles errors gracefully when a request fails', () => {
     cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, (req) => {

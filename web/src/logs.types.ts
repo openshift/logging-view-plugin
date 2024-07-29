@@ -49,13 +49,18 @@ export interface StreamsResult {
   result: Array<StreamLogData>;
 }
 
+type Chunk = Record<string, number>;
+type Store = Record<string, number> & { chunk?: Chunk };
+type Ingester = Record<string, number> & { store?: Store };
+type Querier = Record<string, number> & { store?: Store };
+
 export type QueryRangeResponse<T = MatrixResult | StreamsResult> = {
   status: string;
   data: T & {
     stats: {
-      ingester: Record<string, number>;
-      store: Record<string, number>;
-      summary: Record<string, number>;
+      ingester?: Ingester;
+      querier?: Querier;
+      summary?: Record<string, number>;
     };
   };
 };

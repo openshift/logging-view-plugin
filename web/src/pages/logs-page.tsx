@@ -42,6 +42,8 @@ const LogsPage: React.FC = () => {
     setTenantInURL,
     areResourcesShown,
     setShowResourcesInURL,
+    areStatsShown,
+    setShowStatsInURL,
     filters,
     setFilters,
     setTimeRangeInURL,
@@ -196,7 +198,6 @@ const LogsPage: React.FC = () => {
             onChangeTimeRange={setTimeRangeInURL}
           />
         )}
-
         <LogsToolbar
           query={query}
           onQueryChange={handleQueryChange}
@@ -208,6 +209,8 @@ const LogsPage: React.FC = () => {
           enableStreaming={config.isStreamingEnabledInDefaultPage}
           showResources={areResourcesShown}
           onShowResourcesToggle={setShowResourcesInURL}
+          showStats={areStatsShown}
+          onShowStatsToggle={setShowStatsInURL}
           isDisabled={isQueryEmpty}
           attributeList={attributeList}
           filters={filters}
@@ -238,6 +241,7 @@ const LogsPage: React.FC = () => {
             isLoadingMore={isLoadingMoreLogsData}
             hasMoreLogsData={hasMoreLogsData}
             showResources={areResourcesShown}
+            showStats={areStatsShown}
             direction={direction}
             isStreaming={isStreaming}
             error={logsError}
