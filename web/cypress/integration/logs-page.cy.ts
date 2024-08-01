@@ -7,6 +7,7 @@ import {
   queryRangeStreamsValidResponse,
   queryRangeStreamsWithLineFormatting,
   queryRangeStreamsWithMessage,
+  volumeRangeMatrixValidResponse,
 } from '../fixtures/query-range-fixtures';
 import { namespaceListResponse } from '../fixtures/resource-api-fixtures';
 import { formatTimeRange } from '../../src/time-range';
@@ -21,6 +22,8 @@ const QUERY_RANGE_STREAMS_INFRASTRUCTURE_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/infrastructure/loki/api/v1/query_range?query=%7B*';
 const QUERY_RANGE_MATRIX_INFRASTRUCTURE_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/infrastructure/loki/api/v1/query_range?query=sum*';
+const VOLUME_QUERY_URL_MATCH =
+  '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/index/volume_range?query=*';
 const CONFIG_URL_MATCH = '/api/plugins/logging-view-plugin/config';
 const RESOURCE_URL_MATCH = '/api/kubernetes/api/v1/*';
 const TEST_MESSAGE = "loki_1 | level=info msg='test log'";
@@ -61,6 +64,25 @@ describe('Logs Page', () => {
       });
   });
     
+  it('tests if the volume graph is enabled and is viewable', () => {
+    cy.intercept(
+      QUERY_RANGE_STREAMS_URL_MATCH,
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
+    ).as('queryRangeStreams');
+
+    cy.intercept(VOLUME_QUERY_URL_MATCH, volumeRangeMatrixValidResponse()).as('volumeRangeMatrix');
+
+    cy.visit(LOGS_PAGE_URL);
+
+    cy.getByTestId(TestIds.ExecuteQueryButton).click();
+
+    cy.getByTestId(TestIds.LogsTable).should('exist');
+
+    cy.getByTestId(TestIds.ExecuteVolumeButton).click();
+    
+    cy.getByTestId(TestIds.LogsMetrics).should('exist');
+  });
+
   it('tests if the stats table is enabled and is viewable', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,

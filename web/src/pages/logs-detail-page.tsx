@@ -63,6 +63,11 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
     getMoreLogs,
     hasMoreLogsData,
     toggleStreaming,
+    getVolume,
+    volumeData,
+    isLoadingVolumeData,
+    volumeError,
+    showVolumeGraph,
     getHistogram,
     histogramData,
     isLoadingHistogramData,
@@ -116,6 +121,10 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
     if (isHistogramVisible) {
       getHistogram({ query, tenant: tenant.current, namespace, timeRange });
     }
+  };
+
+  const runVolume = () => {
+    getVolume({ query, tenant: tenant.current, namespace, timeRange });
   };
 
   const handleFiltersChange = (selectedFilters?: Filters) => {
@@ -206,6 +215,7 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
           query={query}
           onQueryChange={handleQueryChange}
           onQueryRun={runQuery}
+          onVolumeRun={runVolume}
           isStreaming={isStreaming}
           onStreamingToggle={handleToggleStreaming}
           showResources={areResourcesShown}
@@ -222,6 +232,19 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
 
         {isLoadingLogsData ? (
           <CenteredContainer>{t('Loading...')}</CenteredContainer>
+        ) : showVolumeGraph ? (
+          <Card>
+            <CardBody>
+              <LogsMetrics
+                logsData={volumeData}
+                timeRange={timeRange}
+                isLoading={isLoadingVolumeData}
+                error={volumeError}
+                height={350}
+                displayLegendTable
+              />
+            </CardBody>
+          </Card>
         ) : resultIsMetric ? (
           <Card>
             <CardBody>
