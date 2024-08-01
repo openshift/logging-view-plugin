@@ -12,3 +12,7 @@ textarea.pf-c-form-control.co-logs-expression-input__searchInput {
   font-family: var(--pf-c-code-block__pre--FontFamily), monospace;
   font-size: var(--pf-c-code-block__pre--FontSize);
 }
+
+.co-logs-expression-input__volumeButton{
+  margin-left: var(--pf-global--spacer--md);
+}
