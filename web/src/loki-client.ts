@@ -6,6 +6,7 @@ import {
   Direction,
   LabelValueResponse,
   QueryRangeResponse,
+  VolumeRangeResponse,
   RulesResponse,
 } from './logs.types';
 import { durationFromTimestamp } from './value-utils';
@@ -20,6 +21,16 @@ type QueryRangeParams = {
   namespace?: string;
   tenant: string;
   direction?: Direction;
+};
+
+type VolumeRangeParams = {
+  query: string;
+  start: number;
+  end: number;
+  config?: Config;
+  namespace?: string;
+  tenant: string;
+  targetLabels?: string;
 };
 
 type HistogramQuerParams = {
@@ -122,6 +133,33 @@ export const executeQueryRange = ({
 
   return cancellableFetch<QueryRangeResponse>(
     `${endpoint}/loki/api/v1/query_range?${new URLSearchParams(params)}`,
+    requestInit,
+  );
+};
+
+export const executeVolumeRange = ({
+  query,
+  start,
+  end,
+  config,
+  tenant,
+  namespace,
+}: VolumeRangeParams): CancellableFetch<VolumeRangeResponse> => {
+  const extendedQuery = queryWithNamespace({
+    query,
+    namespace,
+  });
+
+  const params: Record<string, string> = {
+    query: extendedQuery,
+    start: String(start * 1000000),
+    end: String(end * 1000000),
+  };
+
+  const { endpoint, requestInit } = getFetchConfig({ config, tenant });
+
+  return cancellableFetch<VolumeRangeResponse>(
+    `${endpoint}/loki/api/v1/index/volume_range?${new URLSearchParams(params)}`,
     requestInit,
   );
 };
