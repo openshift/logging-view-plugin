@@ -67,7 +67,12 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
     isStreaming,
     logsData,
     logsError,
+    volumeData,
+    isLoadingVolumeData,
+    volumeError,
+    showVolumeGraph,
     getLogs,
+    getVolume,
     getMoreLogs,
     hasMoreLogsData,
     getHistogram,
@@ -100,6 +105,10 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
     if (isHistogramVisible) {
       getHistogram({ query: queryToUse ?? query, timeRange, tenant });
     }
+  };
+
+  const runVolume = () => {
+    getVolume({ query, tenant, namespace, timeRange });
   };
 
   const handleFiltersChange = (selectedFilters?: Filters) => {
@@ -236,6 +245,7 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
           query={query}
           onQueryChange={handleQueryChange}
           onQueryRun={runQuery}
+          onVolumeRun={runVolume}
           invalidQueryErrorMessage={
             isNamespaceFilterEmpty ? t('Please select a namespace') : undefined
           }
@@ -255,6 +265,19 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
 
         {isLoadingLogsData ? (
           <CenteredContainer>{t('Loading...')}</CenteredContainer>
+        ) : showVolumeGraph ? (
+          <Card>
+            <CardBody>
+              <LogsMetrics
+                logsData={volumeData}
+                timeRange={timeRange}
+                isLoading={isLoadingVolumeData}
+                error={volumeError}
+                height={350}
+                displayLegendTable
+              />
+            </CardBody>
+          </Card>
         ) : resultIsMetric ? (
           <Card>
             <CardBody>

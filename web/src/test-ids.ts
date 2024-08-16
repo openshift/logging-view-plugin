@@ -7,6 +7,7 @@ export enum TestIds {
   LogsMetrics = 'LogsMetrics',
   LogsQueryInput = 'LogsQueryInput',
   ExecuteQueryButton = 'ExecuteQueryButton',
+  ExecuteVolumeButton = 'ExecuteVolumeButton',
   TenantDropdown = 'TenantDropdown',
   SeverityDropdown = 'SeverityDropdown',
   ToogleStreamingButton = 'ToogleStreamingButton',

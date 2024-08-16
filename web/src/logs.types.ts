@@ -65,6 +65,8 @@ export type QueryRangeResponse<T = MatrixResult | StreamsResult> = {
   };
 };
 
+export type VolumeRangeResponse = QueryRangeResponse<MatrixResult>;
+
 export type Rule = {
   query?: string;
   labels?: Record<string, string>;

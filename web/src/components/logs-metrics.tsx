@@ -199,8 +199,8 @@ export const LogsMetrics: React.FC<LogsMetricsProps> = ({
             themeColor={ChartThemeColor.multiUnordered}
             padding={{
               bottom: 40,
-              left: 65,
-              right: 10,
+              left: 100,
+              right: 20,
               top: 10,
             }}
             domainPadding={{ x: [30, 25] }}
@@ -225,7 +225,7 @@ export const LogsMetrics: React.FC<LogsMetricsProps> = ({
           </Chart>
           {displayLegendTable && (
             <InnerScrollContainer>
-              <Table variant="compact">
+              <Table variant="compact" aria-label="alert metrics">
                 <Thead>
                   <Tr>
                     <Th isStickyColumn stickyMinWidth="20px" style={{ width: '20px' }}></Th>
