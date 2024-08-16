@@ -38,7 +38,7 @@ install-backend:
 
 .PHONY: build-backend
 build-backend:
-	go build -mod=readonly -o plugin-backend cmd/plugin-backend.go
+	go build $(BUILD_OPTS) -mod=readonly -o plugin-backend -mod=readonly cmd/plugin-backend.go
 
 .PHONY: test-unit-backend
 test-unit-backend:
@@ -52,7 +52,7 @@ start-console:
 install: install-backend build-backend install-frontend
 
 .PHONY: start-frontend
-start-frontend: 
+start-frontend:
 	cd web && npm run dev
 
 .PHONY: start-backend
