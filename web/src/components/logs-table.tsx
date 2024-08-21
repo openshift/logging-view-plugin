@@ -1,4 +1,4 @@
-import { ResourceLink } from '@openshift-console/dynamic-plugin-sdk';
+import { ResourceLink, useActivePerspective } from '@openshift-console/dynamic-plugin-sdk';
 import { Alert, Button, Split, SplitItem, TextVariants, Text } from '@patternfly/react-core';
 import {
   ExpandableRowContent,
@@ -13,7 +13,7 @@ import {
 } from '@patternfly/react-table';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { DateFormat, dateToFormat } from '../date-utils';
 import { useKorrel8r } from '../hooks/useKorrel8r';
 import { listGoals } from '../korrel8r-client';
@@ -254,6 +254,8 @@ const LogRow: React.FC<LogRowProps> = ({ data, title, showResources }) => {
 
 const MetricsLink: React.FC<MetricsLinkProps> = ({ container, logType, namespace, pod }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
+  const [perspective] = useActivePerspective();
+  const { ns: activeNamespace } = useParams<{ ns: string }>();
 
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [error, setError] = React.useState<Error | undefined>();
@@ -311,7 +313,14 @@ const MetricsLink: React.FC<MetricsLinkProps> = ({ container, logType, namespace
 
                 const params = new URLSearchParams();
                 params.set('query0', promQL);
-                metricsUrl.pathname = '/monitoring/query-browser';
+
+                if (perspective === 'dev') {
+                  const namespaceToUse = namespace || activeNamespace;
+                  metricsUrl.pathname = `/dev-monitoring/ns/${namespaceToUse}/metrics`;
+                } else {
+                  metricsUrl.pathname = '/monitoring/query-browser';
+                }
+
                 metricsUrl.search = params.toString();
 
                 // open the metrics page in a new tab
