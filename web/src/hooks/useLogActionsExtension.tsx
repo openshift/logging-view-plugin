@@ -1,10 +1,16 @@
-import { Action, Alert, ExtensionHook } from '@openshift-console/dynamic-plugin-sdk';
+import {
+  Action,
+  Alert,
+  ExtensionHook,
+  useActivePerspective,
+} from '@openshift-console/dynamic-plugin-sdk';
 import { ListIcon } from '@patternfly/react-icons';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { listGoals } from '../korrel8r-client';
 import { Korrel8rResponse } from '../korrel8r.types';
 import { LogQLQuery } from '../logql-query';
+import { useParams } from 'react-router-dom';
 
 type LogActionsExtensionOptions = {
   alert?: Alert;
@@ -15,6 +21,8 @@ const useLogActionsExtension: ExtensionHook<Array<Action>, LogActionsExtensionOp
 ) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
   const [actions, setActions] = React.useState<Action[]>([]);
+  const [perspective] = useActivePerspective();
+  const { ns: activeNamespace } = useParams<{ ns: string }>();
 
   const alertingRuleName = options.alert?.rule.name;
 
@@ -77,7 +85,14 @@ const useLogActionsExtension: ExtensionHook<Array<Action>, LogActionsExtensionOp
               const params = new URLSearchParams();
               params.set('q', parsedQuery.toString());
               params.set('tenant', tenant);
-              const href = `/monitoring/logs?${params.toString()}`;
+              let href;
+
+              if (perspective === 'dev') {
+                const namespaceToUse = alertNamespace || activeNamespace;
+                href = `/dev-monitoring/ns/${namespaceToUse}/logs?${params.toString()}`;
+              } else {
+                href = `/monitoring/logs?${params.toString()}`;
+              }
 
               setActions([
                 {
