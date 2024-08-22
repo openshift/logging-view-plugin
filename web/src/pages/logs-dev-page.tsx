@@ -220,7 +220,7 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
               <Button
                 onClick={handleRefreshClick}
                 aria-label="Refresh"
-                variant="primary"
+                variant="secondary"
                 data-test={TestIds.SyncButton}
                 isDisabled={isRunQueryDisabled}
               >
