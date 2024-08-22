@@ -191,7 +191,7 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
               <Button
                 onClick={runQuery}
                 aria-label="Refresh"
-                variant="primary"
+                variant="secondary"
                 data-test={TestIds.SyncButton}
               >
                 <SyncAltIcon />

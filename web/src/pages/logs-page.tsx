@@ -187,7 +187,7 @@ const LogsPage: React.FC = () => {
               <Button
                 onClick={handleRefreshClick}
                 aria-label="Refresh"
-                variant="primary"
+                variant="secondary"
                 data-test={TestIds.SyncButton}
                 isDisabled={isQueryEmpty}
               >
