@@ -3,3 +3,4 @@ export { WSFactory } from '@openshift-console/dynamic-plugin-sdk/lib/utils/k8s/w
 
 export const useK8sWatchResource = () => [null, true, ''];
 export const useActivePerspective = () => ['admin'];
+export const useAccessReview = () => [true, false];
