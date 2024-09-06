@@ -1,4 +1,8 @@
-import { ResourceLink, useActivePerspective } from '@openshift-console/dynamic-plugin-sdk';
+import {
+  ResourceLink,
+  useAccessReview,
+  useActivePerspective,
+} from '@openshift-console/dynamic-plugin-sdk';
 import { Alert, Button, Split, SplitItem, TextVariants, Text } from '@patternfly/react-core';
 import {
   ExpandableRowContent,
@@ -385,6 +389,12 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   });
   const tableData = React.useMemo(() => aggregateStreamLogData(logsData), [logsData]);
   const { isKorrel8rReachable } = useKorrel8r();
+  const [canUsePrometheus, canUsePrometheusLoading] = useAccessReview({
+    group: 'monitoring.coreos.com',
+    resource: 'prometheusrules',
+    verb: 'get',
+  });
+  const showMetricsLink = isKorrel8rReachable && !canUsePrometheusLoading && canUsePrometheus;
 
   const handleRowToggle = (_event: React.MouseEvent, rowIndex: number) => {
     if (expandedItems.has(rowIndex)) {
@@ -434,7 +444,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
     onLoadMore?.(tableData[tableData.length - 1].timestamp / 1e6);
   };
 
-  const colSpan = isKorrel8rReachable ? columns.length + 3 : columns.length + 2;
+  const colSpan = showMetricsLink ? columns.length + 3 : columns.length + 2;
   return (
     <div data-test={TestIds.LogsTable}>
       {showStats && <StatsTable logsData={logsData} />}
@@ -461,7 +471,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
                 }
               </Th>
             ))}
-            {isKorrel8rReachable && <Th width={20}>{t('Correlation')}</Th>}
+            {showMetricsLink && <Th width={20}>{t('Correlation')}</Th>}
           </Tr>
         </Thead>
 
@@ -536,7 +546,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
                   ) : null;
                 })}
 
-                {isKorrel8rReachable && (
+                {showMetricsLink && (
                   <Td>
                     <MetricsLink
                       container={value.data.kubernetes_container_name}
