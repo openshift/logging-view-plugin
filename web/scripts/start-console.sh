@@ -2,7 +2,6 @@
 
 set -eou pipefail
 
-PREFER_PODMAN=0
 CREATE_ENV=0
 USE_LOCAL_PROXY=1
 LOKI_HOST=0
@@ -11,7 +10,6 @@ PLUGIN_PORT=9002
 while getopts "epcl:" flag; do
     case $flag in
         e) CREATE_ENV=1;;
-        p) PREFER_PODMAN=1;;
         c) USE_LOCAL_PROXY=0;;
         l) LOKI_HOST=$OPTARG;;
         l) PLUGIN_PORT=$OPTARG;;
@@ -20,7 +18,7 @@ while getopts "epcl:" flag; do
     esac
 done
 
-if [[ -x "$(command -v podman)" && $PREFER_PODMAN == 1 ]]; then
+if [[ -x "$(command -v podman)" ]]; then
     if [ "$(uname -s)" = "Linux" ]; then
         INTERNAL_HOST="http://localhost"
     else
@@ -118,7 +116,7 @@ echo "Console Image: $CONSOLE_IMAGE"
 echo "Starting local OpenShift console"
 
 # Prefer podman if installed. Otherwise, fall back to docker.
-if [[ -x "$(command -v podman)" && $PREFER_PODMAN == 1 ]]; then
+if [[ -x "$(command -v podman)" ]]; then
     if [ "$(uname -s)" = "Linux" ]; then
         echo "Using podman with host network..."
         # Use host networking on Linux since host.containers.internal is unreachable in some environments.
