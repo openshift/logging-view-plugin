@@ -25,6 +25,7 @@ type Config struct {
 	StaticPath       string
 	ConfigPath       string
 	PluginConfigPath string
+	LogLevel         string
 }
 
 type PluginConfig struct {
@@ -51,26 +52,37 @@ func Start(cfg *Config) {
 	router := setupRoutes(cfg)
 	router.Use(corsHeaderMiddleware(cfg))
 
-	loggedRouter := handlers.LoggingHandler(slog.Logger.Out, router)
-
 	// clients must use TLS 1.2 or higher
 	tlsConfig := &tls.Config{
 		MinVersion: tls.VersionTLS12,
 	}
 
+	logrusLevel, err := logrus.ParseLevel(cfg.LogLevel)
+	if err != nil {
+		logrus.WithError(err).Fatal("unable to set the log level")
+		logrusLevel = logrus.ErrorLevel
+	}
+
 	httpServer := &http.Server{
-		Handler:      loggedRouter,
+		Handler:      router,
 		Addr:         fmt.Sprintf(":%d", cfg.Port),
 		TLSConfig:    tlsConfig,
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
 
+	if logrusLevel == logrus.TraceLevel {
+		loggedRouter := handlers.LoggingHandler(slog.Logger.Out, router)
+		httpServer.Handler = loggedRouter
+	}
+
 	if cfg.CertFile != "" && cfg.PrivateKeyFile != "" {
 		slog.Infof("listening on https://:%d", cfg.Port)
+		logrus.SetLevel(logrusLevel)
 		panic(httpServer.ListenAndServeTLS(cfg.CertFile, cfg.PrivateKeyFile))
 	} else {
 		slog.Infof("listening on http://:%d", cfg.Port)
+		logrus.SetLevel(logrusLevel)
 		panic(httpServer.ListenAndServe())
 	}
 }

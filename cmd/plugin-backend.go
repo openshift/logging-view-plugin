@@ -18,6 +18,7 @@ var (
 	staticPathArg   = flag.String("static-path", "", "static files path to serve frontend (default: './web/dist')")
 	configPathArg   = flag.String("config-path", "", "config files path (default: './config')")
 	pluginConfigArg = flag.String("plugin-config-path", "", "plugin yaml configuration")
+	logLevelArg     = flag.String("log-level", "error", "verbosity of logs\noptions: ['panic', 'fatal', 'error', 'warn', 'info', 'debug', 'trace']\n'trace' level will log all incoming requests\n(default 'error')")
 	log             = logrus.WithField("module", "main")
 )
 
@@ -31,6 +32,7 @@ func main() {
 	staticPath := mergeEnvValue("LOGGING_VIEW_PLUGIN_STATIC_PATH", *staticPathArg, "./web/dist")
 	configPath := mergeEnvValue("LOGGING_VIEW_PLUGIN_MANIFEST_CONFIG_PATH", *configPathArg, "./config")
 	pluginConfigPath := mergeEnvValue("LOGGING_VIEW_PLUGIN_CONFIG_PATH", *pluginConfigArg, "/etc/plugin/config.yaml")
+	logLevel := mergeEnvValue("LOGGING_VIEW_PLUGIN_LOG_LEVEL", *logLevelArg, "error")
 
 	featuresList := strings.Fields(strings.Join(strings.Split(strings.ToLower(features), ","), " "))
 
@@ -49,6 +51,7 @@ func main() {
 		StaticPath:       staticPath,
 		ConfigPath:       configPath,
 		PluginConfigPath: pluginConfigPath,
+		LogLevel:         logLevel,
 	})
 }
 
