@@ -4,6 +4,7 @@ WORKDIR /opt/app-root
 
 USER 0
 
+ENV HUSKY=0
 COPY web/package*.json web/
 COPY Makefile Makefile
 RUN make install-frontend-ci-clean
@@ -32,8 +33,22 @@ RUN make build-backend BUILD_OPTS="-tags strictfipsruntime"
 
 FROM registry.redhat.io/rhel9-2-els/rhel:9.2
 
+RUN mkdir /licenses
+COPY LICENSE /licenses/.
+
+USER 1001
+
 COPY --from=web-builder /opt/app-root/web/dist /opt/app-root/web/dist
 COPY --from=go-builder /opt/app-root/plugin-backend /opt/app-root
 COPY config /opt/app-root/config
 
 ENTRYPOINT ["/opt/app-root/plugin-backend", "-config-path", "/opt/app-root/config", "-static-path", "/opt/app-root/web/dist"]
+
+LABEL com.redhat.component="coo-logging-console-plugin" \
+      name="openshift/logging-console-plugin" \
+      version="v6.0.0" \
+      summary="OpenShift console plugin to view and explore logs" \
+      io.openshift.tags="openshift,observability-ui,logging" \
+      io.k8s.display-name="OpenShift console logging plugin" \
+      maintainer="Observability UI Team <team-observability-ui@redhat.com>" \
+      description="OpenShift console plugin to view and explore logs"
