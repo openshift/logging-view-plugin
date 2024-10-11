@@ -4,6 +4,7 @@ WORKDIR /opt/app-root
 
 USER 0
 
+ENV HUSKY=0
 COPY web/package*.json web/
 COPY Makefile Makefile
 RUN make install-frontend-ci-clean
