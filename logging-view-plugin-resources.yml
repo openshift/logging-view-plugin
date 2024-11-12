@@ -116,14 +116,6 @@ spec:
           namespace: openshift-logging
           port: 8080
         type: Service
-    - alias: korrel8r
-      authorization: None
-      endpoint:
-        service:
-          name: korrel8r
-          namespace: korrel8r
-          port: 443
-        type: Service
 
 ---
 apiVersion: v1
