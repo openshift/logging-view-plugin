@@ -90,7 +90,6 @@
     "exposedModules": {
       "LogsPage": "./pages/logs-page",
       "LogsDetailPage": "./pages/logs-detail-page",
-      "LogActionsProvider": "./hooks/useLogActionsExtension",
       "LogsDevPage": "./pages/logs-dev-page",
       "getUserAlertingRules": "./getUserAlertingRules",
       "getPlatformAlertingRules": "./getPlatformAlertingRules",
