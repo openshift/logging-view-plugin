@@ -42,13 +42,6 @@
     }
   },
   {
-    "type": "console.action/provider",
-    "properties": {
-      "contextId": "alert-detail-toolbar-actions",
-      "provider": { "$codeRef": "LogActionsProvider" }
-    }
-  },
-  {
     "type": "console.alerts/rules-source",
     "properties": {
       "id": "user",
