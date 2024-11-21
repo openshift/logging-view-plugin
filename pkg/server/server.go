@@ -63,10 +63,17 @@ func Start(cfg *Config) {
 	if tlsEnabled {
 		// Build and run the controller which reloads the certificate and key
 		// files whenever they change.
+		ctx := context.Background()
+
 		certKeyPair, err := dynamiccertificates.NewDynamicServingContentFromFiles("serving-cert", cfg.CertFile, cfg.PrivateKeyFile)
 		if err != nil {
 			logrus.WithError(err).Fatal("unable to create TLS controller")
 		}
+
+		if err := certKeyPair.RunOnce(ctx); err != nil {
+			logrus.WithError(err).Fatal("failed to initialize cert/key content")
+		}
+
 		ctrl := dynamiccertificates.NewDynamicServingCertificateController(
 			tlsConfig,
 			nil,
@@ -75,13 +82,18 @@ func Start(cfg *Config) {
 			nil,
 		)
 
-		// Check that the cert and key files are valid.
+		// Check that the certificate and key files are valid.
 		if err := ctrl.RunOnce(); err != nil {
 			logrus.WithError(err).Fatal("invalid certificate/key files")
 		}
 
-		ctx := context.Background()
+		// Notify certificate changes to the controller.
+		certKeyPair.AddListener(ctrl)
+
 		go ctrl.Run(1, ctx.Done())
+
+		// Configure the server to use the cert/key pair for all client connections.
+		tlsConfig.GetConfigForClient = ctrl.GetConfigForClient
 	}
 
 	logrusLevel, err := logrus.ParseLevel(cfg.LogLevel)
