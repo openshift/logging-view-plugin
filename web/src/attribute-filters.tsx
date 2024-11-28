@@ -180,9 +180,53 @@ export const availableAttributes = (tenant: string, config: Config): AttributeLi
       mapper: (resource) =>
         resource?.spec?.containers.map((container) => ({
           option: `${resource?.metadata?.name} / ${container.name}`,
-          value: container.name,
+          value: `${resource?.metadata?.name} / ${container.name}`,
         })) ?? [],
     }),
+    expandSelection: (selections) => {
+      const podSelections = new Set<string>();
+      const containerSelections = new Set<string>();
+
+      for (const container of selections.values()) {
+        if (container.includes(' / ')) {
+          const [pod, containerName] = container.split(' / ');
+          podSelections.add(pod);
+          containerSelections.add(containerName);
+        }
+      }
+
+      return new Map([
+        ['pod', podSelections],
+        ['container', containerSelections],
+      ]);
+    },
+    isItemSelected: (value, filters) => {
+      const parts = value.split(' / ');
+      if (parts.length !== 2) {
+        return false;
+      }
+
+      const [pod, container] = parts;
+
+      if (
+        (!filters.pod || filters.pod.size === 0) &&
+        filters.container &&
+        filters.container.size > 0
+      ) {
+        return filters.container.has(container);
+      }
+
+      if (
+        !filters.pod ||
+        filters.pod.size === 0 ||
+        !filters.container ||
+        filters.container.size === 0
+      ) {
+        return false;
+      }
+
+      return filters.pod.has(pod) && filters.container.has(container);
+    },
     valueType: 'checkbox-select',
   },
 ];
