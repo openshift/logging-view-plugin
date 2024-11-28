@@ -9,7 +9,7 @@ import {
   queryRangeStreamsWithMessage,
   volumeRangeMatrixValidResponse,
 } from '../fixtures/query-range-fixtures';
-import { namespaceListResponse } from '../fixtures/resource-api-fixtures';
+import { namespaceListResponse, podsListResponse } from '../fixtures/resource-api-fixtures';
 import { formatTimeRange } from '../../src/time-range';
 import { configResponse } from '../fixtures/backend-fixtures';
 
@@ -63,7 +63,7 @@ describe('Logs Page', () => {
         cy.get('svg g > path').should('have.length.above', 0);
       });
   });
-    
+
   it('tests if the volume graph is enabled and is viewable', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
@@ -79,7 +79,7 @@ describe('Logs Page', () => {
     cy.getByTestId(TestIds.LogsTable).should('exist');
 
     cy.getByTestId(TestIds.ExecuteVolumeButton).click();
-    
+
     cy.getByTestId(TestIds.LogsMetrics).should('exist');
   });
 
@@ -96,9 +96,7 @@ describe('Logs Page', () => {
 
     cy.getByTestId(TestIds.ShowStatsToggle).click();
     cy.getByTestId(TestIds.LogsStats).should('not.exist');
-
   });
-
 
   it('handles errors gracefully when a request fails', () => {
     cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, (req) => {
@@ -630,5 +628,51 @@ describe('Logs Page', () => {
       .within(() => {
         cy.get('svg g > path').should('have.length.above', 0);
       });
+  });
+
+  it('container selection includes the parent pod', () => {
+    cy.intercept(
+      QUERY_RANGE_STREAMS_URL_MATCH,
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
+    ).as('queryRangeStreams');
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrix',
+    );
+
+    cy.intercept(RESOURCE_URL_MATCH, podsListResponse).as('resourceQuery');
+
+    cy.visit(LOGS_PAGE_URL);
+
+    cy.getByTestId(TestIds.ShowQueryToggle).click();
+
+    cy.getByTestId(TestIds.AttributeFilters).within(() => {
+      cy.contains('Content').click({ force: true });
+      cy.contains('Containers').click({ force: true });
+      cy.contains('Filter by Containers').click({ force: true });
+      cy.contains(/^my-pod-2 \/ operator$/).click({ force: true });
+
+      cy.contains(/^my-pod \/ operator$/)
+        .find('input')
+        .should('not.be.checked');
+
+      cy.contains(/^my-pod-2 \/ operator-2$/)
+        .find('input')
+        .should('not.be.checked');
+
+      cy.contains(/^my-pod-2 \/ operator$/)
+        .find('input')
+        .should('be.checked');
+    });
+
+    cy.getByTestId(TestIds.LogsQueryInput).within(() => {
+      cy.get('textarea')
+        .invoke('val')
+        .should(
+          'equal',
+          '{ log_type="application", kubernetes_container_name="operator", kubernetes_pod_name="my-pod-2" } | json',
+        );
+    });
+
+    cy.get('@resourceQuery.all').should('have.length.at.least', 1);
   });
 });
