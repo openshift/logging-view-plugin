@@ -67,16 +67,27 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
     setIsAttributeExpanded(false);
   };
 
-  const handleAttributeValueChange = (value: Set<string>) => {
+  const handleAttributeValueChange = (
+    value: Set<string>,
+    expandedSelections?: Map<string, Set<string>>,
+  ) => {
     if (selectedAttributeId) {
       if (!filters[selectedAttributeId]) {
         filters[selectedAttributeId] = new Set();
       }
 
-      onFiltersChange?.({
-        ...filters,
-        [selectedAttributeId]: value,
-      });
+      if (expandedSelections) {
+        for (const [key, val] of expandedSelections) {
+          filters[key] = val;
+        }
+
+        onFiltersChange?.(filters);
+      } else {
+        onFiltersChange?.({
+          ...filters,
+          [selectedAttributeId]: value,
+        });
+      }
     }
   };
 
@@ -134,7 +145,7 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
             key={`select-${attribute.id}`}
             attribute={attribute}
             onSelect={handleAttributeValueChange}
-            selections={filters[attribute.id]}
+            filters={filters}
           />
         );
       case 'checkbox-select':
@@ -144,7 +155,7 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
             attribute={attribute}
             variant={SelectVariant.checkbox}
             onSelect={handleAttributeValueChange}
-            selections={filters[attribute.id]}
+            filters={filters}
           />
         );
     }
