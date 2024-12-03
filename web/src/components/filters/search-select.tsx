@@ -6,18 +6,19 @@ import {
   SelectVariant,
   Spinner,
 } from '@patternfly/react-core';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAttributeValueData } from './attribute-value-data';
-import { Attribute, Option } from './filter.types';
+import { Attribute, Filters, Option } from './filter.types';
 import { isOption } from './filters-from-params';
 import './search-select.css';
 
 interface SearchSelectProps {
   attribute: Attribute;
   variant?: SelectVariant;
-  selections?: Set<string>;
-  onSelect: (selections: Set<string>) => void;
+  onSelect: (selections: Set<string>, expandedSelections?: Map<string, Set<string>>) => void;
+  filters: Filters;
+  customBadgeTextDependsOnData?: boolean;
 }
 
 const ERROR_VALUE = '__attribute_error';
@@ -49,17 +50,30 @@ const getOptionComponents = (optionsData: Option[] | undefined, error: Error | u
 export const SearchSelect: React.FC<SearchSelectProps> = ({
   attribute,
   variant,
-  selections,
   onSelect,
+  filters,
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
   const [getOptions, optionsData, error] = useAttributeValueData(attribute);
   const [isOpen, setIsOpen] = React.useState(false);
+  const [selections, setSelections] = React.useState<Set<string>>(new Set());
 
   const handleClear = () => {
     onSelect(new Set());
   };
+
+  useEffect(() => {
+    if (attribute.isItemSelected && optionsData) {
+      const selectedItems = optionsData.filter((item) =>
+        attribute.isItemSelected?.(item.value, filters),
+      );
+
+      setSelections(new Set(selectedItems.map((item) => item.value)));
+    } else {
+      setSelections(filters[attribute.id] ?? new Set());
+    }
+  }, [filters, optionsData]);
 
   const handleSelect = (
     _e: React.MouseEvent | React.ChangeEvent,
@@ -67,19 +81,33 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
   ) => {
     const selectedValue = isOption(selectedOption) ? selectedOption.value : String(selectedOption);
 
+    let expandedFilters: Map<string, Set<string>> | undefined = undefined;
+
     if (selectedValue && selectedValue !== ERROR_VALUE) {
       if (variant === SelectVariant.single || variant === undefined) {
-        onSelect(new Set([selectedValue]));
+        expandedFilters = attribute.expandSelection
+          ? attribute.expandSelection(new Set([selectedValue]))
+          : undefined;
+
+        onSelect(new Set([selectedValue]), expandedFilters);
         setIsOpen(false);
       } else {
         const changedSelections = new Set(selections);
         if (changedSelections.has(selectedValue)) {
           changedSelections.delete(selectedValue);
+
+          expandedFilters = attribute.expandSelection
+            ? attribute.expandSelection(changedSelections)
+            : undefined;
         } else {
           changedSelections.add(selectedValue);
+
+          expandedFilters = attribute.expandSelection
+            ? attribute.expandSelection(changedSelections)
+            : undefined;
         }
 
-        onSelect(changedSelections);
+        onSelect(changedSelections, expandedFilters);
       }
     }
   };
@@ -116,6 +144,10 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
         onToggle={handleToggle}
         onSelect={handleSelect}
         selections={selections ? Array.from(selections) : []}
+        customBadgeText={
+          attribute.isItemSelected ? (optionsData !== undefined ? undefined : '*') : undefined
+        }
+        isCreateSelectOptionObject
         isOpen={isOpen}
         placeholderText={t('Filter by {{attributeName}}', {
           attributeName: attribute.name,
