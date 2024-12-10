@@ -104,19 +104,29 @@ const metricValueToChartData = (
   group: Severity,
   value: Array<MetricValue>,
   interval: number,
-): Array<ChartData> =>
-  value.map((metric) => {
+): Array<ChartData> => {
+  const timeEntries = new Set<number>();
+  const chartData: Array<ChartData> = [];
+
+  for (const metric of value) {
     const time = parseFloat(String(metric[0])) * 1000;
     const formattedTime = dateToFormat(time, getTimeFormatFromInterval(interval));
 
-    return {
-      x: time,
-      y: parseInt(String(metric[1]), 10),
-      name: group,
-      time: formattedTime,
-      label: `${formattedTime} ${group}: ${metric[1]}`,
-    };
-  });
+    // Prevent duplicate entries to avoid chart rendering issues
+    if (!timeEntries.has(time)) {
+      timeEntries.add(time);
+      chartData.push({
+        x: time,
+        y: parseInt(String(metric[1]), 10),
+        name: group,
+        time: formattedTime,
+        label: `${formattedTime} ${group}: ${metric[1]}`,
+      });
+    }
+  }
+
+  return chartData;
+};
 
 const getChartsData = (data: HistogramData, interval: number): HistogramChartData => {
   const chartsData: HistogramChartData = {} as HistogramChartData;
