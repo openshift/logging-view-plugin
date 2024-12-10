@@ -8,6 +8,7 @@ import {
   QueryRangeResponse,
   VolumeRangeResponse,
   RulesResponse,
+  MatrixResult,
 } from './logs.types';
 import { durationFromTimestamp } from './value-utils';
 
@@ -52,6 +53,8 @@ type LokiTailQueryParams = {
   namespace?: string;
   tenant: string;
 };
+
+const MAX_RANGE_REQUEST = 60 * 60 * 6 * 1000; // 6 hours
 
 export const getFetchConfig = ({
   config,
@@ -164,6 +167,22 @@ export const executeVolumeRange = ({
   );
 };
 
+const splitQueryRange = (start: number, end: number) => {
+  const ranges = [];
+  let currentStart = start;
+  let currentEnd = start + MAX_RANGE_REQUEST;
+
+  while (currentEnd < end) {
+    ranges.push([currentStart, currentEnd]);
+    currentStart = currentEnd;
+    currentEnd = currentEnd + MAX_RANGE_REQUEST;
+  }
+
+  ranges.push([currentStart, end]);
+
+  return ranges;
+};
+
 export const executeHistogramQuery = ({
   query,
   start,
@@ -172,7 +191,7 @@ export const executeHistogramQuery = ({
   config,
   tenant,
   namespace,
-}: HistogramQuerParams): CancellableFetch<QueryRangeResponse> => {
+}: HistogramQuerParams): CancellableFetch<QueryRangeResponse<MatrixResult>> => {
   const intervalString = durationFromTimestamp(interval);
 
   const extendedQuery = queryWithNamespace({
@@ -191,7 +210,62 @@ export const executeHistogramQuery = ({
 
   const { endpoint, requestInit } = getFetchConfig({ config, tenant });
 
-  return cancellableFetch<QueryRangeResponse>(
+  const timeRange = end - start;
+
+  // for large time ranges, split the query into multiple smaller queries
+  if (timeRange > MAX_RANGE_REQUEST) {
+    const ranges = splitQueryRange(start, end);
+
+    const queries: Array<CancellableFetch<QueryRangeResponse<MatrixResult>>> = [];
+
+    for (const range of ranges) {
+      const [rangeStart, rangeEnd] = range;
+      const rangeParams = {
+        ...params,
+        start: String(rangeStart * 1000000),
+        end: String(rangeEnd * 1000000),
+      };
+      const subQuery = cancellableFetch<QueryRangeResponse<MatrixResult>>(
+        `${endpoint}/loki/api/v1/query_range?${new URLSearchParams(rangeParams)}`,
+        requestInit,
+      );
+
+      queries.push(subQuery);
+    }
+
+    return {
+      request: async () => {
+        const responses = [];
+        // execute the queries sequentially
+        for (const subQuery of queries) {
+          const response = await subQuery.request();
+          responses.push(response);
+        }
+
+        return responses.reduce((acc, response) => {
+          if (Object.keys(acc).length == 0) {
+            return response;
+          }
+
+          // if any of the responses is not successful, skip it
+          if (response.status !== 'success') {
+            return acc;
+          }
+
+          acc.data.result = acc.data.result.concat(response.data.result);
+
+          return acc;
+        }, {} as QueryRangeResponse<MatrixResult>);
+      },
+      abort: () => {
+        for (const subQuery of queries) {
+          subQuery.abort();
+        }
+      },
+    };
+  }
+
+  return cancellableFetch<QueryRangeResponse<MatrixResult>>(
     `${endpoint}/loki/api/v1/query_range?${new URLSearchParams(params)}`,
     requestInit,
   );
