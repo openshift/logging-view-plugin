@@ -15,6 +15,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apiserver/pkg/server/dynamiccertificates"
+
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/record"
 )
 
 var slog = logrus.WithField("module", "server")
@@ -27,7 +31,6 @@ type Config struct {
 	StaticPath       string
 	ConfigPath       string
 	PluginConfigPath string
-	LogLevel         string
 }
 
 type PluginConfig struct {
@@ -63,31 +66,40 @@ func Start(cfg *Config) {
 	if tlsEnabled {
 		// Build and run the controller which reloads the certificate and key
 		// files whenever they change.
+		ctx := context.Background()
+
 		certKeyPair, err := dynamiccertificates.NewDynamicServingContentFromFiles("serving-cert", cfg.CertFile, cfg.PrivateKeyFile)
 		if err != nil {
-			logrus.WithError(err).Fatal("unable to create TLS controller")
+			slog.WithError(err).Fatal("unable to create TLS controller")
 		}
+
+		if err := certKeyPair.RunOnce(ctx); err != nil {
+			slog.WithError(err).Fatal("failed to initialize cert/key content")
+		}
+
+		eventBroadcaster := record.NewBroadcaster()
+		eventBroadcaster.StartLogging(func(format string, args ...interface{}) {
+			slog.Infof(format, args...)
+		})
+
 		ctrl := dynamiccertificates.NewDynamicServingCertificateController(
 			tlsConfig,
 			nil,
 			certKeyPair,
 			nil,
-			nil,
+			record.NewEventRecorderAdapter(
+				eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: "logging-view-plugin"}),
+			),
 		)
 
-		// Check that the cert and key files are valid.
-		if err := ctrl.RunOnce(); err != nil {
-			logrus.WithError(err).Fatal("invalid certificate/key files")
-		}
+		// Configure the server to use the cert/key pair for all client connections.
+		tlsConfig.GetConfigForClient = ctrl.GetConfigForClient
 
-		ctx := context.Background()
+		// Notify cert/key file changes to the controller.
+		certKeyPair.AddListener(ctrl)
+
 		go ctrl.Run(1, ctx.Done())
-	}
-
-	logrusLevel, err := logrus.ParseLevel(cfg.LogLevel)
-	if err != nil {
-		logrus.WithError(err).Fatal("unable to set the log level")
-		logrusLevel = logrus.ErrorLevel
+		go certKeyPair.Run(ctx, 1)
 	}
 
 	httpServer := &http.Server{
@@ -98,18 +110,16 @@ func Start(cfg *Config) {
 		WriteTimeout: 30 * time.Second,
 	}
 
-	if logrusLevel == logrus.TraceLevel {
+	if logrus.GetLevel() == logrus.TraceLevel {
 		loggedRouter := handlers.LoggingHandler(slog.Logger.Out, router)
 		httpServer.Handler = loggedRouter
 	}
 
 	if tlsEnabled {
-		slog.Infof("listening on https://:%d", cfg.Port)
-		logrus.SetLevel(logrusLevel)
+		slog.Infof("listening for https on %s", httpServer.Addr)
 		panic(httpServer.ListenAndServeTLS(cfg.CertFile, cfg.PrivateKeyFile))
 	} else {
-		slog.Infof("listening on http://:%d", cfg.Port)
-		logrus.SetLevel(logrusLevel)
+		slog.Infof("listening for http on %s", httpServer.Addr)
 		panic(httpServer.ListenAndServe())
 	}
 }
