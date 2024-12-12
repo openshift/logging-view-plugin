@@ -18,7 +18,7 @@ var (
 	staticPathArg   = flag.String("static-path", "", "static files path to serve frontend (default: './web/dist')")
 	configPathArg   = flag.String("config-path", "", "config files path (default: './config')")
 	pluginConfigArg = flag.String("plugin-config-path", "", "plugin yaml configuration")
-	logLevelArg     = flag.String("log-level", "error", "verbosity of logs\noptions: ['panic', 'fatal', 'error', 'warn', 'info', 'debug', 'trace']\n'trace' level will log all incoming requests\n(default 'error')")
+	logLevelArg     = flag.String("log-level", logrus.InfoLevel.String(), "verbosity of logs\noptions: ['panic', 'fatal', 'error', 'warn', 'info', 'debug', 'trace']\n'trace' level will log all incoming requests\n(default 'error')")
 	log             = logrus.WithField("module", "main")
 )
 
@@ -32,7 +32,7 @@ func main() {
 	staticPath := mergeEnvValue("LOGGING_VIEW_PLUGIN_STATIC_PATH", *staticPathArg, "./web/dist")
 	configPath := mergeEnvValue("LOGGING_VIEW_PLUGIN_MANIFEST_CONFIG_PATH", *configPathArg, "./config")
 	pluginConfigPath := mergeEnvValue("LOGGING_VIEW_PLUGIN_CONFIG_PATH", *pluginConfigArg, "/etc/plugin/config.yaml")
-	logLevel := mergeEnvValue("LOGGING_VIEW_PLUGIN_LOG_LEVEL", *logLevelArg, "error")
+	logLevel := mergeEnvValue("LOGGING_VIEW_PLUGIN_LOG_LEVEL", *logLevelArg, logrus.InfoLevel.String())
 
 	featuresList := strings.Fields(strings.Join(strings.Split(strings.ToLower(features), ","), " "))
 
@@ -40,6 +40,14 @@ func main() {
 	for _, s := range featuresList {
 		featuresSet[s] = true
 	}
+
+	logrusLevel, err := logrus.ParseLevel(logLevel)
+	if err != nil {
+		logrusLevel = logrus.ErrorLevel
+		logrus.WithError(err).Warnf("Invalid log level. Defaulting to %q", logrusLevel.String())
+	}
+
+	logrus.SetLevel(logrusLevel)
 
 	log.Infof("enabled features: %+q\n", featuresList)
 
@@ -51,7 +59,6 @@ func main() {
 		StaticPath:       staticPath,
 		ConfigPath:       configPath,
 		PluginConfigPath: pluginConfigPath,
-		LogLevel:         logLevel,
 	})
 }
 
