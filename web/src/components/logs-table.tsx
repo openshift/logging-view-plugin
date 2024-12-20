@@ -3,7 +3,7 @@ import { Alert, Split, SplitItem } from '@patternfly/react-core';
 import {
   ExpandableRowContent,
   ISortBy,
-  TableComposable,
+  Table /* data-codemods */,
   Tbody,
   Td,
   Th,
@@ -318,7 +318,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
     <div data-test={TestIds.LogsTable}>
       {showStats && <StatsTable logsData={logsData} />}
       {children}
-      <TableComposable
+      <Table
         aria-label="Logs Table"
         variant="compact"
         className="co-logs-table"
@@ -453,7 +453,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
             </Tr>
           </Tbody>
         )}
-      </TableComposable>
+      </Table>
     </div>
   );
 };

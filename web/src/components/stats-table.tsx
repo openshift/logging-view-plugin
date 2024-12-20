@@ -1,7 +1,7 @@
 import React from 'react';
 import { QueryRangeResponse } from '../logs.types';
 import { Tooltip } from '@patternfly/react-core';
-import { Tbody, Table, Td, Th, Thead, Tr } from '@patternfly/react-table';
+import { Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import { TestIds } from '../test-ids';
 import { useTranslation } from 'react-i18next';
 import './stats-table.css';
@@ -87,7 +87,10 @@ export const StatsTable: React.FC<StatsTableProps> = ({ logsData }) => {
             </Tr>
 
             <Tr>
-              <Tooltip content={t('Total of bytes processed per second')} className="pf-c-tooltip">
+              <Tooltip
+                content={t('Total of bytes processed per second')}
+                className="pf-v5-c-tooltip"
+              >
                 <Td>Bytes Processed Per Second:</Td>
               </Tooltip>
               <Td>

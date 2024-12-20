@@ -1,5 +1,4 @@
 import '@patternfly/patternfly/patternfly.css';
-import { Dropdown, DropdownItem, DropdownToggle } from '@patternfly/react-core';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter, Link, Route, useHistory, useParams } from 'react-router-dom';
@@ -9,6 +8,13 @@ import './index.css';
 import LogsDetailPage from './pages/logs-detail-page';
 import LogsDevPage from './pages/logs-dev-page';
 import LogsPage from './pages/logs-page';
+import {
+  Dropdown,
+  DropdownItem,
+  DropdownList,
+  MenuToggle,
+  MenuToggleElement,
+} from '@patternfly/react-core';
 
 const DevConsole = () => {
   const { ns: namespace } = useParams<{ ns: string }>();
@@ -28,39 +34,42 @@ const DevConsole = () => {
     <>
       <Dropdown
         data-test="namespace-dropdown"
-        toggle={
-          <DropdownToggle id="toggle-basic" onToggle={onToggle} data-test="namespace-toggle">
-            {namespace}
-          </DropdownToggle>
-        }
         isOpen={isOpen}
-        dropdownItems={[
+        onSelect={() => setIsOpen(false)}
+        onOpenChange={(isOpenVal: boolean) => setIsOpen(isOpenVal)}
+        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+          <MenuToggle ref={toggleRef} onClick={onToggle} isExpanded={isOpen} id="toggle-basic">
+            {namespace}
+          </MenuToggle>
+        )}
+      >
+        <DropdownList>
           <DropdownItem onClick={onSelectNamespace('default')} key="default" component="button">
             default
-          </DropdownItem>,
+          </DropdownItem>
           <DropdownItem
             onClick={onSelectNamespace('my-namespace')}
             key="my-namespace"
             component="button"
           >
             my-namespace
-          </DropdownItem>,
+          </DropdownItem>
           <DropdownItem
             onClick={onSelectNamespace('my-namespace-two')}
             key="my-namespace-two"
             component="button"
           >
             my-namespace-two
-          </DropdownItem>,
+          </DropdownItem>
           <DropdownItem
             onClick={onSelectNamespace('openshift-cluster-version')}
             key="action"
             component="button"
           >
             openshift-cluster-version
-          </DropdownItem>,
-        ]}
-      />
+          </DropdownItem>
+        </DropdownList>
+      </Dropdown>
       <LogsDevPage />
     </>
   );
@@ -68,33 +77,33 @@ const DevConsole = () => {
 
 const EndToEndTestsApp = () => {
   return (
-    <div className="pf-c-page co-logs-standalone__page">
+    <div className="pf-v5-c-page co-logs-standalone__page">
       <BrowserRouter>
-        <header className="pf-c-masthead">
-          <div className="pf-c-masthead__main"></div>
+        <header className="pf-v5-c-masthead">
+          <div className="pf-v5-c-masthead__main"></div>
         </header>
 
-        <div className="pf-c-page__sidebar co-logs-standalone__side-menu">
-          <div className="pf-c-page__sidebar-body">
-            <nav className="pf-c-nav" aria-label="Global">
-              <ul className="pf-c-nav__list">
-                <li className="pf-c-nav__item">
-                  <Link className="pf-c-nav__link" to="/k8s/ns/default/pods/test-pod-name">
+        <div className="pf-v5-c-page__sidebar co-logs-standalone__side-menu">
+          <div className="pf-v5-c-page__sidebar-body">
+            <nav className="pf-v5-c-nav" aria-label="Global">
+              <ul className="pf-v5-c-nav__list">
+                <li className="pf-v5-c-nav__item">
+                  <Link className="pf-v5-c-nav__link" to="/k8s/ns/default/pods/test-pod-name">
                     Pods Logs
                   </Link>
                 </li>
-                <li className="pf-c-nav__item">
-                  <Link className="pf-c-nav__link" to="/dev-monitoring/ns/my-namespace/logs">
+                <li className="pf-v5-c-nav__item">
+                  <Link className="pf-v5-c-nav__link" to="/dev-monitoring/ns/my-namespace/logs">
                     Dev Logs
                   </Link>
                 </li>
-                <li className="pf-c-nav__item">
-                  <Link className="pf-c-nav__link" to="/monitoring/logs">
+                <li className="pf-v5-c-nav__item">
+                  <Link className="pf-v5-c-nav__link" to="/monitoring/logs">
                     Logs
                   </Link>
                 </li>
-                <li className="pf-c-nav__item">
-                  <Link className="pf-c-nav__link" to="/monitoring/alerts/test-alert">
+                <li className="pf-v5-c-nav__item">
+                  <Link className="pf-v5-c-nav__link" to="/monitoring/alerts/test-alert">
                     Alerts
                   </Link>
                 </li>
@@ -103,7 +112,7 @@ const EndToEndTestsApp = () => {
           </div>
         </div>
 
-        <main className="pf-c-page__main" tabIndex={-1}>
+        <main className="pf-v5-c-page__main" tabIndex={-1}>
           <Route path="/monitoring/logs">
             <LogsPage />
           </Route>

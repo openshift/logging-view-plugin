@@ -1,7 +1,7 @@
-.co-logs-toggle-play.pf-c-button {
-  background-color: var(--pf-global--BackgroundColor--100);
-  border: var(--pf-global--BorderWidth--lg) solid
-    var(--pf-global--BorderColor--100);
+.co-logs-toggle-play.pf-v5-c-button {
+  background-color: var(--pf-v5-global--BackgroundColor--100);
+  border: var(--pf-v5-global--BorderWidth--lg) solid
+    var(--pf-v5-global--BorderColor--100);
   border-radius: 50%;
   height: 32px;
   padding: 0;
@@ -9,6 +9,6 @@
   cursor: pointer;
 }
 
-.co-logs-toggle-play.pf-c-button.co-logs-toggle-play--active {
-  border-color: var(--pf-global--palette--green-300);
+.co-logs-toggle-play.pf-v5-c-button.co-logs-toggle-play--active {
+  border-color: var(--pf-v5-global--palette--green-300);
 }

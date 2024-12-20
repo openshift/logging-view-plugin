@@ -1,4 +1,4 @@
 .co-logs-histogram__tooltip-line{
-  stroke: var(--pf-global--BackgroundColor--dark-100);
+  stroke: var(--pf-v5-global--BackgroundColor--dark-100);
   stroke-dasharray: 3;
 }

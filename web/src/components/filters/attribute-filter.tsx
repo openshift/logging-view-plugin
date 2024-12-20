@@ -1,8 +1,10 @@
 import {
+  Badge,
+  MenuToggle,
+  MenuToggleElement,
   Select,
+  SelectList,
   SelectOption,
-  SelectOptionObject,
-  SelectVariant,
   TextInput,
   ToolbarChip,
   ToolbarChipGroup,
@@ -58,8 +60,8 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
   }, [textAttribute, filters]);
 
   const handleAttributeSelect = (
-    _: React.MouseEvent | React.ChangeEvent,
-    value: string | SelectOptionObject,
+    _: React.MouseEvent<Element, MouseEvent> | undefined,
+    value: string | number | undefined,
   ) => {
     if (typeof value === 'string') {
       setSelectedAttributeId(value);
@@ -120,6 +122,24 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
     setTextInputValue(value);
   };
 
+  const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
+    <MenuToggle
+      ref={toggleRef}
+      onClick={handleAttributeToggle}
+      isExpanded={isAttributeExpanded}
+      isDisabled={isDisabled}
+      icon={<FilterIcon />}
+      style={
+        {
+          width: '200px',
+        } as React.CSSProperties
+      }
+    >
+      Filter by status
+      {attributeList.length > 0 && <Badge isRead>{attributeList.length}</Badge>}
+    </MenuToggle>
+  );
+
   const renderAttributeValueComponent = (attribute: Attribute) => {
     switch (attribute.valueType) {
       case 'text': {
@@ -129,9 +149,8 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
             placeholder={t('Search by {{attributeName}}', {
               attributeName: attribute.name,
             })}
-            onChange={handleInputValueChange}
+            onChange={(_event, value: string) => handleInputValueChange(value)}
             className="co-logs__attribute-filter__text"
-            iconVariant="search"
             aria-label={t('Search by {{attributeName}}', {
               attributeName: attribute.name,
             })}
@@ -153,9 +172,9 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
           <SearchSelect
             key={`checkbox-select-${attribute.id}`}
             attribute={attribute}
-            variant={SelectVariant.checkbox}
             onSelect={handleAttributeValueChange}
             filters={filters}
+            isCheckbox={true}
           />
         );
     }
@@ -169,19 +188,18 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
         data-test={TestIds.AttributeFilters}
       >
         <Select
-          onToggle={handleAttributeToggle}
           isOpen={isAttributeExpanded}
           onSelect={handleAttributeSelect}
-          placeholderText={t('Attribute')}
-          isDisabled={isDisabled}
-          selections={selectedAttributeId}
-          toggleIcon={<FilterIcon />}
+          placeholder={t('Attribute')}
+          toggle={toggle}
         >
-          {attributeList.map(({ name: label, id }) => (
-            <SelectOption key={id} value={id}>
-              {label}
-            </SelectOption>
-          ))}
+          <SelectList>
+            {attributeList.map(({ name: label, id }) => (
+              <SelectOption key={id} value={id} isSelected={selectedAttributeId === id}>
+                {label}
+              </SelectOption>
+            ))}
+          </SelectList>
         </Select>
         {attributeList.map((attribute) => (
           <ToolbarFilter

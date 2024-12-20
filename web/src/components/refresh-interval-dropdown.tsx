@@ -1,4 +1,11 @@
-import { Dropdown, DropdownItem, DropdownToggle, FormGroup } from '@patternfly/react-core';
+import {
+  Dropdown,
+  DropdownItem,
+  DropdownList,
+  FormGroup,
+  MenuToggle,
+  MenuToggleElement,
+} from '@patternfly/react-core';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocalStorage } from '../hooks/useLocalStorage';
@@ -81,33 +88,42 @@ export const RefreshIntervalDropdown: React.FC<RefreshIntervalDropdownProps> = (
   return (
     <FormGroup fieldId="logs-refresh-interval" data-test={TestIds.RefreshIntervalDropdown}>
       <Dropdown
-        disabled={isDisabled}
-        dropdownItems={refreshIntervalOptions.map(({ key, name }, index) => (
-          <DropdownItem componentID={key} onClick={handleSelectedValue(index)} key={key}>
-            {
-              /*
-                t('plugin__logging-view-plugin~Refresh off')
-                t('plugin__logging-view-plugin~15 seconds')
-                t('plugin__logging-view-plugin~30 seconds')
-                t('plugin__logging-view-plugin~1 minute')
-                t('plugin__logging-view-plugin~5 minutes')
-                t('plugin__logging-view-plugin~15 minutes')
-                t('plugin__logging-view-plugin~30 minutes')
-                t('plugin__logging-view-plugin~1 hour')
-                t('plugin__logging-view-plugin~2 hours')
-                t('plugin__logging-view-plugin~1 day')
-              */
-              t(name)
-            }
-          </DropdownItem>
-        ))}
         isOpen={isOpen}
-        toggle={
-          <DropdownToggle isDisabled={isDisabled} onToggle={toggleIsOpen}>
+        onSelect={() => setIsOpen(false)}
+        onOpenChange={(isOpenVal: boolean) => setIsOpen(isOpenVal)}
+        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+          <MenuToggle
+            isDisabled={isDisabled}
+            ref={toggleRef}
+            onClick={toggleIsOpen}
+            isExpanded={isOpen}
+          >
             {refreshIntervalOptions[selectedIndex].name}
-          </DropdownToggle>
-        }
-      />
+          </MenuToggle>
+        )}
+      >
+        <DropdownList>
+          {refreshIntervalOptions.map(({ key, name }, index) => (
+            <DropdownItem ouiaId={key} onClick={handleSelectedValue(index)} key={key}>
+              {
+                /*
+                  t('plugin__logging-view-plugin~Refresh off')
+                  t('plugin__logging-view-plugin~15 seconds')
+                  t('plugin__logging-view-plugin~30 seconds')
+                  t('plugin__logging-view-plugin~1 minute')
+                  t('plugin__logging-view-plugin~5 minutes')
+                  t('plugin__logging-view-plugin~15 minutes')
+                  t('plugin__logging-view-plugin~30 minutes')
+                  t('plugin__logging-view-plugin~1 hour')
+                  t('plugin__logging-view-plugin~2 hours')
+                  t('plugin__logging-view-plugin~1 day')
+                */
+                t(name)
+              }
+            </DropdownItem>
+          ))}
+        </DropdownList>
+      </Dropdown>
     </FormGroup>
   );
 };

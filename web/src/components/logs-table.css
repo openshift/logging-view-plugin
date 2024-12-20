@@ -3,7 +3,7 @@
 }
 
 .co-logs-table__time {
-  --pf-c-table--cell--WhiteSpace: nowrap;
+  --pf-v5-c-table--cell--WhiteSpace: nowrap;
   font-family: monospace;
 }
 
@@ -13,8 +13,8 @@
 }
 
 .co-logs-table__resources {
-  --pf-c-table--cell--FontSize: var(--pf-global--FontSize--md);
-  margin-top: var(--pf-global--spacer--xs);
+  --pf-v5-c-table--cell--FontSize: var(--pf-v5-global--FontSize--md);
+  margin-top: var(--pf-v5-global--spacer--xs);
 }
 
 .co-logs-table__row::before {
@@ -25,7 +25,7 @@
   bottom: 3px;
   width: 3px;
   left: 3px;
-  background-color: var(--pf-global--disabled-color--200);
+  background-color: var(--pf-v5-global--disabled-color--200);
 }
 
 .co-logs-table__row-child-expanded::before {
@@ -37,54 +37,54 @@
 }
 
 .co-logs-table__severity-critical::before {
-  background-color: var(--pf-global--palette--purple-500);
+  background-color: var(--pf-v5-global--palette--purple-500);
 }
 
 .co-logs-table__severity-error::before {
-  background-color: var(--pf-global--danger-color--100);
+  background-color: var(--pf-v5-global--danger-color--100);
 }
 
 .co-logs-table__severity-warning::before {
-  background-color: var(--pf-global--warning-color--100);
+  background-color: var(--pf-v5-global--warning-color--100);
 }
 
 .co-logs-table__severity-info::before {
-  background-color: var(--pf-global--palette--green-300);
+  background-color: var(--pf-v5-global--palette--green-300);
 }
 
 .co-logs-table__severity-debug::before {
-  background-color: var(--pf-global--palette--light-blue-400);
+  background-color: var(--pf-v5-global--palette--light-blue-400);
 }
 
 .co-logs-table__severity-trace::before {
-  background-color: var(--pf-global--palette--cyan-200);
+  background-color: var(--pf-v5-global--palette--cyan-200);
 }
 
-.co-logs-table.pf-m-compact tr:not(.pf-c-table__expandable-row) > *:first-child {
+.co-logs-table.pf-m-compact tr:not(.pf-v5-c-table__expandable-row) > *:first-child {
   padding-left: 0;
 }
 
 .co-logs-table tr > :first-child::after {
-  --pf-c-table__expandable-row--after--BorderLeftWidth: none;
+  --pf-v5-c-table__expandable-row--after--BorderLeftWidth: none;
 }
 
 .co-logs-table__row-info {
-  font-size: var(--pf-global--FontSize--xs);
-  background-color: var(--pf-global--Background-color--100);
-  --pf-c-table--cell--PaddingBottom: var(--pf-global--spacer--xs);
-  --pf-c-table--cell--PaddingTop: var(--pf-global--spacer--xs);
+  font-size: var(--pf-v5-global--FontSize--xs);
+  background-color: var(--pf-v5-global--Background-color--100);
+  --pf-v5-c-table--cell--PaddingBottom: var(--pf-v5-global--spacer--xs);
+  --pf-v5-c-table--cell--PaddingTop: var(--pf-v5-global--spacer--xs);
 }
 
 .co-logs-table__row-info td {
   text-align: center;
 }
 
-.co-logs-table__row-info .pf-c-alert {
+.co-logs-table__row-info .pf-v5-c-alert {
   text-align: center;
-  --pf-c-alert__icon--FontSize: 0.9rem;
+  --pf-v5-c-alert__icon--FontSize: 0.9rem;
 }
 
-.co-logs-table__row-info .pf-c-alert__title {
+.co-logs-table__row-info .pf-v5-c-alert__title {
   font-size: 0.8rem;
 }
 

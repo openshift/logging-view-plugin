@@ -1,10 +1,12 @@
 import {
   Alert,
+  Spinner,
+  Badge,
+  MenuToggle,
+  MenuToggleElement,
+  SelectList,
   Select,
   SelectOption,
-  SelectOptionObject,
-  SelectVariant,
-  Spinner,
 } from '@patternfly/react-core';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,15 +17,20 @@ import './search-select.css';
 
 interface SearchSelectProps {
   attribute: Attribute;
-  variant?: SelectVariant;
   onSelect: (selections: Set<string>, expandedSelections?: Map<string, Set<string>>) => void;
   filters: Filters;
   customBadgeTextDependsOnData?: boolean;
+  isCheckbox?: boolean;
 }
 
 const ERROR_VALUE = '__attribute_error';
 
-const getOptionComponents = (optionsData: Option[] | undefined, error: Error | undefined) => {
+const getOptionComponents = (
+  optionsData: Option[] | undefined,
+  error: Error | undefined,
+  isCheckbox: boolean,
+  selections: Set<string>,
+) => {
   if (error) {
     return [
       <SelectOption key="error" value={ERROR_VALUE}>
@@ -34,14 +41,19 @@ const getOptionComponents = (optionsData: Option[] | undefined, error: Error | u
 
   if (optionsData) {
     return optionsData.map((item) => (
-      <SelectOption key={item.value} value={item.value}>
+      <SelectOption
+        key={item.value}
+        value={item.value}
+        hasCheckbox={isCheckbox}
+        isSelected={selections.has(item.value)}
+      >
         {item.option}
       </SelectOption>
     ));
   }
 
   return [
-    <SelectOption isLoading key="custom-loading" value="loading">
+    <SelectOption isLoading key="custom-loading" value="loading" hasCheckbox={isCheckbox}>
       <Spinner size="lg" />
     </SelectOption>,
   ];
@@ -49,9 +61,9 @@ const getOptionComponents = (optionsData: Option[] | undefined, error: Error | u
 
 export const SearchSelect: React.FC<SearchSelectProps> = ({
   attribute,
-  variant,
   onSelect,
   filters,
+  isCheckbox = false,
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
@@ -59,9 +71,9 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
   const [isOpen, setIsOpen] = React.useState(false);
   const [selections, setSelections] = React.useState<Set<string>>(new Set());
 
-  const handleClear = () => {
-    onSelect(new Set());
-  };
+  // const handleClear = () => {
+  //   onSelect(new Set());
+  // };
 
   useEffect(() => {
     if (attribute.isItemSelected && optionsData) {
@@ -76,15 +88,15 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
   }, [filters, optionsData]);
 
   const handleSelect = (
-    _e: React.MouseEvent | React.ChangeEvent,
-    selectedOption: string | SelectOptionObject,
+    _: React.MouseEvent<Element, MouseEvent> | undefined,
+    value: string | number | undefined,
   ) => {
-    const selectedValue = isOption(selectedOption) ? selectedOption.value : String(selectedOption);
+    const selectedValue = isOption(value) ? value.value : String(value);
 
     let expandedFilters: Map<string, Set<string>> | undefined = undefined;
 
     if (selectedValue && selectedValue !== ERROR_VALUE) {
-      if (variant === SelectVariant.single || variant === undefined) {
+      if (!isCheckbox) {
         expandedFilters = attribute.expandSelection
           ? attribute.expandSelection(new Set([selectedValue]))
           : undefined;
@@ -120,46 +132,72 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
     getOptions();
   }, []);
 
-  const handleFilter = (
-    _e: React.ChangeEvent<HTMLInputElement> | null,
-    filterQuery: string,
-  ): React.ReactElement[] | undefined =>
-    optionsData
-      ?.filter((item) => item.option.includes(filterQuery))
-      .map((item) => (
-        <SelectOption key={item.value} value={item.value}>
-          {item.option}
-        </SelectOption>
-      ));
+  // const handleFilter = (
+  //   _e: React.ChangeEvent<HTMLInputElement> | null,
+  //   filterQuery: string,
+  // ): React.ReactElement[] | undefined =>
+  //   optionsData
+  //     ?.filter((item) => item.option.includes(filterQuery))
+  //     .map((item) => (
+  //       <SelectOption key={item.value} value={item.value}>
+  //         {item.option}
+  //       </SelectOption>
+  //     ));
 
   const titleId = `attribute-value-selector-${attribute.id}`;
 
+  const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
+    <MenuToggle
+      ref={toggleRef}
+      onClick={handleToggle}
+      isExpanded={isOpen}
+      style={
+        {
+          width: '200px',
+        } as React.CSSProperties
+      }
+    >
+      Filter by status
+      {selections.size > 0 && (
+        <Badge isRead>
+          {attribute.isItemSelected ? (optionsData !== undefined ? undefined : '*') : undefined}
+        </Badge>
+      )}
+    </MenuToggle>
+  );
+
+  // STILL NEEDS TO HANDLE CREATING ITEMS. DO THIS IN PF6. OLD SELECT BELOW
+  // <Select
+  //   onSelect={handleSelect}
+  //   isOpen={isOpen}
+  //   placeholder={t('Filter by {{attributeName}}', {
+  //     attributeName: attribute.name,
+  //   })}
+  //   aria-labelledby={titleId}
+  //   onFilter={handleFilter}
+  //   onClear={handleClear}
+  //   hasInlineFilter={optionsData && optionsData.length > 10}
+  //   inlineFilterPlaceholderText={t('Search')}
+  //   className="co-logs__search-select"
+  //   toggle={toggle}
+  // >
   return (
     <>
       <span id={titleId} hidden>
         {attribute.name}
       </span>
       <Select
-        variant={error ? 'single' : variant}
-        onToggle={handleToggle}
         onSelect={handleSelect}
-        selections={selections ? Array.from(selections) : []}
-        customBadgeText={
-          attribute.isItemSelected ? (optionsData !== undefined ? undefined : '*') : undefined
-        }
-        isCreateSelectOptionObject
         isOpen={isOpen}
-        placeholderText={t('Filter by {{attributeName}}', {
+        placeholder={t('Filter by {{attributeName}}', {
           attributeName: attribute.name,
         })}
         aria-labelledby={titleId}
-        onFilter={handleFilter}
-        onClear={handleClear}
-        hasInlineFilter={optionsData && optionsData.length > 10}
-        inlineFilterPlaceholderText={t('Search')}
+        aria-placeholder={t('Search')}
         className="co-logs__search-select"
+        toggle={toggle}
       >
-        {getOptionComponents(optionsData, error)}
+        <SelectList>{getOptionComponents(optionsData, error, isCheckbox, selections)}</SelectList>
       </Select>
     </>
   );

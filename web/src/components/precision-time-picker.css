@@ -8,5 +8,5 @@
 }
 
 .co-logs-time-picker__error {
-  padding-top: 'var(--pf-global--spacer--xs)';
+  padding-top: 'var(--pf-v5-global--spacer--xs)';
 }
