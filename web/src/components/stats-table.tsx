@@ -89,7 +89,7 @@ export const StatsTable: React.FC<StatsTableProps> = ({ logsData }) => {
             <Tr>
               <Tooltip
                 content={t('Total of bytes processed per second')}
-                className="pf-v5-c-tooltip"
+                className="pf-v6-c-tooltip"
               >
                 <Td>Bytes Processed Per Second:</Td>
               </Tooltip>

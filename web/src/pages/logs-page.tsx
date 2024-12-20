@@ -164,7 +164,7 @@ const LogsPage: React.FC = () => {
   }, [resultIsMetric]);
 
   return (
-    <PageSection>
+    <PageSection hasBodyWrapper={false}>
       <Grid hasGutter>
         <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }}>
           <Title headingLevel="h1" size="lg">
@@ -185,14 +185,13 @@ const LogsPage: React.FC = () => {
             <RefreshIntervalDropdown onRefresh={runQuery} isDisabled={isQueryEmpty} />
             <Tooltip content={<div>Refresh</div>}>
               <Button
+                icon={<SyncAltIcon />}
                 onClick={handleRefreshClick}
                 aria-label="Refresh"
                 variant="secondary"
                 data-test={TestIds.SyncButton}
                 isDisabled={isQueryEmpty}
-              >
-                <SyncAltIcon />
-              </Button>
+              ></Button>
             </Tooltip>
           </Flex>
         </Flex>

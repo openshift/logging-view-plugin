@@ -6,8 +6,7 @@ import {
   ChartLine,
   ChartThemeColor,
   createContainer,
-  getThemeColors,
-} from '@patternfly/react-charts';
+} from '@patternfly/react-charts/victory';
 import { Alert } from '@patternfly/react-core';
 import { InnerScrollContainer, Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
 import React from 'react';
@@ -19,8 +18,8 @@ import { TestIds } from '../test-ids';
 import { defaultTimeRange, intervalFromTimeRange, numericTimeRange } from '../time-range';
 import { CenteredContainer } from './centered-container';
 import './logs-metrics.css';
-
-const colors = getThemeColors(ChartThemeColor.multiUnordered).line.colorScale;
+import t_global_background_color_secondary_default from '@patternfly/react-tokens/dist/esm/t_global_background_color_secondary_default';
+import { CallbackArgs } from 'victory';
 
 type MetricsData = {
   name: string;
@@ -182,8 +181,8 @@ export const LogsMetrics: React.FC<LogsMetricsProps> = ({
                 labelComponent={
                   <ChartLegendTooltip
                     legendData={toolTipData}
-                    title={(datum: { x: number }) =>
-                      dateToFormat(datum.x, getTimeFormatFromTimeRange(timeRangeValue))
+                    title={(datum: CallbackArgs) =>
+                      dateToFormat(Number(datum.x), getTimeFormatFromTimeRange(timeRangeValue))
                     }
                   />
                 }
@@ -237,19 +236,26 @@ export const LogsMetrics: React.FC<LogsMetricsProps> = ({
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {legendTableData?.map((series, index) => (
-                    <Tr key={series.childName}>
-                      <Th isStickyColumn stickyMinWidth="20px" style={{ width: '20px' }}>
-                        <div
-                          className="co-logs-metrics-legent-table-color"
-                          style={{ backgroundColor: colors[index] }}
-                        />
-                      </Th>
-                      {legendTableColumns.map((column) => (
-                        <Td key={`${column}-${index}`}>{series.labels[column]}</Td>
-                      ))}
-                    </Tr>
-                  ))}
+                  {legendTableData?.map((series, index) => {
+                    const isOddRow = (index + 1) % 2;
+                    const customStyle = {
+                      backgroundColor: t_global_background_color_secondary_default.var,
+                    };
+                    return (
+                      <Tr
+                        key={series.childName}
+                        className={isOddRow ? 'odd-row-class' : 'even-row-class'}
+                        style={isOddRow ? customStyle : {}}
+                      >
+                        <Th isStickyColumn stickyMinWidth="20px" style={{ width: '20px' }}>
+                          <div className="co-logs-metrics-legent-table-color" />
+                        </Th>
+                        {legendTableColumns.map((column) => (
+                          <Td key={`${column}-${index}`}>{series.labels[column]}</Td>
+                        ))}
+                      </Tr>
+                    );
+                  })}
                 </Tbody>
               </Table>
             </InnerScrollContainer>

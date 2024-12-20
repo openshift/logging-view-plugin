@@ -16,22 +16,23 @@ export const TogglePlay: React.FC<TogglePlayProps> = ({ onClick, active, isDisab
 
   return (
     <Button
+      icon={
+        active ? (
+          <Icon size="sm">
+            <PauseIcon />
+          </Icon>
+        ) : (
+          <Icon size="sm">
+            <PlayIcon />
+          </Icon>
+        )
+      }
       variant="plain"
       className={`co-logs-toggle-play ${active ? 'co-logs-toggle-play--active' : ''}`}
       onClick={onClick}
       aria-label={active ? t('Pause streaming') : t('Start streaming')}
       isDisabled={isDisabled}
       data-test={TestIds.ToogleStreamingButton}
-    >
-      {active ? (
-        <Icon size="sm">
-          <PauseIcon />
-        </Icon>
-      ) : (
-        <Icon size="sm">
-          <PlayIcon />
-        </Icon>
-      )}
-    </Button>
+    />
   );
 };

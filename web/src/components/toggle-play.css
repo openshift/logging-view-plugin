@@ -1,4 +1,4 @@
-.co-logs-toggle-play.pf-v5-c-button {
+.co-logs-toggle-play.pf-v6-c-button {
   background-color: var(--pf-v5-global--BackgroundColor--100);
   border: var(--pf-v5-global--BorderWidth--lg) solid
     var(--pf-v5-global--BorderColor--100);
@@ -9,6 +9,6 @@
   cursor: pointer;
 }
 
-.co-logs-toggle-play.pf-v5-c-button.co-logs-toggle-play--active {
+.co-logs-toggle-play.pf-v6-c-button.co-logs-toggle-play--active {
   border-color: var(--pf-v5-global--palette--green-300);
 }

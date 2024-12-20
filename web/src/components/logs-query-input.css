@@ -8,7 +8,7 @@
   width: 100%;
 }
 
-textarea.pf-v5-c-form-control.co-logs-expression-input__searchInput {
+textarea.pf-v6-c-form-control.co-logs-expression-input__searchInput {
   font-family: var(--pf-v5-c-code-block__pre--FontFamily), monospace;
   font-size: var(--pf-v5-c-code-block__pre--FontSize);
 }

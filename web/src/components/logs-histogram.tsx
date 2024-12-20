@@ -6,7 +6,7 @@ import {
   ChartLegendTooltipProps,
   ChartStack,
   createContainer,
-} from '@patternfly/react-charts';
+} from '@patternfly/react-charts/victory';
 import { getResizeObserver } from '@patternfly/react-core';
 import { Alert, Card, CardBody } from '@patternfly/react-core';
 import React from 'react';
@@ -25,6 +25,7 @@ import { intervalFromTimeRange, numericTimeRange } from '../time-range';
 import { valueWithScalePrefix } from '../value-utils';
 import { CenteredContainer } from './centered-container';
 import './logs-histogram.css';
+import { CallbackArgs } from 'victory';
 
 const GRAPH_HEIGHT = 130;
 const LEFT_PADDING = 50;
@@ -172,7 +173,9 @@ const HistogramTooltip: React.FC<ChartLegendTooltipProps & { interval: number }>
     <>
       <ChartLegendTooltip
         {...fixedProps}
-        title={(datum: ChartData) => dateToFormat(datum.x, getTimeFormatFromInterval(interval))}
+        title={(datum: CallbackArgs) =>
+          dateToFormat(Number(datum.x), getTimeFormatFromInterval(interval))
+        }
         constrainToVisibleArea
       />
       <line

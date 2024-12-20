@@ -1,10 +1,10 @@
 import chartGrayColor from '@patternfly/react-tokens/dist/esm/chart_color_black_200';
 import chartBlueColor from '@patternfly/react-tokens/dist/esm/chart_color_blue_200';
-import chartCyanColor from '@patternfly/react-tokens/dist/esm/chart_color_cyan_200';
-import chartYellowColor from '@patternfly/react-tokens/dist/esm/chart_color_gold_200';
+import chartTealColor from '@patternfly/react-tokens/dist/esm/chart_color_teal_200';
+import chartYellowColor from '@patternfly/react-tokens/dist/esm/chart_color_yellow_200';
 import chartGreenColor from '@patternfly/react-tokens/dist/esm/chart_color_green_200';
 import chartPurpleColor from '@patternfly/react-tokens/dist/esm/chart_color_purple_200';
-import chartRedColor from '@patternfly/react-tokens/dist/esm/chart_color_red_100';
+import chartRedColor from '@patternfly/react-tokens/dist/esm/chart_color_red_orange_100';
 
 export type Severity =
   | 'critical'
@@ -60,7 +60,7 @@ export const getSeverityColor = (severity: Severity): string => {
       return chartBlueColor.value;
       break;
     case 'trace':
-      return chartCyanColor.value;
+      return chartTealColor.value;
       break;
     default:
       return chartGrayColor.value;

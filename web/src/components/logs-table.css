@@ -60,7 +60,7 @@
   background-color: var(--pf-v5-global--palette--cyan-200);
 }
 
-.co-logs-table.pf-m-compact tr:not(.pf-v5-c-table__expandable-row) > *:first-child {
+.co-logs-table.pf-m-compact tr:not(.pf-v6-c-table__expandable-row) > *:first-child {
   padding-left: 0;
 }
 
@@ -79,12 +79,12 @@
   text-align: center;
 }
 
-.co-logs-table__row-info .pf-v5-c-alert {
+.co-logs-table__row-info .pf-v6-c-alert {
   text-align: center;
   --pf-v5-c-alert__icon--FontSize: 0.9rem;
 }
 
-.co-logs-table__row-info .pf-v5-c-alert__title {
+.co-logs-table__row-info .pf-v6-c-alert__title {
   font-size: 0.8rem;
 }
 

@@ -6,8 +6,8 @@ import {
   SelectList,
   SelectOption,
   TextInput,
-  ToolbarChip,
-  ToolbarChipGroup,
+  ToolbarLabel,
+  ToolbarLabelGroup,
   ToolbarFilter,
   ToolbarGroup,
 } from '@patternfly/react-core';
@@ -109,7 +109,7 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
   };
 
   const handleDeleteAttributeValue =
-    (attribute: string) => (_category: string | ToolbarChipGroup, chip: string | ToolbarChip) => {
+    (attribute: string) => (_category: string | ToolbarLabelGroup, chip: string | ToolbarLabel) => {
       filters?.[attribute]?.delete(chip as string);
       onFiltersChange?.({
         ...filters,
@@ -204,9 +204,9 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
         {attributeList.map((attribute) => (
           <ToolbarFilter
             key={`toolbar-filter-${attribute.id}`}
-            chips={Array.from(filters[attribute.id] ?? [])}
-            deleteChip={handleDeleteAttributeValue(attribute.id)}
-            deleteChipGroup={handleDeleteAttributeGroup(attribute.id)}
+            labels={Array.from(filters[attribute.id] ?? [])}
+            deleteLabel={handleDeleteAttributeValue(attribute.id)}
+            deleteLabelGroup={handleDeleteAttributeGroup(attribute.id)}
             categoryName={attribute.name}
             data-test={'test'}
           >

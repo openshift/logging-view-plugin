@@ -1,11 +1,4 @@
-import {
-  Alert,
-  CodeBlock,
-  CodeBlockCode,
-  Text,
-  TextContent,
-  TextVariants,
-} from '@patternfly/react-core';
+import { Alert, CodeBlock, CodeBlockCode, Content, ContentVariants } from '@patternfly/react-core';
 import React from 'react';
 import { TFunction, useTranslation } from 'react-i18next';
 import { isFetchError } from '../cancellable-fetch';
@@ -32,7 +25,7 @@ subjects:
 `;
 
 const Suggestion: React.FC = ({ children }) => (
-  <Text component={TextVariants.small}>{children}</Text>
+  <Content component={ContentVariants.small}>{children}</Content>
 );
 
 const messages: (t: TFunction) => Record<string, React.ReactElement> = (t) => ({
@@ -138,11 +131,11 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({ error }) => {
       />
 
       {suggestions && suggestions.length > 0 ? (
-        <TextContent>
-          <Text component={TextVariants.p}>{title}</Text>
+        <Content>
+          <Content component={ContentVariants.p}>{title}</Content>
 
           {suggestions}
-        </TextContent>
+        </Content>
       ) : null}
     </>
   );

@@ -99,13 +99,15 @@
   },
   "dependencies": {
     "@grafana/lezer-logql": "^0.2.6",
-    "@patternfly/patternfly": "^5.4.2",
-    "@patternfly/react-charts": "^6.94.21",
-    "@patternfly/react-core": "^5.4.12",
-    "@patternfly/react-icons": "^5.4.2",
-    "@patternfly/react-table": "^5.4.13",
+    "@patternfly/patternfly": "^6.1.0",
+    "@patternfly/react-charts": "^8.1.0",
+    "@patternfly/react-core": "^6.1.0",
+    "@patternfly/react-icons": "^6.1.0",
+    "@patternfly/react-table": "^6.1.0",
+    "@patternfly/react-tokens": "^6.1.0",
     "i18next": "^22.4.12",
-    "react-i18next": "^11.18.6"
+    "react-i18next": "^11.18.6",
+    "victory": "^37.3.5"
   },
   "nyc": {
     "report-dir": "./coverage/cov-cypress"

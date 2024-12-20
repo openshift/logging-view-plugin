@@ -77,33 +77,33 @@ const DevConsole = () => {
 
 const EndToEndTestsApp = () => {
   return (
-    <div className="pf-v5-c-page co-logs-standalone__page">
+    <div className="pf-v6-c-page co-logs-standalone__page">
       <BrowserRouter>
-        <header className="pf-v5-c-masthead">
-          <div className="pf-v5-c-masthead__main"></div>
+        <header className="pf-v6-c-masthead">
+          <div className="pf-v6-c-masthead__main"></div>
         </header>
 
-        <div className="pf-v5-c-page__sidebar co-logs-standalone__side-menu">
-          <div className="pf-v5-c-page__sidebar-body">
-            <nav className="pf-v5-c-nav" aria-label="Global">
-              <ul className="pf-v5-c-nav__list">
-                <li className="pf-v5-c-nav__item">
-                  <Link className="pf-v5-c-nav__link" to="/k8s/ns/default/pods/test-pod-name">
+        <div className="pf-v6-c-page__sidebar co-logs-standalone__side-menu">
+          <div className="pf-v6-c-page__sidebar-body">
+            <nav className="pf-v6-c-nav" aria-label="Global">
+              <ul className="pf-v6-c-nav__list">
+                <li className="pf-v6-c-nav__item">
+                  <Link className="pf-v6-c-nav__link" to="/k8s/ns/default/pods/test-pod-name">
                     Pods Logs
                   </Link>
                 </li>
-                <li className="pf-v5-c-nav__item">
-                  <Link className="pf-v5-c-nav__link" to="/dev-monitoring/ns/my-namespace/logs">
+                <li className="pf-v6-c-nav__item">
+                  <Link className="pf-v6-c-nav__link" to="/dev-monitoring/ns/my-namespace/logs">
                     Dev Logs
                   </Link>
                 </li>
-                <li className="pf-v5-c-nav__item">
-                  <Link className="pf-v5-c-nav__link" to="/monitoring/logs">
+                <li className="pf-v6-c-nav__item">
+                  <Link className="pf-v6-c-nav__link" to="/monitoring/logs">
                     Logs
                   </Link>
                 </li>
-                <li className="pf-v5-c-nav__item">
-                  <Link className="pf-v5-c-nav__link" to="/monitoring/alerts/test-alert">
+                <li className="pf-v6-c-nav__item">
+                  <Link className="pf-v6-c-nav__link" to="/monitoring/alerts/test-alert">
                     Alerts
                   </Link>
                 </li>
@@ -112,7 +112,7 @@ const EndToEndTestsApp = () => {
           </div>
         </div>
 
-        <main className="pf-v5-c-page__main" tabIndex={-1}>
+        <main className="pf-v6-c-page__main" tabIndex={-1}>
           <Route path="/monitoring/logs">
             <LogsPage />
           </Route>
