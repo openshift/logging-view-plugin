@@ -1,8 +1,14 @@
-import { OptionsMenu, OptionsMenuItem, OptionsMenuToggle } from '@patternfly/react-core';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TENANTS } from '../tenants';
 import { TestIds } from '../test-ids';
+import {
+  Dropdown,
+  DropdownItem,
+  DropdownList,
+  MenuToggle,
+  MenuToggleElement,
+} from '@patternfly/react-core';
 
 interface TenantDropdownProps {
   selectedTenant?: string;
@@ -29,28 +35,31 @@ export const TenantDropdown: React.FC<TenantDropdownProps> = ({
   };
 
   return (
-    <OptionsMenu
+    <Dropdown
       id="logging-view-tenant-dropdown"
       data-test={TestIds.TenantDropdown}
-      disabled={isDisabled}
-      menuItems={TENANTS.map((tenant) => (
-        <OptionsMenuItem
-          onSelect={onSelect}
-          isSelected={selectedTenant === tenant}
-          key={tenant}
-          id={tenant}
-        >
-          {tenant}
-        </OptionsMenuItem>
-      ))}
       isOpen={isOpen}
-      toggle={
-        <OptionsMenuToggle
-          isDisabled={isDisabled}
-          onToggle={onToggle}
-          toggleTemplate={selectedTenant ?? t('Select a tenant')}
-        />
-      }
-    />
+      onSelect={() => setIsOpen(false)}
+      onOpenChange={(isOpenVal: boolean) => setIsOpen(isOpenVal)}
+      placeholder={t('Select a tenant')}
+      toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+        <MenuToggle isDisabled={isDisabled} ref={toggleRef} onClick={onToggle} isExpanded={isOpen}>
+          {selectedTenant}
+        </MenuToggle>
+      )}
+    >
+      <DropdownList>
+        {TENANTS.map((tenant) => (
+          <DropdownItem
+            ouiaId={tenant}
+            onClick={onSelect}
+            key={tenant}
+            isSelected={selectedTenant === tenant}
+          >
+            {tenant}
+          </DropdownItem>
+        ))}
+      </DropdownList>
+    </Dropdown>
   );
 };

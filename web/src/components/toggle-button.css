@@ -1,4 +1,4 @@
 .co-logs-toggle-button {
-  padding-right: var(--pf-global--spacer--xs);
-  padding-left: var(--pf-global--spacer--xs);
+  padding-right: var(--pf-v5-global--spacer--xs);
+  padding-left: var(--pf-v5-global--spacer--xs);
 }

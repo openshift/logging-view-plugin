@@ -126,8 +126,7 @@ export const PrecisionTimePicker: React.FC<PrecisionTimePickerProps> = ({ onChan
         value={value}
         onFocus={openMenu}
         type="text"
-        iconVariant="clock"
-        onChange={handleValueChange}
+        onChange={(_event, changedValue: string) => handleValueChange(changedValue)}
         aria-label="Precision time picker"
         isRequired
         validated={isValid ? undefined : ValidatedOptions.error}

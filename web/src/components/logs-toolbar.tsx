@@ -1,12 +1,14 @@
 import {
   Alert,
+  Badge,
+  MenuToggle,
+  MenuToggleElement,
   Select,
+  SelectList,
   SelectOption,
-  SelectOptionObject,
-  SelectVariant,
   Toolbar,
-  ToolbarChip,
-  ToolbarChipGroup,
+  ToolbarLabel,
+  ToolbarLabelGroup,
   ToolbarContent,
   ToolbarFilter,
   ToolbarGroup,
@@ -91,8 +93,8 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
     : new Set();
 
   const onDeleteSeverityFilter = (
-    _category: string | ToolbarChipGroup,
-    chip: string | ToolbarChip,
+    _category: string | ToolbarLabelGroup,
+    chip: string | ToolbarLabel,
   ) => {
     severityFilter.delete(chip.toString() as Severity);
     const newFilters = { ...(filters ?? {}), severity: severityFilter };
@@ -112,10 +114,10 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
   };
 
   const onSeveritySelect = (
-    _: React.MouseEvent | React.ChangeEvent,
-    value: string | SelectOptionObject,
+    _: React.MouseEvent<Element, MouseEvent> | undefined,
+    value: string | number | undefined,
   ) => {
-    const severityValue = value.toString() as Severity;
+    const severityValue = String(value ?? 'unknown') as Severity;
 
     if (severityFilter.has(severityValue)) {
       severityFilter.delete(severityValue);
@@ -128,6 +130,23 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
       severity: new Set(severityFilter),
     });
   };
+
+  const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
+    <MenuToggle
+      ref={toggleRef}
+      onClick={onSeverityToggle}
+      isExpanded={isSeverityExpanded}
+      isDisabled={isDisabled}
+      style={
+        {
+          width: '200px',
+        } as React.CSSProperties
+      }
+    >
+      Filter by status
+      {severityFilter.size > 0 && <Badge isRead>{severityFilter.size}</Badge>}
+    </MenuToggle>
+  );
 
   const severityFilterArray = Array.from(severityFilter);
 
@@ -143,26 +162,31 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
         )}
         <ToolbarGroup>
           <ToolbarFilter
-            chips={severityFilterArray}
-            deleteChip={onDeleteSeverityFilter}
-            deleteChipGroup={onDeleteSeverityGroup}
+            labels={severityFilterArray}
+            deleteLabel={onDeleteSeverityFilter}
+            deleteLabelGroup={onDeleteSeverityGroup}
             categoryName="Severity"
             className="co-logs-severity-filter"
             data-test={TestIds.SeverityDropdown}
           >
             <Select
-              variant={SelectVariant.checkbox}
+              role="menu"
               aria-label="Severity"
-              onToggle={onSeverityToggle}
               onSelect={onSeveritySelect}
-              selections={severityFilterArray}
               isOpen={isSeverityExpanded}
-              placeholderText="Severity"
-              isDisabled={isDisabled}
+              placeholder="Severity"
+              toggle={toggle}
             >
-              {availableSeverityFilters.map((severity) => (
-                <SelectOption key={severity} value={severity} />
-              ))}
+              <SelectList>
+                {availableSeverityFilters.map((severity) => (
+                  <SelectOption
+                    key={severity}
+                    value={severity}
+                    hasCheckbox
+                    isSelected={severityFilter.has(severity)}
+                  />
+                ))}
+              </SelectList>
             </Select>
           </ToolbarFilter>
         </ToolbarGroup>

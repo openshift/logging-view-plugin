@@ -1,4 +1,4 @@
-import { Button } from '@patternfly/react-core';
+import { Button, Icon } from '@patternfly/react-core';
 import { PauseIcon, PlayIcon } from '@patternfly/react-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -16,14 +16,23 @@ export const TogglePlay: React.FC<TogglePlayProps> = ({ onClick, active, isDisab
 
   return (
     <Button
+      icon={
+        active ? (
+          <Icon size="sm">
+            <PauseIcon />
+          </Icon>
+        ) : (
+          <Icon size="sm">
+            <PlayIcon />
+          </Icon>
+        )
+      }
       variant="plain"
       className={`co-logs-toggle-play ${active ? 'co-logs-toggle-play--active' : ''}`}
       onClick={onClick}
       aria-label={active ? t('Pause streaming') : t('Start streaming')}
       isDisabled={isDisabled}
       data-test={TestIds.ToogleStreamingButton}
-    >
-      {active ? <PauseIcon size="sm" /> : <PlayIcon size="sm" />}
-    </Button>
+    />
   );
 };
