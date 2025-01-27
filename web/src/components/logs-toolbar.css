@@ -1,5 +1,5 @@
 .co-logs-toolbar {
-  gap: var(--pf-global--spacer--md);
+  gap: var(--pf-v5-global--spacer--md);
 }
 
 .co-logs-severity-filter {
@@ -7,6 +7,6 @@
 }
 
 .co-logs-toolbar .co-logs-expression-input {
-  padding-right: var(--pf-c-toolbar__content--PaddingRight);
-  padding-left: var(--pf-c-toolbar__content--PaddingLeft);
+  padding-right: var(--pf-v5-c-toolbar__content--PaddingRight);
+  padding-left: var(--pf-v5-c-toolbar__content--PaddingLeft);
 }

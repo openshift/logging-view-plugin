@@ -1,4 +1,11 @@
-import { Dropdown, DropdownItem, DropdownToggle, FormGroup } from '@patternfly/react-core';
+import {
+  Dropdown,
+  DropdownItem,
+  DropdownList,
+  FormGroup,
+  MenuToggle,
+  MenuToggleElement,
+} from '@patternfly/react-core';
 import React from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { TimeRange } from '../logs.types';
@@ -108,37 +115,46 @@ export const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
       )}
       <FormGroup fieldId="logs-time-range" data-test={TestIds.TimeRangeDropdown}>
         <Dropdown
-          disabled={isDisabled}
-          dropdownItems={timeRangeOptions.map(({ key, name }, index) => (
-            <DropdownItem componentID={key} onClick={handleSelectedValue(index)} key={key}>
-              {
-                /*
-                  t('plugin__logging-view-plugin~Custom time range')
-                  t('plugin__logging-view-plugin~Last 5 minutes')
-                  t('plugin__logging-view-plugin~Last 15 minutes')
-                  t('plugin__logging-view-plugin~Last 30 minutes')
-                  t('plugin__logging-view-plugin~Last 1 hour')
-                  t('plugin__logging-view-plugin~Last 2 hours')
-                  t('plugin__logging-view-plugin~Last 6 hours')
-                  t('plugin__logging-view-plugin~Last 12 hours')
-                  t('plugin__logging-view-plugin~Last 1 day')
-                  t('plugin__logging-view-plugin~Last 2 days')
-                  t('plugin__logging-view-plugin~Last 1 week')
-                  t('plugin__logging-view-plugin~Last 2 weeks')
-                */
-                t(`plugin__logging-view-plugin~${name}`)
-              }
-            </DropdownItem>
-          ))}
           isOpen={isOpen}
-          toggle={
-            <DropdownToggle isDisabled={isDisabled} onToggle={toggleIsOpen}>
+          onSelect={() => setIsOpen(false)}
+          onOpenChange={(isOpenVal: boolean) => setIsOpen(isOpenVal)}
+          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+            <MenuToggle
+              isDisabled={isDisabled}
+              ref={toggleRef}
+              onClick={toggleIsOpen}
+              isExpanded={isOpen}
+            >
               {timeRangeOptions[selectedIndex].key === CUSTOM_TIME_RANGE_KEY && timeRangeValue
                 ? formatTimeRange(timeRangeValue)
                 : timeRangeOptions[selectedIndex].name}
-            </DropdownToggle>
-          }
-        />
+            </MenuToggle>
+          )}
+        >
+          <DropdownList>
+            {timeRangeOptions.map(({ key, name }, index) => (
+              <DropdownItem ouiaId={key} onClick={handleSelectedValue(index)} key={key}>
+                {
+                  /*
+                    t('plugin__logging-view-plugin~Custom time range')
+                    t('plugin__logging-view-plugin~Last 5 minutes')
+                    t('plugin__logging-view-plugin~Last 15 minutes')
+                    t('plugin__logging-view-plugin~Last 30 minutes')
+                    t('plugin__logging-view-plugin~Last 1 hour')
+                    t('plugin__logging-view-plugin~Last 2 hours')
+                    t('plugin__logging-view-plugin~Last 6 hours')
+                    t('plugin__logging-view-plugin~Last 12 hours')
+                    t('plugin__logging-view-plugin~Last 1 day')
+                    t('plugin__logging-view-plugin~Last 2 days')
+                    t('plugin__logging-view-plugin~Last 1 week')
+                    t('plugin__logging-view-plugin~Last 2 weeks')
+                  */
+                  t(`plugin__logging-view-plugin~${name}`)
+                }
+              </DropdownItem>
+            ))}
+          </DropdownList>
+        </Dropdown>
       </FormGroup>
     </>
   );

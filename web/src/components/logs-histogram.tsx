@@ -6,8 +6,8 @@ import {
   ChartLegendTooltipProps,
   ChartStack,
   createContainer,
-  getResizeObserver,
-} from '@patternfly/react-charts';
+} from '@patternfly/react-charts/victory';
+import { getResizeObserver } from '@patternfly/react-core';
 import { Alert, Card, CardBody } from '@patternfly/react-core';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +25,7 @@ import { intervalFromTimeRange, numericTimeRange } from '../time-range';
 import { valueWithScalePrefix } from '../value-utils';
 import { CenteredContainer } from './centered-container';
 import './logs-histogram.css';
+import { CallbackArgs } from 'victory';
 
 const GRAPH_HEIGHT = 130;
 const LEFT_PADDING = 50;
@@ -172,7 +173,9 @@ const HistogramTooltip: React.FC<ChartLegendTooltipProps & { interval: number }>
     <>
       <ChartLegendTooltip
         {...fixedProps}
-        title={(datum: ChartData) => dateToFormat(datum.x, getTimeFormatFromInterval(interval))}
+        title={(datum: CallbackArgs) =>
+          dateToFormat(Number(datum.x), getTimeFormatFromInterval(interval))
+        }
         constrainToVisibleArea
       />
       <line
@@ -207,13 +210,13 @@ const BrushHandleComponent: React.FC<SelectionComponentProps> = ({ x, y, width, 
         x2={x}
         y1={y}
         y2={height + y}
-        style={{ stroke: 'var(--pf-chart-color-blue-300)', strokeDasharray: '5 3' }}
+        style={{ stroke: 'var(--pf-v5-chart-color-blue-300)', strokeDasharray: '5 3' }}
       />
       <polygon
         points={`${x},${y} ${x - triangleSize},${y - triangleSize} ${x + triangleSize},${
           y - triangleSize
         }`}
-        style={{ fill: 'var(--pf-chart-color-blue-300)' }}
+        style={{ fill: 'var(--pf-v5-chart-color-blue-300)' }}
       />
     </g>
   );

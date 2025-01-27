@@ -1,11 +1,5 @@
-import {
-  Alert,
-  Button,
-  DatePicker,
-  Modal,
-  ModalBoxBody,
-  ModalVariant,
-} from '@patternfly/react-core';
+import { Alert, Button, DatePicker } from '@patternfly/react-core';
+import { Modal, ModalBoxBody, ModalVariant } from '@patternfly/react-core/deprecated';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { DateFormat, dateToFormat } from '../date-utils';
