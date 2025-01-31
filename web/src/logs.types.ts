@@ -84,3 +84,21 @@ export type RulesResponse = {
 export type LabelValueResponse = {
   data: Array<string>;
 };
+
+export type Resource = {
+  kind: string;
+  name: string;
+};
+
+export type LogTableData = {
+  time: string;
+  timestamp: number;
+  severity: string;
+  namespace?: string;
+  podName?: string;
+  resources?: Array<Resource>;
+  message: string;
+  data: Record<string, string>;
+  type: 'log' | 'expand';
+  logIndex: number;
+};

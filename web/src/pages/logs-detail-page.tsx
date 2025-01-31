@@ -27,6 +27,7 @@ import { TestIds } from '../test-ids';
 import { getInitialTenantFromNamespace } from '../value-utils';
 import { CenteredContainer } from '../components/centered-container';
 import { LogsMetrics } from '../components/logs-metrics';
+import { downloadCSV } from '../download-csv';
 
 /*
 This comment creates an entry in the translations catalogue for console extensions
@@ -107,7 +108,7 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
 
   const handleLoadMoreData = (lastTimestamp: number) => {
     if (!isLoadingMoreLogsData) {
-      getMoreLogs({ lastTimestamp, query });
+      getMoreLogs({ lastTimestamp, query, namespace, direction });
     }
   };
 
@@ -228,6 +229,7 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
           attributeList={attributesForPod}
           filters={filters}
           onFiltersChange={handleFiltersChange}
+          onDownloadCSV={() => downloadCSV(logsData)}
         />
 
         {isLoadingLogsData ? (

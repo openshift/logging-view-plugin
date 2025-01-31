@@ -26,6 +26,10 @@ rules:
     - error
   no-shadow: 'off'
   '@typescript-eslint/no-shadow': 'error'
+  '@typescript-eslint/no-unused-vars':
+    - warn
+    - argsIgnorePattern: '^_'
+      varsIgnorePattern: '^_'
 settings:
   react:
     version: detect

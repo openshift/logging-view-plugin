@@ -1,29 +1,24 @@
-import { ResourceLink } from '@openshift-console/dynamic-plugin-sdk';
-import { Alert, Split, SplitItem } from '@patternfly/react-core';
-import {
-  ExpandableRowContent,
-  ISortBy,
-  TableComposable,
-  Tbody,
-  Td,
-  Th,
-  ThProps,
-  Thead,
-  Tr,
-} from '@patternfly/react-table';
-import React from 'react';
-import { useTranslation } from 'react-i18next';
+import { ResourceLink, RowProps, TableColumn } from '@openshift-console/dynamic-plugin-sdk';
+import { Split, SplitItem } from '@patternfly/react-core';
+import { ISortBy, SortByDirection, Td, ThProps } from '@patternfly/react-table';
+import React, { useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { DateFormat, dateToFormat } from '../date-utils';
-import { Direction, QueryRangeResponse, StreamLogData, isStreamsResult } from '../logs.types';
+import {
+  Direction,
+  isStreamsResult,
+  LogTableData,
+  QueryRangeResponse,
+  Resource,
+  StreamLogData,
+} from '../logs.types';
 import { severityFromString } from '../severity';
 import { TestIds } from '../test-ids';
 import { notUndefined } from '../value-utils';
-import { CenteredContainer } from './centered-container';
-import { ErrorMessage } from './error-message';
 import { LogDetail } from './log-detail';
 import './logs-table.css';
 import { StatsTable } from './stats-table';
+import { TableData, VirtualizedLogsTable } from './virtualized-logs-table';
 
 interface LogsTableProps {
   logsData?: QueryRangeResponse;
@@ -39,37 +34,7 @@ interface LogsTableProps {
   error?: unknown;
 }
 
-type Resource = {
-  kind: string;
-  name: string;
-};
-
 type TableCellValue = string | number | Resource | Array<Resource>;
-
-type LogsTableColumn = {
-  title: string;
-  isDisabled?: boolean;
-  isSelected?: boolean;
-  sort?: <T extends TableCellValue>(a: T, b: T, directionMultiplier: number) => number;
-  value: (row: LogTableData) => TableCellValue;
-};
-
-type LogTableData = {
-  time: string;
-  timestamp: number;
-  severity: string;
-  namespace?: string;
-  podName?: string;
-  resources?: Array<Resource>;
-  message: string;
-  data: Record<string, string>;
-};
-
-type LogRowProps = {
-  data: LogTableData;
-  title: string;
-  showResources: boolean;
-};
 
 const isJSONObject = (value: string): boolean => {
   const trimmedValue = value.trim();
@@ -119,6 +84,9 @@ const streamToTableData = (stream: StreamLogData): Array<LogTableData> => {
       resources: parseResources(stream.stream),
       namespace: stream.stream['kubernetes_namespace_name'],
       podName: stream.stream['kubernetes_pod_name'],
+      type: 'log',
+      // index is 0 here to match the type, but it will be recalculated when flattening the array
+      logIndex: 0,
     };
   });
 };
@@ -129,7 +97,9 @@ const aggregateStreamLogData = (response?: QueryRangeResponse): Array<LogTableDa
 
   const data = response?.data;
   if (isStreamsResult(data)) {
-    return data.result.flatMap(streamToTableData);
+    return data.result
+      .flatMap(streamToTableData)
+      .map((log, index) => ({ ...log, logIndex: index }));
   }
 
   return [];
@@ -146,32 +116,40 @@ const numericComparator = <T extends TableCellValue>(
   directionMultiplier: number,
 ): number => (a < b ? -1 : a > b ? 1 : 0) * directionMultiplier;
 
-const columns: Array<LogsTableColumn> = [
+const columns: Array<TableColumn<LogTableData>> = [
   {
-    title: 'Date',
-    isDisabled: true,
-    isSelected: true,
-    value: (row: LogTableData) => row.timestamp,
-    sort: numericComparator,
+    id: 'expand',
+    title: ' ',
+    props: {
+      className: 'co-logs-table__expand',
+    },
   },
   {
+    id: 'date',
+    title: 'Date',
+    props: {
+      className: 'co-logs-table__time co-logs-table__time-header',
+    },
+    sort: (data, sortDirection) =>
+      data.sort((a, b) =>
+        numericComparator(a.timestamp, b.timestamp, sortDirection === 'asc' ? 1 : -1),
+      ),
+  },
+  {
+    id: 'message',
     title: 'Message',
-    isDisabled: true,
-    isSelected: true,
-    value: (row: LogTableData) => row.message,
+    sort: (data, sortDirection) =>
+      data.sort((a, b) => {
+        const messageA = a.message;
+        const messageB = b.message;
+
+        return (
+          (messageA < messageB ? -1 : messageA > messageB ? 1 : 0) *
+          (sortDirection === 'asc' ? 1 : -1)
+        );
+      }),
   },
 ];
-
-const getRowClassName = (index: number): string => {
-  switch (index) {
-    case 0:
-      return 'co-logs-table__time';
-    case 1:
-      return 'co-logs-table__message';
-  }
-
-  return '';
-};
 
 const ResourceLinkList: React.FC<{
   resource: Resource;
@@ -203,43 +181,53 @@ const ResourceLinkList: React.FC<{
   );
 };
 
-const LogRow: React.FC<LogRowProps> = ({ data, title, showResources }) => {
-  switch (title) {
-    case 'Date':
-      return <>{data.time}</>;
-    case 'Message':
-      return (
-        <>
-          <div className="co-logs-table__message">{data.message}</div>
+type TableRowProps = {
+  expandedItems: Set<number>;
+  handleRowToggle: (e: React.MouseEvent, rowIndex: number) => void;
+  showResources: boolean;
+  colSpan?: number;
+};
+
+const TableRow = ({ expandedItems, handleRowToggle, showResources, colSpan }: TableRowProps) => {
+  return function TableRowComponent({ obj, activeColumnIDs }: RowProps<LogTableData>) {
+    const isExpanded = expandedItems.has(obj.logIndex);
+
+    return obj.type === 'log' ? (
+      <>
+        <Td
+          expand={{ isExpanded, onToggle: handleRowToggle, rowIndex: obj.logIndex }}
+          className="co-logs-table__expand"
+          id="expand"
+        />
+        <TableData id="date" activeColumnIDs={activeColumnIDs} className="co-logs-table__time">
+          {obj.time}
+        </TableData>
+        <TableData
+          id="message"
+          activeColumnIDs={activeColumnIDs}
+          className="co-logs-table__message"
+        >
+          <div>{obj.message}</div>
           {showResources && (
             <Split className="co-logs-table__resources" hasGutter>
-              {data.resources?.map((resource) => (
-                <ResourceLinkList key={resource.kind} resource={resource} data={data} />
+              {obj.resources?.map((resource) => (
+                <ResourceLinkList key={resource.kind} resource={resource} data={obj} />
               ))}
             </Split>
           )}
-        </>
-      );
-    case 'Resources':
-      return (
-        <>
-          {data.resources?.map((resource) => (
-            <ResourceLink
-              key={resource.name}
-              kind={resource.kind}
-              name={resource.name}
-              namespace={data.namespace}
-            />
-          ))}
-        </>
-      );
-    case 'Namespace': {
-      const namespace = data.namespace;
-      return namespace ? <ResourceLink key={namespace} kind="Namespace" name={namespace} /> : null;
-    }
-  }
-
-  return null;
+        </TableData>
+      </>
+    ) : isExpanded ? (
+      <TableData
+        className="co-logs-table__details"
+        id="expand"
+        activeColumnIDs={activeColumnIDs}
+        colSpan={colSpan}
+      >
+        <LogDetail data={obj.data} />
+      </TableData>
+    ) : null;
+  };
 };
 
 export const LogsTable: React.FC<LogsTableProps> = ({
@@ -256,14 +244,26 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   children,
   error,
 }) => {
-  const { t } = useTranslation('plugin__logging-view-plugin');
-
   const [expandedItems, setExpandedItems] = React.useState<Set<number>>(new Set());
+  const [prevChildrenCount, setPrevChildrenCount] = React.useState(0);
   const [sortBy, setSortBy] = React.useState<ISortBy>({
-    index: 0,
+    index: 1,
     direction: direction === 'backward' ? 'desc' : 'asc',
   });
-  const tableData = React.useMemo(() => aggregateStreamLogData(logsData), [logsData]);
+  const tableData: Array<LogTableData> = React.useMemo(() => {
+    const logsTableData = aggregateStreamLogData(logsData);
+
+    const logsTableDataWithExpanded = logsTableData.flatMap((row) => [
+      row,
+      { ...row, type: 'expand' as const },
+    ]);
+
+    return logsTableDataWithExpanded;
+  }, [logsData]);
+
+  useEffect(() => {
+    setPrevChildrenCount(React.Children.count(children));
+  }, [children]);
 
   const handleRowToggle = (_event: React.MouseEvent, rowIndex: number) => {
     if (expandedItems.has(rowIndex)) {
@@ -274,186 +274,90 @@ export const LogsTable: React.FC<LogsTableProps> = ({
     }
   };
 
-  const getSortParams = (columnIndex: number): ThProps['sort'] => ({
-    sortBy,
-    onSort: (_event, index, tableSortDirection) => {
-      setExpandedItems(new Set());
-      setSortBy({ index, direction: tableSortDirection, defaultDirection: 'desc' });
-      onSortByDate?.(
-        tableSortDirection === undefined
-          ? undefined
-          : tableSortDirection === 'desc'
-          ? 'backward'
-          : 'forward',
-      );
+  const getSortParams = useCallback(
+    (columnIndex: number): ThProps['sort'] => {
+      if (columnIndex === 0) {
+        return undefined;
+      }
+
+      return {
+        sortBy,
+        onSort: (_event, index, tableSortDirection) => {
+          setExpandedItems(new Set());
+          setSortBy({ index, direction: tableSortDirection, defaultDirection: 'desc' });
+
+          if (index == 1) {
+            // Sort results calling the backend if the column is the date column
+            onSortByDate?.(
+              tableSortDirection === undefined
+                ? undefined
+                : tableSortDirection === 'desc'
+                ? 'backward'
+                : 'forward',
+            );
+          }
+        },
+        columnIndex,
+      };
     },
-    columnIndex,
-  });
+    [sortBy, onSortByDate],
+  );
 
   const sortedData = React.useMemo(() => {
+    setExpandedItems(new Set());
+
     if (sortBy.index !== undefined && columns[sortBy.index]) {
-      const { sort, value } = columns[sortBy.index];
-      if (sort) {
-        return tableData.sort((a, b) =>
-          sort(value(a), value(b), sortBy.direction === 'asc' ? 1 : -1),
+      const { sort } = columns[sortBy.index];
+      if (sort && typeof sort === 'function') {
+        return sort(
+          tableData,
+          sortBy.direction === 'asc' ? SortByDirection.asc : SortByDirection.desc,
         );
       }
     }
-
-    setExpandedItems(new Set());
 
     return tableData.sort((a, b) => numericComparator(a.timestamp, b.timestamp, -1));
   }, [tableData, columns, sortBy]);
 
   const dataIsEmpty = sortedData.length === 0;
 
-  let rowIndex = 0;
-
   const handleLoadMore = () => {
     onLoadMore?.(tableData[tableData.length - 1].timestamp / 1e6);
   };
 
-  const colSpan = columns.length + 3;
   return (
-    <div data-test={TestIds.LogsTable}>
+    <div data-test={TestIds.LogsTable} className="co-logs-table">
       {showStats && <StatsTable logsData={logsData} />}
       {children}
-      <TableComposable
-        aria-label="Logs Table"
-        variant="compact"
-        className="co-logs-table"
-        isStriped
-        isExpandable
-      >
-        <Thead>
-          <Tr>
-            <Th></Th>
-            <Th></Th>
-            {columns.map((column, index) => (
-              <Th sort={column.sort ? getSortParams(index) : undefined} key={column.title}>
-                {
-                  /*
-                  t('Date')
-                  t('Message')
-                */
-                  t(column.title)
-                }
-              </Th>
-            ))}
-          </Tr>
-        </Thead>
 
-        {error ? (
-          <Tbody>
-            <Tr className="co-logs-table__row-info">
-              <Td colSpan={colSpan} key="error-row">
-                <div className="co-logs-table__row-error">
-                  <ErrorMessage error={error} />
-                </div>
-              </Td>
-            </Tr>
-          </Tbody>
-        ) : isStreaming ? (
-          <Tbody>
-            <Tr className="co-logs-table__row-info">
-              <Td colSpan={colSpan} key="streaming-row">
-                <div className="co-logs-table__row-streaming">
-                  <Alert variant="info" isInline isPlain title={t('Streaming Logs...')} />
-                </div>
-              </Td>
-            </Tr>
-          </Tbody>
-        ) : isLoading ? (
-          <Tbody>
-            <Tr className="co-logs-table__row-info">
-              <Td colSpan={colSpan} key="loading-row">
-                {t('Loading...')}
-              </Td>
-            </Tr>
-          </Tbody>
-        ) : (
-          dataIsEmpty && (
-            <Tbody>
-              <Tr className="co-logs-table__row-info">
-                <Td colSpan={colSpan} key="data-empty-row">
-                  <CenteredContainer>
-                    <Alert variant="warning" isInline isPlain title={t('No datapoints found')} />
-                  </CenteredContainer>
-                </Td>
-              </Tr>
-            </Tbody>
-          )
-        )}
-
-        {!isLoading &&
-          sortedData.map((value, index) => {
-            const isExpanded = expandedItems.has(rowIndex);
-            const severityClass = getSeverityClass(value.severity);
-
-            const parentRow = (
-              <Tr
-                key={`${value.timestamp}-${rowIndex}`}
-                className={`co-logs-table__row ${severityClass} ${
-                  isExpanded ? 'co-logs-table__row-parent-expanded' : ''
-                }`}
-              >
-                <Td expand={{ isExpanded, onToggle: handleRowToggle, rowIndex }} />
-
-                {columns.map((column, columnIndex) => {
-                  const content = (
-                    <LogRow data={value} title={column.title} showResources={showResources} />
-                  );
-
-                  return content ? (
-                    <Td
-                      key={`col-${column.title}-row-${columnIndex}`}
-                      className={getRowClassName(columnIndex)}
-                    >
-                      {content}
-                    </Td>
-                  ) : null;
-                })}
-              </Tr>
-            );
-
-            const childRow = isExpanded ? (
-              <Tr
-                className={`co-logs-table__row ${severityClass} co-logs-table__row-child-expanded`}
-                isExpanded={true}
-                key={`${value.timestamp}-${rowIndex}-child`}
-              >
-                <Td colSpan={colSpan}>
-                  <ExpandableRowContent>
-                    <LogDetail data={value.data} />
-                  </ExpandableRowContent>
-                </Td>
-              </Tr>
-            ) : null;
-
-            // Expanded elements create an additional row in the table
-            rowIndex += isExpanded ? 2 : 1;
-
-            return (
-              <Tbody isExpanded={isExpanded} key={index}>
-                {parentRow}
-                {childRow}
-              </Tbody>
-            );
-          })}
-
-        {!isLoading && hasMoreLogsData && (
-          <Tbody>
-            <Tr
-              className="co-logs-table__row-info co-logs-table__row-more-data"
-              onClick={handleLoadMore}
-            >
-              <Td colSpan={colSpan} key="more-data-row">
-                {t('More data available')}, {isLoadingMore ? t('Loading...') : t('Click to load')}
-              </Td>
-            </Tr>
-          </Tbody>
-        )}
-      </TableComposable>
+      <VirtualizedLogsTable
+        data={sortedData}
+        Row={TableRow({
+          expandedItems,
+          handleRowToggle,
+          showResources,
+          colSpan: columns.length,
+        })}
+        columns={columns}
+        getSortParams={getSortParams}
+        getRowClassName={(row) =>
+          `co-logs-table__row ${getSeverityClass(row.severity)} ${
+            expandedItems.has(row.logIndex)
+              ? row.type === 'log'
+                ? 'co-logs-table__row--expanded'
+                : 'co-logs-table__row--expanded-details'
+              : ''
+          }`
+        }
+        error={error}
+        isLoading={isLoading}
+        isStreaming={isStreaming}
+        dataIsEmpty={dataIsEmpty}
+        hasMoreLogsData={hasMoreLogsData}
+        onLoadMore={handleLoadMore}
+        isLoadingMore={isLoadingMore}
+        shouldResize={showStats || React.Children.count(children) != prevChildrenCount}
+      />
     </div>
   );
 };

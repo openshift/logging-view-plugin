@@ -30,6 +30,7 @@ import { defaultQueryFromTenant, useURLState } from '../hooks/useURLState';
 import { Direction, isMatrixResult } from '../logs.types';
 import { TestIds } from '../test-ids';
 import { CenteredContainer } from '../components/centered-container';
+import { downloadCSV } from '../download-csv';
 
 const LogsPage: React.FC = () => {
   const { t } = useTranslation('plugin__logging-view-plugin');
@@ -81,7 +82,7 @@ const LogsPage: React.FC = () => {
 
   const handleLoadMoreData = (lastTimestamp: number) => {
     if (!isLoadingMoreLogsData) {
-      getMoreLogs({ lastTimestamp, query });
+      getMoreLogs({ lastTimestamp, query, direction });
     }
   };
 
@@ -225,6 +226,7 @@ const LogsPage: React.FC = () => {
           attributeList={attributeList}
           filters={filters}
           onFiltersChange={handleFiltersChange}
+          onDownloadCSV={() => downloadCSV(logsData)}
         />
 
         {isLoadingLogsData ? (
