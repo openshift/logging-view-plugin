@@ -4,14 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { LogQLQuery } from '../logql-query';
 import { TestIds } from '../test-ids';
 import { ExecuteQueryButton } from './execute-query-button';
-import { ExecuteVolumeButton } from './execute-volume-button';
 import './logs-query-input.css';
 
 interface LogsQueryInputProps {
   value: string;
   onChange?: (expression: string) => void;
   onRun?: () => void;
-  onVolumeRun?: () => void;
   isDisabled?: boolean;
   invalidQueryErrorMessage?: string | null;
 }
@@ -20,7 +18,6 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
   value = '',
   onChange,
   onRun,
-  onVolumeRun,
   isDisabled,
   invalidQueryErrorMessage,
 }) => {
@@ -85,14 +82,6 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
           isDisabled={value === undefined || value.length === 0 || isDisabled}
         />
       )}
-      <div className="co-logs-expression-input__volumeButton">
-        {onVolumeRun && (
-          <ExecuteVolumeButton
-            onClick={onVolumeRun}
-            isDisabled={value === undefined || value.length === 0 || isDisabled}
-          />
-        )}
-      </div>
     </div>
   );
 };

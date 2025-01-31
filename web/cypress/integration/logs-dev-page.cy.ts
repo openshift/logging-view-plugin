@@ -411,7 +411,7 @@ describe('Logs Dev Page', () => {
     cy.getByTestId(TestIds.LogsHistogram).should('not.exist');
   });
 
-  it.only('histogram is disabled after beign enabled by a streams result when query results are matrix type', () => {
+  it('histogram is disabled after beign enabled by a streams result when query results are matrix type', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
       queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),

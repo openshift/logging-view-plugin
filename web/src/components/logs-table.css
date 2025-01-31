@@ -1,18 +1,45 @@
-.co-logs-table tr {
-  position: relative;
+.co-logs-table .co-logs-table__expand {
+  font-size: var(--pf-global--FontSize--sm);
+  --pf-c-table--cell--Width: 50px;
+  --pf-c-table--cell--MaxWidth: 50px;
+  --pf-c-table--cell--MinWidth: 0px;
+  padding: 0;
+  vertical-align: middle;
 }
 
-.co-logs-table__time {
+.co-logs-table .co-logs-table__details {
+  font-size: var(--pf-global--FontSize--sm);
+  padding: var(--pf-global--spacer--lg);
+  display: block;
+}
+
+.co-logs-table .co-logs-table__time {
+  --pf-c-table--cell--Width: 270px;
+  --pf-c-table--cell--MaxWidth: 270px;
+  --pf-c-table--cell--MinWidth: 270px;
   --pf-c-table--cell--WhiteSpace: nowrap;
+
+  font-size: var(--pf-global--FontSize--sm);
+  padding: var(--pf-global--spacer--xs);
   font-family: monospace;
+  vertical-align: middle;
 }
 
-.co-logs-table__message {
+.co-logs-table .co-logs-table__time-header {
+  font-size: var(--pf-global--FontSize--md);
+}
+
+.co-logs-table .co-logs-table__message {
+  font-size: var(--pf-global--FontSize--sm);
+  padding: var(--pf-global--spacer--xs);
+  padding-right: var(--pf-global--spacer--md);
   font-family: monospace;
   word-break: break-all;
+  vertical-align: middle;
+  width: 100%;
 }
 
-.co-logs-table__resources {
+.co-logs-table .co-logs-table__resources {
   --pf-c-table--cell--FontSize: var(--pf-global--FontSize--md);
   margin-top: var(--pf-global--spacer--xs);
 }
@@ -28,12 +55,12 @@
   background-color: var(--pf-global--disabled-color--200);
 }
 
-.co-logs-table__row-child-expanded::before {
-  top: 0px;
+.co-logs-table__row--expanded::before {
+  bottom: 0;
 }
 
-.co-logs-table__row-parent-expanded::before {
-  bottom: -1px;
+.co-logs-table__row--expanded-details::before {
+  top: 0;
 }
 
 .co-logs-table__severity-critical::before {
@@ -58,14 +85,6 @@
 
 .co-logs-table__severity-trace::before {
   background-color: var(--pf-global--palette--cyan-200);
-}
-
-.co-logs-table.pf-m-compact tr:not(.pf-c-table__expandable-row) > *:first-child {
-  padding-left: 0;
-}
-
-.co-logs-table tr > :first-child::after {
-  --pf-c-table__expandable-row--after--BorderLeftWidth: none;
 }
 
 .co-logs-table__row-info {
@@ -98,4 +117,14 @@
   display: grid;
   justify-content: center;
   justify-items: center;
+}
+
+.co-logs-table__row-header {
+  padding: var(--pf-global--spacer--xs);
+  font-size: var(--pf-global--FontSize--md);
+  vertical-align: middle;
+}
+
+.pf-c-table .co-logs-table__row.co-logs-table__row--expanded {
+  border-bottom: none;
 }

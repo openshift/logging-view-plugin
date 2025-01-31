@@ -23,6 +23,7 @@ import { defaultQueryFromTenant, useURLState } from '../hooks/useURLState';
 import { Direction, isMatrixResult } from '../logs.types';
 import { TestIds } from '../test-ids';
 import { getInitialTenantFromNamespace } from '../value-utils';
+import { downloadCSV } from '../download-csv';
 
 /*
 This comment creates an entry in the translations catalogue for console extensions
@@ -86,7 +87,7 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
 
   const handleLoadMoreData = (lastTimestamp: number) => {
     if (!isLoadingMoreLogsData) {
-      getMoreLogs({ lastTimestamp, query });
+      getMoreLogs({ lastTimestamp, query, namespace, direction });
     }
   };
 
@@ -261,6 +262,7 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
           attributeList={attributeList}
           filters={filters}
           onFiltersChange={handleFiltersChange}
+          onDownloadCSV={() => downloadCSV(logsData)}
         />
 
         {isLoadingLogsData ? (
