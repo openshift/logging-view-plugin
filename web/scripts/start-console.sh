@@ -69,7 +69,7 @@ function createEnvironment(){
     BRIDGE_USER_SETTINGS_LOCATION="localstorage"
     echo BRIDGE_USER_SETTINGS_LOCATION=$BRIDGE_USER_SETTINGS_LOCATION >> scripts/env.list
 
-    BRIDGE_PLUGIN_PROXY="{\"services\": [{\"consoleAPIPath\": \"/api/proxy/plugin/logging-view-plugin/backend/\", \"authorize\": true, \"endpoint\": \"${LOKI_HOST}\"}]}"
+    BRIDGE_PLUGIN_PROXY="{\"services\": [{\"consoleAPIPath\": \"/api/proxy/plugin/logging-view-plugin/backend/\", \"authorize\": true, \"endpoint\": \"${LOKI_HOST}\"}, {\"consoleAPIPath\":\"/api/proxy/plugin/logging-view-plugin/korrel8r\", \"authorize\": true, \"endpoint\": \"http://host.containers.internal:3005\" }]}"
     if [[ $USE_LOCAL_PROXY == 1 ]]; then
         echo "Using local proxy"
         echo BRIDGE_PLUGIN_PROXY=$BRIDGE_PLUGIN_PROXY >> scripts/env.list

@@ -77,7 +77,7 @@ describe('Logs Page - korrel8r', () => {
       .should('exist')
       .within(() => {
         cy.contains('Correlation');
-        cy.contains('Metrics').first().click();
+        cy.contains('Metrics').first().click({ force: true });
         cy.contains('No correlation found');
       });
   });

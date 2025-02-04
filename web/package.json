@@ -41,6 +41,7 @@
     "@types/react-dom": "17.0.17",
     "@types/react-helmet": "^6.1.4",
     "@types/react-router-dom": "^5.3.2",
+    "@types/react-virtualized": "^9.22.0",
     "@types/webpack-dev-server": "^4.7.2",
     "@typescript-eslint/eslint-plugin": "^5.15.0",
     "@typescript-eslint/parser": "^5.15.0",
@@ -105,6 +106,7 @@
     "@patternfly/react-core": "4.239.0",
     "@patternfly/react-icons": "^4.57.2",
     "@patternfly/react-table": "4.108.0",
+    "@patternfly/react-virtualized-extension": "4.88.122",
     "i18next": "^22.4.12",
     "react-i18next": "^11.18.6"
   },

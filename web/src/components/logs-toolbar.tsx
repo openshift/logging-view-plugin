@@ -1,5 +1,6 @@
 import {
   Alert,
+  Button,
   Select,
   SelectOption,
   SelectOptionObject,
@@ -47,6 +48,7 @@ interface LogsToolbarProps {
   onFiltersChange?: (filters: Filters) => void;
   filters?: Filters;
   attributeList?: AttributeList;
+  onDownloadCSV?: () => void;
 }
 
 const availableSeverityFilters: Array<Severity> = [
@@ -68,6 +70,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
   onTenantSelect,
   onStreamingToggle,
   onShowResourcesToggle,
+  onDownloadCSV,
   showResources = false,
   onShowStatsToggle,
   showStats = false,
@@ -192,6 +195,14 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
             data-test={TestIds.ShowStatsToggle}
           />
         </ToolbarGroup>
+
+        {onDownloadCSV && (
+          <ToolbarGroup>
+            <Button variant="secondary" isInline onClick={onDownloadCSV}>
+              {t('Export as CSV')}
+            </Button>
+          </ToolbarGroup>
+        )}
 
         {!isQueryShown && (
           <>
