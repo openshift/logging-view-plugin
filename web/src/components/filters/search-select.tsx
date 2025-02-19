@@ -1,90 +1,166 @@
 import {
   Alert,
+  Spinner,
+  MenuToggle,
+  MenuToggleElement,
+  SelectList,
   Select,
   SelectOption,
-  SelectOptionObject,
-  SelectVariant,
-  Spinner,
+  TextInputGroup,
+  TextInputGroupMain,
+  TextInputGroupUtilities,
+  Button,
+  SelectOptionProps,
 } from '@patternfly/react-core';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAttributeValueData } from './attribute-value-data';
-import { Attribute, Filters, Option } from './filter.types';
+import { Attribute, Filters } from './filter.types';
 import { isOption } from './filters-from-params';
 import './search-select.css';
+import { TimesIcon } from '@patternfly/react-icons';
+import { TestIds } from '../../test-ids';
 
 interface SearchSelectProps {
   attribute: Attribute;
-  variant?: SelectVariant;
   onSelect: (selections: Set<string>, expandedSelections?: Map<string, Set<string>>) => void;
   filters: Filters;
   customBadgeTextDependsOnData?: boolean;
+  isCheckbox?: boolean;
 }
 
 const ERROR_VALUE = '__attribute_error';
+const NO_RESULTS = 'no results';
 
-const getOptionComponents = (optionsData: Option[] | undefined, error: Error | undefined) => {
-  if (error) {
+const createItemId = (value: string) => `select-multi-typeahead-${value.replace(' ', '-')}`;
+
+const getOptionComponents = (
+  attributeOptions: SelectOptionProps[],
+  attributeError: Error | undefined,
+  attributeLoading: boolean,
+  selections: Array<string>,
+  focusedItemIndex: number | null,
+  onInputKeyDown: (event: React.KeyboardEvent) => void,
+) => {
+  if (attributeLoading) {
     return [
-      <SelectOption key="error" value={ERROR_VALUE}>
-        <Alert variant="danger" isInline isPlain title={error.message || String(error)} />
+      <SelectOption isLoading key="custom-loading" value="loading" hasCheckbox={false}>
+        <Spinner size="lg" />
       </SelectOption>,
     ];
   }
 
-  if (optionsData) {
-    return optionsData.map((item) => (
-      <SelectOption key={item.value} value={item.value}>
-        {item.option}
-      </SelectOption>
-    ));
+  if (attributeError) {
+    return [
+      <SelectOption key="error" value={ERROR_VALUE}>
+        <Alert
+          variant="danger"
+          isInline
+          isPlain
+          title={attributeError.message || String(attributeError)}
+        />
+      </SelectOption>,
+    ];
   }
 
-  return [
-    <SelectOption isLoading key="custom-loading" value="loading">
-      <Spinner size="lg" />
-    </SelectOption>,
-  ];
+  return attributeOptions.map((attributeOption, index) => (
+    <SelectOption
+      key={attributeOption.value || attributeOption.children}
+      value={attributeOption.value}
+      hasCheckbox={attributeOption.hasCheckbox}
+      isSelected={selections.includes(attributeOption.value)}
+      isFocused={focusedItemIndex === index}
+      id={createItemId(attributeOption.value)}
+      onKeyDown={onInputKeyDown}
+    >
+      {attributeOption.value}
+    </SelectOption>
+  ));
 };
 
 export const SearchSelect: React.FC<SearchSelectProps> = ({
   attribute,
-  variant,
   onSelect,
   filters,
+  isCheckbox = false,
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
-  const [getOptions, optionsData, error] = useAttributeValueData(attribute);
+  const { getAttributeOptions, attributeOptions, attributeError, attributeLoading } =
+    useAttributeValueData(attribute);
+  const [selections, setSelections] = React.useState<Array<string>>([]);
+  const [viewableOptions, setViewableOptions] = React.useState<SelectOptionProps[]>([]);
+
   const [isOpen, setIsOpen] = React.useState(false);
-  const [selections, setSelections] = React.useState<Set<string>>(new Set());
+  const [inputValue, setInputValue] = React.useState<string>('');
+  const [focusedItemIndex, setFocusedItemIndex] = React.useState<number | null>(null);
+  const [activeItemId, setActiveItemId] = React.useState<string | null>(null);
+
+  const textInputRef = React.useRef<HTMLInputElement>();
+
+  React.useEffect(() => {
+    let newSelectOptions: SelectOptionProps[] = attributeOptions.map((attributeOption) => {
+      return { ...attributeOption, hasCheckbox: true };
+    });
+    // Filter menu items based on the text input value when one exists
+    if (inputValue) {
+      newSelectOptions = newSelectOptions.filter((menuItem) =>
+        String(menuItem.value).toLowerCase().includes(inputValue.toLowerCase()),
+      );
+      // When no options are found after filtering, display 'No results found'
+      if (!newSelectOptions.length) {
+        newSelectOptions = [
+          {
+            isAriaDisabled: true,
+            children: `No results found for "${inputValue}"`,
+            value: NO_RESULTS,
+            hasCheckbox: false,
+          },
+        ];
+      }
+      // Open the menu when the input value changes and the new value is not empty
+      if (!isOpen) {
+        setIsOpen(true);
+      }
+    }
+    setViewableOptions(newSelectOptions);
+  }, [inputValue, attributeOptions]);
+
+  const setActiveAndFocusedItem = (itemIndex: number) => {
+    setFocusedItemIndex(itemIndex);
+    const focusedItem = viewableOptions[itemIndex];
+    setActiveItemId(createItemId(focusedItem.value));
+  };
 
   const handleClear = () => {
     onSelect(new Set());
+    setInputValue('');
+    resetActiveAndFocusedItem();
+    textInputRef?.current?.focus();
   };
 
   useEffect(() => {
-    if (attribute.isItemSelected && optionsData) {
-      const selectedItems = optionsData.filter((item) =>
+    if (attribute.isItemSelected) {
+      const selectedItems = attributeOptions.filter((item) =>
         attribute.isItemSelected?.(item.value, filters),
       );
 
-      setSelections(new Set(selectedItems.map((item) => item.value)));
+      setSelections(selectedItems.map((item) => item.value));
     } else {
-      setSelections(filters[attribute.id] ?? new Set());
+      setSelections(Array.from(filters[attribute.id] ?? []));
     }
-  }, [filters, optionsData]);
+  }, [filters, attributeOptions]);
 
   const handleSelect = (
-    _e: React.MouseEvent | React.ChangeEvent,
-    selectedOption: string | SelectOptionObject,
+    _: React.MouseEvent<Element, MouseEvent> | undefined,
+    value: string | number | undefined,
   ) => {
-    const selectedValue = isOption(selectedOption) ? selectedOption.value : String(selectedOption);
+    const selectedValue = isOption(value) ? value.value : String(value);
 
     let expandedFilters: Map<string, Set<string>> | undefined = undefined;
 
     if (selectedValue && selectedValue !== ERROR_VALUE) {
-      if (variant === SelectVariant.single || variant === undefined) {
+      if (!isCheckbox) {
         expandedFilters = attribute.expandSelection
           ? attribute.expandSelection(new Set([selectedValue]))
           : undefined;
@@ -112,27 +188,121 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
     }
   };
 
-  const handleToggle = () => {
+  const onToggleClick = () => {
     setIsOpen(!isOpen);
+    textInputRef?.current?.focus();
   };
 
   React.useEffect(() => {
-    getOptions();
+    getAttributeOptions();
   }, []);
 
-  const handleFilter = (
-    _e: React.ChangeEvent<HTMLInputElement> | null,
-    filterQuery: string,
-  ): React.ReactElement[] | undefined =>
-    optionsData
-      ?.filter((item) => item.option.includes(filterQuery))
-      .map((item) => (
-        <SelectOption key={item.value} value={item.value}>
-          {item.option}
-        </SelectOption>
-      ));
+  const resetActiveAndFocusedItem = () => {
+    setFocusedItemIndex(null);
+    setActiveItemId(null);
+  };
+
+  const closeMenu = () => {
+    setIsOpen(false);
+    resetActiveAndFocusedItem();
+  };
+
+  const onInputClick = () => {
+    if (!isOpen) {
+      setIsOpen(true);
+    } else if (!inputValue) {
+      closeMenu();
+    }
+  };
+
+  const onInputKeyDown = (event: React.KeyboardEvent) => {
+    const focusedItem = focusedItemIndex !== null ? viewableOptions[focusedItemIndex] : null;
+    const keypress = event.key;
+
+    if (keypress === 'Enter') {
+      if (isOpen && focusedItem && focusedItem.value !== NO_RESULTS) {
+        handleSelect(undefined, focusedItem.value);
+      } else if (!isOpen) {
+        setIsOpen(true);
+      }
+      return;
+    }
+
+    let indexToFocus = 0;
+    if (!isOpen) {
+      setIsOpen(true);
+    }
+
+    if (keypress === 'ArrowUp') {
+      event.preventDefault();
+      // When no index is set or at the first index, focus to the last
+      // otherwise decrement focus index
+      if (focusedItemIndex === null || focusedItemIndex === 0) {
+        indexToFocus = viewableOptions.length - 1;
+      } else {
+        indexToFocus = focusedItemIndex - 1;
+      }
+      setActiveAndFocusedItem(indexToFocus);
+    } else if (keypress === 'ArrowDown') {
+      event.preventDefault();
+      // When no index is set or at the last index, focus to the first,
+      // otherwise increment focus index
+      if (focusedItemIndex === null || focusedItemIndex === viewableOptions.length - 1) {
+        indexToFocus = 0;
+      } else {
+        indexToFocus = focusedItemIndex + 1;
+      }
+      setActiveAndFocusedItem(indexToFocus);
+    }
+  };
+
+  const onTextInputChange = (_event: React.FormEvent<HTMLInputElement>, value: string) => {
+    setInputValue(value);
+    resetActiveAndFocusedItem();
+  };
 
   const titleId = `attribute-value-selector-${attribute.id}`;
+
+  const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
+    <MenuToggle
+      variant="typeahead"
+      ref={toggleRef}
+      onClick={onToggleClick}
+      isExpanded={isOpen}
+      data-test={TestIds.AttributeOptions}
+      style={
+        {
+          width: '200px',
+        } as React.CSSProperties
+      }
+    >
+      <TextInputGroup isPlain>
+        <TextInputGroupMain
+          value={inputValue}
+          onClick={onInputClick}
+          onChange={onTextInputChange}
+          onKeyDown={onInputKeyDown}
+          id="attribute-typeahead-multiselect"
+          autoComplete="off"
+          innerRef={textInputRef}
+          placeholder={t('Filter by {{attributeName}}', {
+            attributeName: attribute.name,
+          })}
+          {...(activeItemId && { 'aria-activedescendant': activeItemId })}
+          role="combobox"
+          isExpanded={isOpen}
+          aria-controls="select-multi-typeahead-checkbox-listbox"
+        />
+        {selections.length > 0 && (
+          <TextInputGroupUtilities>
+            <Button variant="plain" onClick={handleClear} aria-label="Clear input value">
+              <TimesIcon aria-hidden />
+            </Button>
+          </TextInputGroupUtilities>
+        )}
+      </TextInputGroup>
+    </MenuToggle>
+  );
 
   return (
     <>
@@ -140,26 +310,26 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
         {attribute.name}
       </span>
       <Select
-        variant={error ? 'single' : variant}
-        onToggle={handleToggle}
         onSelect={handleSelect}
-        selections={selections ? Array.from(selections) : []}
-        customBadgeText={
-          attribute.isItemSelected ? (optionsData !== undefined ? undefined : '*') : undefined
-        }
-        isCreateSelectOptionObject
         isOpen={isOpen}
-        placeholderText={t('Filter by {{attributeName}}', {
+        placeholder={t('Filter by {{attributeName}}', {
           attributeName: attribute.name,
         })}
         aria-labelledby={titleId}
-        onFilter={handleFilter}
-        onClear={handleClear}
-        hasInlineFilter={optionsData && optionsData.length > 10}
-        inlineFilterPlaceholderText={t('Search')}
+        aria-placeholder={t('Search')}
         className="co-logs__search-select"
+        toggle={toggle}
       >
-        {getOptionComponents(optionsData, error)}
+        <SelectList isAriaMultiselectable>
+          {getOptionComponents(
+            viewableOptions,
+            attributeError,
+            attributeLoading,
+            selections,
+            focusedItemIndex,
+            onInputKeyDown,
+          )}
+        </SelectList>
       </Select>
     </>
   );

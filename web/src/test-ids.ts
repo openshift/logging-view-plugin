@@ -8,7 +8,7 @@ export enum TestIds {
   LogsQueryInput = 'LogsQueryInput',
   ExecuteQueryButton = 'ExecuteQueryButton',
   ExecuteVolumeButton = 'ExecuteVolumeButton',
-  TenantDropdown = 'TenantDropdown',
+  TenantToggle = 'TenantToggle',
   SeverityDropdown = 'SeverityDropdown',
   ToogleStreamingButton = 'ToogleStreamingButton',
   ShowQueryToggle = 'ShowQueryToggle',
@@ -18,4 +18,8 @@ export enum TestIds {
   TimeRangeSelectModal = 'TimeRangeSelectModal',
   TimeRangeDropdownSaveButton = 'TimeRangeDropdownSaveButton',
   ToggleHistogramButton = 'ToggleHistogramButton',
+  AvailableAttributes = 'AvailableAttributes',
+  AttributeOptions = 'AttributeOptions',
+  NamespaceDropdown = 'NamespaceDropdown',
+  NamespaceToggle = 'NamespaceToggle',
 }

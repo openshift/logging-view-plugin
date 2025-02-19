@@ -1,8 +1,15 @@
-import { OptionsMenu, OptionsMenuItem, OptionsMenuToggle } from '@patternfly/react-core';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TENANTS } from '../tenants';
 import { TestIds } from '../test-ids';
+import {
+  MenuToggle,
+  MenuToggleElement,
+  Select,
+  SelectList,
+  SelectOption,
+} from '@patternfly/react-core';
+import { isOption } from './filters/filters-from-params';
 
 interface TenantDropdownProps {
   selectedTenant?: string;
@@ -20,37 +27,44 @@ export const TenantDropdown: React.FC<TenantDropdownProps> = ({
   const [isOpen, setIsOpen] = React.useState(false);
 
   const onToggle = () => setIsOpen(!isOpen);
-  const onSelect = (e?: React.MouseEvent | React.KeyboardEvent) => {
-    const tenant = e?.currentTarget.id;
+  const onSelect = (
+    _: React.MouseEvent<Element, MouseEvent> | undefined,
+    value: string | number | undefined,
+  ) => {
+    const selectedValue = isOption(value) ? value.value : String(value);
     setIsOpen(false);
-    if (tenant) {
-      onTenantSelected?.(tenant);
+    if (selectedValue) {
+      onTenantSelected?.(selectedValue);
     }
   };
 
+  const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
+    <MenuToggle
+      isDisabled={isDisabled}
+      ref={toggleRef}
+      onClick={onToggle}
+      isExpanded={isOpen}
+      data-test={TestIds.TenantToggle}
+    >
+      {selectedTenant}
+    </MenuToggle>
+  );
+
   return (
-    <OptionsMenu
+    <Select
       id="logging-view-tenant-dropdown"
-      data-test={TestIds.TenantDropdown}
-      disabled={isDisabled}
-      menuItems={TENANTS.map((tenant) => (
-        <OptionsMenuItem
-          onSelect={onSelect}
-          isSelected={selectedTenant === tenant}
-          key={tenant}
-          id={tenant}
-        >
-          {tenant}
-        </OptionsMenuItem>
-      ))}
       isOpen={isOpen}
-      toggle={
-        <OptionsMenuToggle
-          isDisabled={isDisabled}
-          onToggle={onToggle}
-          toggleTemplate={selectedTenant ?? t('Select a tenant')}
-        />
-      }
-    />
+      onSelect={onSelect}
+      placeholder={t('Select a tenant')}
+      toggle={toggle}
+    >
+      <SelectList>
+        {TENANTS.map((tenant) => (
+          <SelectOption key={tenant} value={tenant} isSelected={selectedTenant === tenant}>
+            {tenant}
+          </SelectOption>
+        ))}
+      </SelectList>
+    </Select>
   );
 };
