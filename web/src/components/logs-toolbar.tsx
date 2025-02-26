@@ -1,10 +1,12 @@
 import {
   Alert,
+  Badge,
   Button,
+  MenuToggle,
+  MenuToggleElement,
   Select,
+  SelectList,
   SelectOption,
-  SelectOptionObject,
-  SelectVariant,
   Toolbar,
   ToolbarChip,
   ToolbarChipGroup,
@@ -27,6 +29,7 @@ import { Spacer } from './spacer';
 import { TenantDropdown } from './tenant-dropdown';
 import { ToggleButton } from './toggle-button';
 import { TogglePlay } from './toggle-play';
+import { isOption } from './filters/filters-from-params';
 
 interface LogsToolbarProps {
   query: string;
@@ -115,10 +118,10 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
   };
 
   const onSeveritySelect = (
-    _: React.MouseEvent | React.ChangeEvent,
-    value: string | SelectOptionObject,
+    _: React.MouseEvent<Element, MouseEvent> | undefined,
+    value: string | number | undefined,
   ) => {
-    const severityValue = value.toString() as Severity;
+    const severityValue = (isOption(value) ? value.value : String(value)) as Severity;
 
     if (severityFilter.has(severityValue)) {
       severityFilter.delete(severityValue);
@@ -133,6 +136,23 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
   };
 
   const severityFilterArray = Array.from(severityFilter);
+
+  const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
+    <MenuToggle
+      isDisabled={isDisabled}
+      ref={toggleRef}
+      onClick={onSeverityToggle}
+      isExpanded={isSeverityExpanded}
+      style={
+        {
+          width: '200px',
+        } as React.CSSProperties
+      }
+    >
+      {t('Severity')}
+      {severityFilterArray.length > 0 && <Badge isRead>{severityFilterArray.length}</Badge>}
+    </MenuToggle>
+  );
 
   return (
     <Toolbar isSticky clearAllFilters={handleClearAllFilters} className="co-logs-toolbar">
@@ -154,18 +174,26 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
             data-test={TestIds.SeverityDropdown}
           >
             <Select
-              variant={SelectVariant.checkbox}
               aria-label="Severity"
-              onToggle={onSeverityToggle}
+              toggle={toggle}
               onSelect={onSeveritySelect}
-              selections={severityFilterArray}
+              placeholder={t('Severity')}
               isOpen={isSeverityExpanded}
-              placeholderText="Severity"
-              isDisabled={isDisabled}
             >
-              {availableSeverityFilters.map((severity) => (
-                <SelectOption key={severity} value={severity} />
-              ))}
+              <SelectList>
+                {availableSeverityFilters.map((severity) => (
+                  <SelectOption
+                    key={severity}
+                    value={severity}
+                    isSelected={severityFilterArray.some(
+                      (selectedSeverity) => selectedSeverity === severity,
+                    )}
+                    hasCheckbox={true}
+                  >
+                    {severity}
+                  </SelectOption>
+                ))}
+              </SelectList>
             </Select>
           </ToolbarFilter>
         </ToolbarGroup>

@@ -1,4 +1,4 @@
-import { Form, FormGroup, TextArea } from '@patternfly/react-core';
+import { Alert, Form, FormAlert, FormGroup, TextArea } from '@patternfly/react-core';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { LogQLQuery } from '../logql-query';
@@ -53,23 +53,28 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
   return (
     <div className="co-logs-expression-input" data-test={TestIds.LogsQueryInput}>
       <Form className="co-logs-expression-input__form">
-        <FormGroup
-          type="string"
-          helperTextInvalid={
-            !isValid
-              ? `${t(
-                  'Invalid log stream selector. Please select a namespace, pod or container as filter, or add a log stream selector like: ',
-                )} { log_type =~ ".+" } | json`
-              : invalidQueryErrorMessage
-          }
-          fieldId="selection"
-          validated={hasError ? 'error' : undefined}
-        >
+        {hasError && (
+          <FormAlert>
+            <Alert
+              variant="danger"
+              title={
+                !isValid
+                  ? `${t(
+                      'Invalid log stream selector. Please select a namespace, pod or container as filter, or add a log stream selector like: ',
+                    )} { log_type =~ ".+" } | json`
+                  : invalidQueryErrorMessage
+              }
+              aria-live="polite"
+              isInline
+            />
+          </FormAlert>
+        )}
+        <FormGroup type="string" fieldId="selection">
           <TextArea
             className="co-logs-expression-input__searchInput"
             placeholder="LogQL Query"
             value={internalValue}
-            onChange={handleOnChange}
+            onChange={(_event, text: string) => handleOnChange(text)}
             onKeyDown={handleKeyDown}
             aria-label="LogQL Query"
             validated={hasError ? 'error' : undefined}

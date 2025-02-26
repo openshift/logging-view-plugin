@@ -1,4 +1,4 @@
-import { Button } from '@patternfly/react-core';
+import { Button, Icon } from '@patternfly/react-core';
 import { PauseIcon, PlayIcon } from '@patternfly/react-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -23,7 +23,15 @@ export const TogglePlay: React.FC<TogglePlayProps> = ({ onClick, active, isDisab
       isDisabled={isDisabled}
       data-test={TestIds.ToogleStreamingButton}
     >
-      {active ? <PauseIcon size="sm" /> : <PlayIcon size="sm" />}
+      {active ? (
+        <Icon size="sm">
+          <PauseIcon />
+        </Icon>
+      ) : (
+        <Icon size="sm">
+          <PlayIcon />
+        </Icon>
+      )}
     </Button>
   );
 };

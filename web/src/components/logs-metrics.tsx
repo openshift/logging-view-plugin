@@ -20,7 +20,7 @@ import { defaultTimeRange, intervalFromTimeRange, numericTimeRange } from '../ti
 import { CenteredContainer } from './centered-container';
 import './logs-metrics.css';
 
-const colors = getThemeColors(ChartThemeColor.multiUnordered).line.colorScale;
+const colors = getThemeColors(ChartThemeColor.multiUnordered).line?.colorScale;
 
 type MetricsData = {
   name: string;
@@ -182,8 +182,8 @@ export const LogsMetrics: React.FC<LogsMetricsProps> = ({
                 labelComponent={
                   <ChartLegendTooltip
                     legendData={toolTipData}
-                    title={(datum: { x: number }) =>
-                      dateToFormat(datum.x, getTimeFormatFromTimeRange(timeRangeValue))
+                    title={(datum) =>
+                      dateToFormat(datum.x ?? 0, getTimeFormatFromTimeRange(timeRangeValue))
                     }
                   />
                 }
@@ -242,7 +242,7 @@ export const LogsMetrics: React.FC<LogsMetricsProps> = ({
                       <Th isStickyColumn stickyMinWidth="20px" style={{ width: '20px' }}>
                         <div
                           className="co-logs-metrics-legent-table-color"
-                          style={{ backgroundColor: colors[index] }}
+                          style={{ backgroundColor: colors?.[index] }}
                         />
                       </Th>
                       {legendTableColumns.map((column) => (

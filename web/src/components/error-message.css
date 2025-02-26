@@ -1,9 +1,9 @@
 .co-logs-error_message {
-  margin-bottom: var(--pf-global--spacer--md);
-  margin-top: var(--pf-global--spacer--md);
+  margin-bottom: var(--pf-v5-global--spacer--md);
+  margin-top: var(--pf-v5-global--spacer--md);
   background-color: transparent;
 }
 
-.co-logs-table__row-error .pf-c-code-block__pre {
+.co-logs-table__row-error .pf-v5-c-code-block__pre {
   text-align: left;
 }

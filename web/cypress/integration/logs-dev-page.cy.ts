@@ -191,10 +191,8 @@ describe('Logs Dev Page', () => {
       );
     });
 
-    cy.getByTestId('namespace-toggle' as TestIds).click();
-    cy.getByTestId('namespace-dropdown' as TestIds)
-      .contains('my-namespace-two')
-      .click();
+    cy.getByTestId(TestIds.NamespaceToggle).click();
+    cy.getByTestId(TestIds.NamespaceDropdown).contains('my-namespace-two').click();
 
     cy.wait('@queryRangeStreams').then(({ request }) => {
       const url = new URL(request.url);
@@ -238,10 +236,8 @@ describe('Logs Dev Page', () => {
       );
     });
 
-    cy.getByTestId('namespace-toggle' as TestIds).click();
-    cy.getByTestId('namespace-dropdown' as TestIds)
-      .contains('openshift-cluster-version')
-      .click();
+    cy.getByTestId(TestIds.NamespaceToggle).click();
+    cy.getByTestId(TestIds.NamespaceDropdown).contains('openshift-cluster-version').click();
 
     cy.wait('@queryRangeStreamsInfrastructure').then(({ request }) => {
       const url = new URL(request.url);
@@ -275,19 +271,21 @@ describe('Logs Dev Page', () => {
       });
 
     cy.getByTestId(TestIds.AttributeFilters).within(() => {
-      cy.get(`[aria-label="Options menu"]`)
+      cy.getByTestId(TestIds.AvailableAttributes)
         .first()
         .click({ force: true })
         .parent()
         .within(() => {
           cy.contains('Pods').click({ force: true });
         });
-    });
-
-    cy.getByTestId(TestIds.AttributeFilters).within(() => {
-      cy.contains('Filter by Pods').click({ force: true });
+      cy.get('input').invoke('attr', 'placeholder').should('contain', 'Filter by Pods');
+      cy.getByTestId(TestIds.AttributeOptions).within(() => {
+        cy.get('button').click({ force: true });
+      });
       cy.contains('my-pod').click({ force: true });
     });
+
+    // cy.getByTestId(TestIds.AttributeFilters).within(() => {});
 
     cy.wait('@resourceQuery').then(({ request }) => {
       const url = new URL(request.url);
@@ -319,19 +317,21 @@ describe('Logs Dev Page', () => {
       });
 
     cy.getByTestId(TestIds.AttributeFilters).within(() => {
-      cy.get(`[aria-label="Options menu"]`)
+      cy.getByTestId(TestIds.AvailableAttributes)
         .first()
         .click({ force: true })
         .parent()
         .within(() => {
           cy.contains('Pods').click({ force: true });
         });
-    });
-
-    cy.getByTestId(TestIds.AttributeFilters).within(() => {
-      cy.contains('Filter by Pods').click({ force: true });
+      cy.get('input').invoke('attr', 'placeholder').should('contain', 'Filter by Pods');
+      cy.getByTestId(TestIds.AttributeOptions).within(() => {
+        cy.get('button').click({ force: true });
+      });
       cy.contains('You are not authorized to list pods in this namespace');
     });
+
+    // cy.getByTestId(TestIds.AttributeFilters).within(() => {});
   });
 
   it('displays log based metrics when query results are matrix type', () => {
@@ -365,10 +365,8 @@ describe('Logs Dev Page', () => {
       cy.get('textarea').contains('kubernetes_namespace_name="my-namespace"');
     });
 
-    cy.getByTestId('namespace-toggle' as TestIds).click();
-    cy.getByTestId('namespace-dropdown' as TestIds)
-      .contains('my-namespace-two')
-      .click();
+    cy.getByTestId(TestIds.NamespaceToggle).click();
+    cy.getByTestId(TestIds.NamespaceDropdown).contains('my-namespace-two').click();
 
     cy.getByTestId(TestIds.LogsQueryInput).within(() => {
       cy.get('textarea').contains('kubernetes_namespace_name="my-namespace-two"');

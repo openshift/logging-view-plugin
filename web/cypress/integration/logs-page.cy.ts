@@ -249,7 +249,7 @@ describe('Logs Page', () => {
         cy.get('svg g > path').should('have.length.above', 0);
       });
 
-    cy.getByTestId(TestIds.TenantDropdown).click();
+    cy.getByTestId(TestIds.TenantToggle).click();
     cy.contains('infrastructure').click();
 
     cy.getByTestId(TestIds.ExecuteQueryButton).click();
@@ -333,9 +333,7 @@ describe('Logs Page', () => {
       cy.get('button').should('be.disabled');
     });
 
-    cy.getByTestId(TestIds.TenantDropdown).within(() => {
-      cy.get('button').should('be.disabled');
-    });
+    cy.getByTestId(TestIds.TenantToggle).should('be.disabled');
   });
 
   it('updates the query when selecting filters', () => {
@@ -370,7 +368,7 @@ describe('Logs Page', () => {
     });
 
     cy.getByTestId(TestIds.AttributeFilters).within(() => {
-      cy.get(`[aria-label="Options menu"]`)
+      cy.getByTestId(TestIds.AvailableAttributes)
         .first()
         .click({ force: true })
         .parent()
@@ -393,17 +391,17 @@ describe('Logs Page', () => {
     });
 
     cy.getByTestId(TestIds.AttributeFilters).within(() => {
-      cy.get(`[aria-label="Options menu"]`)
+      cy.getByTestId(TestIds.AvailableAttributes)
         .first()
         .click({ force: true })
         .parent()
         .within(() => {
           cy.contains('Namespaces').click({ force: true });
         });
-    });
-
-    cy.getByTestId(TestIds.AttributeFilters).within(() => {
-      cy.contains('Filter by Namespaces').click({ force: true });
+      cy.get('input').invoke('attr', 'placeholder').should('contain', 'Filter by Namespaces');
+      cy.getByTestId(TestIds.AttributeOptions).within(() => {
+        cy.get('button').click({ force: true });
+      });
       cy.contains('gitops').click({ force: true });
     });
 
@@ -646,9 +644,24 @@ describe('Logs Page', () => {
     cy.getByTestId(TestIds.ShowQueryToggle).click();
 
     cy.getByTestId(TestIds.AttributeFilters).within(() => {
-      cy.contains('Content').click({ force: true });
-      cy.contains('Containers').click({ force: true });
-      cy.contains('Filter by Containers').click({ force: true });
+      cy.getByTestId(TestIds.AvailableAttributes)
+        .first()
+        .click({ force: true })
+        .parent()
+        .within(() => {
+          cy.contains('Content').click({ force: true });
+        });
+      cy.getByTestId(TestIds.AvailableAttributes)
+        .first()
+        .click({ force: true })
+        .parent()
+        .within(() => {
+          cy.contains('Containers').click({ force: true });
+        });
+      cy.get('input').invoke('attr', 'placeholder').should('contain', 'Filter by Containers');
+      cy.getByTestId(TestIds.AttributeOptions).within(() => {
+        cy.get('button').click({ force: true });
+      });
       cy.contains(/^my-pod-2 \/ operator$/).click({ force: true });
 
       cy.contains(/^my-pod \/ operator$/)
