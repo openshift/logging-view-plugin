@@ -1,0 +1,45 @@
+[
+  {
+    "op": "replace",
+    "path": "/extensions",
+    "value": [
+      {
+        "type": "console.page/route",
+        "properties": {
+          "exact": true,
+          "path": "/monitoring/logs",
+          "component": {
+            "$codeRef": "LogsPage"
+          }
+        }
+      },
+      {
+        "type": "console.navigation/href",
+        "properties": {
+          "id": "monitoring-logs",
+          "name": "Logs",
+          "href": "/monitoring/logs",
+          "perspective": "admin",
+          "section": "observe"
+        }
+      },
+      {
+        "type": "console.tab/horizontalNav",
+        "properties": {
+          "page": {
+            "name": "%plugin__logging-view-plugin~Aggregated Logs%",
+            "href": "aggregated-logs"
+          },
+          "model": {
+            "group": "core",
+            "version": "v1",
+            "kind": "Pod"
+          },
+          "component": {
+            "$codeRef": "LogsDetailPage"
+          }
+        }
+      }
+    ]
+  }
+]
