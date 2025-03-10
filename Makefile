@@ -62,3 +62,12 @@ start-backend: build-backend
 .PHONY: build-image
 build-image: install-backend build-backend install-frontend build-frontend
 	./scripts/image.sh -t latest
+
+export REGISTRY_ORG?=openshift-observability-ui
+export TAG?=pf5
+IMAGE=quay.io/${REGISTRY_ORG}/logging-view-plugin:${TAG}
+
+deploy:
+	helm uninstall logging-view-plugin -n logging-view-plugin || true
+	PUSH=1 scripts/build-image.sh
+	helm install logging-view-plugin charts/openshift-console-plugin -n logging-view-plugin --create-namespace --set plugin.image=$(IMAGE)
