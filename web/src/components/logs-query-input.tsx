@@ -51,8 +51,8 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
     !isValid || (invalidQueryErrorMessage !== undefined && invalidQueryErrorMessage !== null);
 
   return (
-    <div className="co-logs-expression-input" data-test={TestIds.LogsQueryInput}>
-      <Form className="co-logs-expression-input__form">
+    <div className="lv-plugin__expression-input" data-test={TestIds.LogsQueryInput}>
+      <Form className="lv-plugin__expression-input__form">
         {hasError && (
           <FormAlert>
             <Alert
@@ -71,7 +71,7 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
         )}
         <FormGroup type="string" fieldId="selection">
           <TextArea
-            className="co-logs-expression-input__searchInput"
+            className="lv-plugin__expression-input__searchInput"
             placeholder="LogQL Query"
             value={internalValue}
             onChange={(_event, text: string) => handleOnChange(text)}

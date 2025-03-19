@@ -19,14 +19,14 @@ export const LogDetail: React.FC<LogDetailProps> = ({ data }) => (
     columnModifier={{
       default: '2Col',
     }}
-    className="co-logs-detail_descripton-list"
+    className="lv-plugin__detail_descripton-list"
   >
     {Object.keys(data)
       .filter((key) => key !== '_')
       .sort()
       .map((key) => (
         <DescriptionListGroup key={key}>
-          <DescriptionListTerm className="co-logs-detail__list-term">{key}</DescriptionListTerm>
+          <DescriptionListTerm className="lv-plugin__detail__list-term">{key}</DescriptionListTerm>
           <DescriptionListDescription>{data[key]}</DescriptionListDescription>
         </DescriptionListGroup>
       ))}

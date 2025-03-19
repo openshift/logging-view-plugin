@@ -155,7 +155,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
   );
 
   return (
-    <Toolbar isSticky clearAllFilters={handleClearAllFilters} className="co-logs-toolbar">
+    <Toolbar isSticky clearAllFilters={handleClearAllFilters} className="lv-plugin__toolbar">
       <ToolbarContent>
         {attributeList && (
           <AttributeFilter
@@ -170,7 +170,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
             deleteChip={onDeleteSeverityFilter}
             deleteChipGroup={onDeleteSeverityGroup}
             categoryName="Severity"
-            className="co-logs-severity-filter"
+            className="lv-plugin__severity-filter"
             data-test={TestIds.SeverityDropdown}
           >
             <Select

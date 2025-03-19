@@ -149,7 +149,7 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
               attributeName: attribute.name,
             })}
             onChange={(_event, value: string) => handleInputValueChange(value)}
-            className="co-logs__attribute-filter__text"
+            className="lv-plugin__attribute-filter__text"
             aria-label={t('Search by {{attributeName}}', {
               attributeName: attribute.name,
             })}
@@ -183,7 +183,7 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
     <>
       <ToolbarGroup
         variant="filter-group"
-        className="co-logs__attribute-filter"
+        className="lv-plugin__attribute-filter"
         data-test={TestIds.AttributeFilters}
       >
         <Select

@@ -1,4 +1,4 @@
-.co-logs-table .co-logs-table__expand {
+.lv-plugin__table .lv-plugin__table__expand {
   font-size: var(--pf-v5-global--FontSize--sm);
   --pf-v5-c-table--cell--Width: 50px;
   --pf-v5-c-table--cell--MaxWidth: 50px;
@@ -7,13 +7,13 @@
   vertical-align: middle;
 }
 
-.co-logs-table .co-logs-table__details {
+.lv-plugin__table .lv-plugin__table__details {
   font-size: var(--pf-v5-global--FontSize--sm);
   padding: var(--pf-v5-global--spacer--lg);
   display: block;
 }
 
-.co-logs-table .co-logs-table__time {
+.lv-plugin__table .lv-plugin__table__time {
   --pf-v5-c-table--cell--Width: 270px;
   --pf-v5-c-table--cell--MaxWidth: 270px;
   --pf-v5-c-table--cell--MinWidth: 270px;
@@ -25,11 +25,11 @@
   vertical-align: middle;
 }
 
-.co-logs-table .co-logs-table__time-header {
+.lv-plugin__table .lv-plugin__table__time-header {
   font-size: var(--pf-v5-global--FontSize--md);
 }
 
-.co-logs-table .co-logs-table__message {
+.lv-plugin__table .lv-plugin__table__message {
   font-size: var(--pf-v5-global--FontSize--sm);
   padding: var(--pf-v5-global--spacer--xs);
   padding-right: var(--pf-v5-global--spacer--md);
@@ -39,12 +39,12 @@
   width: 100%;
 }
 
-.co-logs-table .co-logs-table__resources {
+.lv-plugin__table .lv-plugin__table__resources {
   --pf-v5-c-table--cell--FontSize: var(--pf-v5-global--FontSize--md);
   margin-top: var(--pf-v5-global--spacer--xs);
 }
 
-.co-logs-table__row::before {
+.lv-plugin__table__row::before {
   content: '';
   display: block;
   position: absolute;
@@ -55,76 +55,76 @@
   background-color: var(--pf-v5-global--disabled-color--200);
 }
 
-.co-logs-table__row--expanded::before {
+.lv-plugin__table__row--expanded::before {
   bottom: 0;
 }
 
-.co-logs-table__row--expanded-details::before {
+.lv-plugin__table__row--expanded-details::before {
   top: 0;
 }
 
-.co-logs-table__severity-critical::before {
+.lv-plugin__table__severity-critical::before {
   background-color: var(--pf-v5-global--palette--purple-500);
 }
 
-.co-logs-table__severity-error::before {
+.lv-plugin__table__severity-error::before {
   background-color: var(--pf-v5-global--danger-color--100);
 }
 
-.co-logs-table__severity-warning::before {
+.lv-plugin__table__severity-warning::before {
   background-color: var(--pf-v5-global--warning-color--100);
 }
 
-.co-logs-table__severity-info::before {
+.lv-plugin__table__severity-info::before {
   background-color: var(--pf-v5-global--palette--green-300);
 }
 
-.co-logs-table__severity-debug::before {
+.lv-plugin__table__severity-debug::before {
   background-color: var(--pf-v5-global--palette--light-blue-400);
 }
 
-.co-logs-table__severity-trace::before {
+.lv-plugin__table__severity-trace::before {
   background-color: var(--pf-v5-global--palette--cyan-200);
 }
 
-.co-logs-table__row-info {
+.lv-plugin__table__row-info {
   font-size: var(--pf-v5-global--FontSize--xs);
   background-color: var(--pf-v5-global--Background-color--100);
   --pf-v5-c-table--cell--PaddingBottom: var(--pf-v5-global--spacer--xs);
   --pf-v5-c-table--cell--PaddingTop: var(--pf-v5-global--spacer--xs);
 }
 
-.co-logs-table__row-info td {
+.lv-plugin__table__row-info td {
   text-align: center;
 }
 
-.co-logs-table__row-info .pf-v5-c-alert {
+.lv-plugin__table__row-info .pf-v5-c-alert {
   text-align: center;
   --pf-v5-c-alert__icon--FontSize: 0.9rem;
 }
 
-.co-logs-table__row-info .pf-v5-c-alert__title {
+.lv-plugin__table__row-info .pf-v5-c-alert__title {
   font-size: 0.8rem;
 }
 
-.co-logs-table__row-more-data td {
+.lv-plugin__table__row-more-data td {
   text-align: center;
   cursor: pointer;
 }
 
-.co-logs-table__row-error,
-.co-logs-table__row-streaming {
+.lv-plugin__table__row-error,
+.lv-plugin__table__row-streaming {
   display: grid;
   justify-content: center;
   justify-items: center;
 }
 
-.co-logs-table__row-header {
+.lv-plugin__table__row-header {
   padding: var(--pf-v5-global--spacer--xs);
   font-size: var(--pf-v5-global--FontSize--md);
   vertical-align: middle;
 }
 
-.pf-v5-c-table .co-logs-table__row.co-logs-table__row--expanded {
+.pf-v5-c-table .lv-plugin__table__row.lv-plugin__table__row--expanded {
   border-bottom: none;
 }

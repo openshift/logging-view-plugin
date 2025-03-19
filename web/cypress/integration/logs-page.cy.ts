@@ -532,7 +532,7 @@ describe('Logs Page', () => {
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
       .within(() => {
-        cy.get('.co-logs-table__message').first().contains('formatted string');
+        cy.get('.lv-plugin__table__message').first().contains('formatted string');
       });
 
     cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
@@ -550,7 +550,7 @@ describe('Logs Page', () => {
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
       .within(() => {
-        cy.get('.co-logs-table__message').first().contains('a message');
+        cy.get('.lv-plugin__table__message').first().contains('a message');
       });
 
     cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
