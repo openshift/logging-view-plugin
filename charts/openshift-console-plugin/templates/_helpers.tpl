@@ -31,7 +31,7 @@ Selector labels
 {{- define "openshift-console-plugin.selectorLabels" -}}
 app: {{ include "openshift-console-plugin.name" . }}
 app.kubernetes.io/name: {{ include "openshift-console-plugin.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/instance: logging
 app.kubernetes.io/part-of: {{ include "openshift-console-plugin.name" . }}
 {{- end }}
 
