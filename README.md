@@ -34,9 +34,23 @@ to `http://localhost:3100`. You can disable this by re-running the console with
 
 Navigate to <http://localhost:9000/monitoring/logs> to see the running plugin.
 
+### Running using Devspace
+
+Install the [devspace](https://www.devspace.sh/docs/getting-started/installation) cli.
+
+1. Create and install a LokiStack in your cluster collecting logs
+2. Install the dependencies running `make install`
+3. Start the frontend `make start-frontend`
+4. Select the namespace you want to deploy in using `devspace use namespace {NAMESPACE}`. If you are attempting to take over a COO deployment, make sure to set the namespace where the plugin has been deployed.
+4. In a different terminal start the devspace sync `devspace dev`
+
+If helm is selected in the `devspace dev` command, this will run and deploy the logging-view-plugin in the cluster using the helm chart for this repository. It will then "take over" the logging-view-plugin pod, grabbing all of the certificates and backend binary and configuration to run in the devspace pod. If helm isn't selected, the pipeline will attempt to run the `scale_down_coo` function to prevent COO from fighting over the pod. Devspace then begins a sync process which will mirror changes from the `/web/dist` folder into the `/opt/app-root/web/dist` folder in the devspace pod. You can then make changes to your frontend files locally and have webpack rebuild the `/web/dist` folder, have the files be re-synced, and reload your console webpage to see your local changes running in the cluster.
+
+After development you can run `devspace purge` to cleanup. When helm is not selected, scale_up_coo will then be called.
+
 ### Local Development Troubleshooting
 1. Disable cache. Select 'disable cache' in your browser's DevTools > Network > 'disable cache'. Or use private/incognito mode in your browser.
-2. Enable higher log verbosity by setting `-log-level=trace` when starting the plugin backend. For more options to set log level see [logrus documentation](https://github.com/sirupsen/logrus?tab=readme-ov-file#level-logging). 
+2. Enable higher log verbosity by setting `-log-level=trace` when starting the plugin backend. For more options to set log level see [logrus documentation](https://github.com/sirupsen/logrus?tab=readme-ov-file#level-logging).
 
 ### Running tests
 
