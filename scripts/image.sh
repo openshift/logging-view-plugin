@@ -17,7 +17,7 @@ BASE_IMAGE="quay.io/${REGISTRY_ORG}/logging-view-plugin"
 IMAGE=${BASE_IMAGE}:${TAG}
 
 echo "Building image '${IMAGE}' with ${OCI_BIN}"
-$OCI_BIN build -t $IMAGE -f Dockerfile.dev .
+$OCI_BIN build -t $IMAGE --platform=linux/amd64 -f Dockerfile.dev .
 
 if [[ $PUSH == 1 ]]; then
     echo "Pushing to registry with ${OCI_BIN}"
