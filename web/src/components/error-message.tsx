@@ -130,7 +130,7 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({ error }) => {
   return (
     <>
       <Alert
-        className="co-logs-error_message"
+        className="lv-plugin__error_message"
         variant="danger"
         isInline
         isPlain

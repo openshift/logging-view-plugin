@@ -33,8 +33,8 @@ const LogsAlertMetrics: React.FC<LogsAlertMetricsProps> = ({ rule }) => {
     : undefined;
 
   return (
-    <div className="co-logs-alert-metrics__container">
-      <div className="co-logs-metrics__header">
+    <div className="lv-plugin__alert-metrics__container">
+      <div className="lv-plugin__metrics__header">
         <TimeRangeDropdown value={timeRange} onChange={setTimeRange} />
       </div>
       <LogsMetrics

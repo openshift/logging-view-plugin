@@ -1,4 +1,4 @@
-.co-logs-histogram__tooltip-line{
+.lv-plugin__histogram__tooltip-line {
   stroke: var(--pf-v5-global--BackgroundColor--dark-100);
   stroke-dasharray: 3;
 }

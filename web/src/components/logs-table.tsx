@@ -106,7 +106,7 @@ const aggregateStreamLogData = (response?: QueryRangeResponse): Array<LogTableDa
 };
 
 const getSeverityClass = (severity: string) => {
-  return severity ? `co-logs-table__severity-${severity}` : '';
+  return severity ? `lv-plugin__table__severity-${severity}` : '';
 };
 
 // sort with an appropriate numeric comparator for big floats
@@ -121,14 +121,14 @@ const columns: Array<TableColumn<LogTableData>> = [
     id: 'expand',
     title: ' ',
     props: {
-      className: 'co-logs-table__expand',
+      className: 'lv-plugin__table__expand',
     },
   },
   {
     id: 'date',
     title: 'Date',
     props: {
-      className: 'co-logs-table__time co-logs-table__time-header',
+      className: 'lv-plugin__table__time lv-plugin__table__time-header',
     },
     sort: (data, sortDirection) =>
       data.sort((a, b) =>
@@ -196,20 +196,20 @@ const TableRow = ({ expandedItems, handleRowToggle, showResources, colSpan }: Ta
       <>
         <Td
           expand={{ isExpanded, onToggle: handleRowToggle, rowIndex: obj.logIndex }}
-          className="co-logs-table__expand"
+          className="lv-plugin__table__expand"
           id="expand"
         />
-        <TableData id="date" activeColumnIDs={activeColumnIDs} className="co-logs-table__time">
+        <TableData id="date" activeColumnIDs={activeColumnIDs} className="lv-plugin__table__time">
           {obj.time}
         </TableData>
         <TableData
           id="message"
           activeColumnIDs={activeColumnIDs}
-          className="co-logs-table__message"
+          className="lv-plugin__table__message"
         >
           <div>{obj.message}</div>
           {showResources && (
-            <Split className="co-logs-table__resources" hasGutter>
+            <Split className="lv-plugin__table__resources" hasGutter>
               {obj.resources?.map((resource) => (
                 <ResourceLinkList key={resource.kind} resource={resource} data={obj} />
               ))}
@@ -219,7 +219,7 @@ const TableRow = ({ expandedItems, handleRowToggle, showResources, colSpan }: Ta
       </>
     ) : isExpanded ? (
       <TableData
-        className="co-logs-table__details"
+        className="lv-plugin__table__details"
         id="expand"
         activeColumnIDs={activeColumnIDs}
         colSpan={colSpan}
@@ -326,7 +326,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   };
 
   return (
-    <div data-test={TestIds.LogsTable} className="co-logs-table">
+    <div data-test={TestIds.LogsTable} className="lv-plugin__table">
       {showStats && <StatsTable logsData={logsData} />}
       {children}
 
@@ -341,11 +341,11 @@ export const LogsTable: React.FC<LogsTableProps> = ({
         columns={columns}
         getSortParams={getSortParams}
         getRowClassName={(row) =>
-          `co-logs-table__row ${getSeverityClass(row.severity)} ${
+          `lv-plugin__table__row ${getSeverityClass(row.severity)} ${
             expandedItems.has(row.logIndex)
               ? row.type === 'log'
-                ? 'co-logs-table__row--expanded'
-                : 'co-logs-table__row--expanded-details'
+                ? 'lv-plugin__table__row--expanded'
+                : 'lv-plugin__table__row--expanded-details'
               : ''
           }`
         }

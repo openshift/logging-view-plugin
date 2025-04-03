@@ -105,7 +105,7 @@ export const PrecisionTimePicker: React.FC<PrecisionTimePickerProps> = ({ onChan
     <Menu
       id="time-select-menu"
       onSelect={handleMenuSelect}
-      className="co-logs-time-picker__time-options"
+      className="lv-plugin__time-picker__time-options"
       ref={menuRef}
     >
       <MenuContent>
@@ -130,11 +130,11 @@ export const PrecisionTimePicker: React.FC<PrecisionTimePickerProps> = ({ onChan
         aria-label="Precision time picker"
         isRequired
         validated={isValid ? undefined : ValidatedOptions.error}
-        className="co-logs-time-picker__input"
+        className="lv-plugin__time-picker__input"
         ref={inputRef}
       />
       {!isValid && (
-        <HelperText className="co-logs-time-picker__error">
+        <HelperText className="lv-plugin__time-picker__error">
           <HelperTextItem variant="error">{t('Invalid time format')}</HelperTextItem>
         </HelperText>
       )}

@@ -1,12 +1,12 @@
-.co-logs-toolbar {
+.lv-plugin__toolbar {
   gap: var(--pf-v5-global--spacer--md);
 }
 
-.co-logs-severity-filter {
+.lv-plugin__severity-filter {
   margin: 0;
 }
 
-.co-logs-toolbar .co-logs-expression-input {
+.lv-plugin__toolbar .lv-plugin__expression-input {
   padding-right: var(--pf-v5-c-toolbar__content--PaddingRight);
   padding-left: var(--pf-v5-c-toolbar__content--PaddingLeft);
 }

@@ -1,9 +1,9 @@
-.co-logs-error_message {
+.lv-plugin__error_message {
   margin-bottom: var(--pf-v5-global--spacer--md);
   margin-top: var(--pf-v5-global--spacer--md);
   background-color: transparent;
 }
 
-.co-logs-table__row-error .pf-v5-c-code-block__pre {
+.lv-plugin__table__row-error .pf-v5-c-code-block__pre {
   text-align: left;
 }

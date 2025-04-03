@@ -137,7 +137,7 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
   return (
     <Modal
       id="date-time-picker-modal"
-      className="modal-dialog co-logs-time-range-modal"
+      className="modal-dialog lv-plugin__time-range-modal"
       variant={ModalVariant.small}
       title="Custom time range"
       position="top"
@@ -149,7 +149,7 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
       aria-label="date-time-picker-modal"
       data-test={TestIds.TimeRangeSelectModal}
       footer={
-        <div className="co-logs-time-range-modal__footer">
+        <div className="lv-plugin__time-range-modal__footer">
           <Button
             key="confirm"
             variant="primary"
@@ -166,25 +166,25 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
       }
     >
       <ModalBoxBody
-        className="co-logs-time-range-modal__body"
+        className="lv-plugin__time-range-modal__body"
         data-test={TestIds.TimeRangeSelectModal}
       >
         <div>
           <label>{t('From')}</label>
-          <div className="co-logs-time-range-modal__field">
+          <div className="lv-plugin__time-range-modal__field">
             <DatePicker onChange={handleStartDateChange} value={startDate} />
             <PrecisionTimePicker time={startTime} onChange={handleStartTimeChange} />
           </div>
         </div>
         <div>
           <label>{t('To')}</label>
-          <div className="co-logs-time-range-modal__field">
+          <div className="lv-plugin__time-range-modal__field">
             <DatePicker onChange={handleEndDateChange} value={endDate} />
             <PrecisionTimePicker time={endTime} onChange={handleEndTimeChange} />
           </div>
           {!isRangeValid && (
             <Alert
-              className="co-logs-time-range-modal__error"
+              className="lv-plugin__time-range-modal__error"
               variant="danger"
               isInline
               isPlain

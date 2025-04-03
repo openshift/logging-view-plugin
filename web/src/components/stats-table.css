@@ -1,16 +1,16 @@
-.co-stats-title{
-    font-size: 16px;
+.lv-plugin__stats-title {
+  font-size: 16px;
 }
 
-.co-stats__content{
-    padding: 20px;
-    padding-top: 5px;
-    padding-bottom: 40px;
+.lv-plugin__stats__content {
+  padding: 20px;
+  padding-top: 5px;
+  padding-bottom: 40px;
 }
-.co-stats-table{
-    background: none;
+.lv-plugin__stats-table {
+  background: none;
 }
 
-.co-stats-table__header{
-    width: 205px;
+.lv-plugin__stats-table__header {
+  width: 205px;
 }

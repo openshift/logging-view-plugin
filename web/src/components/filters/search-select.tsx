@@ -317,7 +317,7 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
         })}
         aria-labelledby={titleId}
         aria-placeholder={t('Search')}
-        className="co-logs__search-select"
+        className="lv-plugin__search-select"
         toggle={toggle}
       >
         <SelectList isAriaMultiselectable>

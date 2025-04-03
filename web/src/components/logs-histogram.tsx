@@ -176,7 +176,7 @@ const HistogramTooltip: React.FC<ChartLegendTooltipProps & { interval: number }>
         constrainToVisibleArea
       />
       <line
-        className="co-logs-histogram__tooltip-line"
+        className="lv-plugin__histogram__tooltip-line"
         x1={xCoord}
         x2={xCoord}
         y1={TOP_PADDING}

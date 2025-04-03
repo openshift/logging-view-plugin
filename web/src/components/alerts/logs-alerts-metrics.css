@@ -1,13 +1,13 @@
-.co-logs-alert-metrics__container {
+.lv-plugin__alert-metrics__container {
   border: var(--pf-v5-global--BorderWidth--sm) solid var(--pf-v5-global--BorderColor--100);
   margin: 0 0 var(--pf-v5-global--spacer--md) 0;
   padding: var(--pf-v5-global--spacer--sm);
 }
 
-.co-logs-metrics__header {
+.lv-plugin__metrics__header {
   margin-bottom: var(--pf-v5-global--spacer--sm);
 }
 
-.co-logs-metrics__error {
+.lv-plugin__metrics__error {
   min-height: 250px;
 }

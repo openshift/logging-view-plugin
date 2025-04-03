@@ -1,12 +1,12 @@
-.co-logs-time-picker__time-options {
+.lv-plugin__time-picker__time-options {
   max-height: 200px;
   overflow: auto;
 }
 
-.co-logs-time-picker__input {
+.lv-plugin__time-picker__input {
   width: 150px;
 }
 
-.co-logs-time-picker__error {
+.lv-plugin__time-picker__error {
   padding-top: 'var(--pf-v5-global--spacer--xs)';
 }
