@@ -41,7 +41,7 @@ Install the [devspace](https://www.devspace.sh/docs/getting-started/installation
 1. Create and install a LokiStack in your cluster collecting logs
 2. Install the dependencies running `make install`
 3. Start the frontend `make start-frontend`
-4. Select the namespace you want to deploy in using `devspace use namespace {NAMESPACE}`. If you are attempting to take over a COO deployment, make sure to set the namespace where the plugin has been deployed.
+4. Select the namespace you want to deploy in using `devspace use namespace {NAMESPACE}`. If you are attempting to take over a COO deployment, make sure to set the namespace where the plugin has been deployed. For example, `devspace use namespace openshift-cluster-observability-operator`.
 4. In a different terminal start the devspace sync `devspace dev`
 
 If helm is selected in the `devspace dev` command, this will run and deploy the logging-view-plugin in the cluster using the helm chart for this repository. It will then "take over" the logging-view-plugin pod, grabbing all of the certificates and backend binary and configuration to run in the devspace pod. If helm isn't selected, the pipeline will attempt to run the `scale_down_coo` function to prevent COO from fighting over the pod. Devspace then begins a sync process which will mirror changes from the `/web/dist` folder into the `/opt/app-root/web/dist` folder in the devspace pod. You can then make changes to your frontend files locally and have webpack rebuild the `/web/dist` folder, have the files be re-synced, and reload your console webpage to see your local changes running in the cluster.
