@@ -14,11 +14,11 @@ import {
 } from '../logs.types';
 import { severityFromString } from '../severity';
 import { TestIds } from '../test-ids';
-import { notUndefined } from '../value-utils';
 import { LogDetail } from './log-detail';
 import './logs-table.css';
 import { StatsTable } from './stats-table';
 import { TableData, VirtualizedLogsTable } from './virtualized-logs-table';
+import { parseResources } from '../parse-resources';
 
 interface LogsTableProps {
   logsData?: QueryRangeResponse;
@@ -40,61 +40,6 @@ const isJSONObject = (value: string): boolean => {
   const trimmedValue = value.trim();
 
   return trimmedValue.startsWith('{') && trimmedValue.endsWith('}');
-};
-
-enum KindLabel {
-  Container = 'Container',
-  Namespace = 'Namespace',
-  Pod = 'Pod',
-}
-
-enum OtelStreamLabel {
-  ContainerName = 'k8s_container_name',
-  Namespace = 'k8s_namespace_name',
-  PodName = 'k8s_pod_name',
-}
-
-enum ViaQStreamLabel {
-  ContainerName = 'kubernetes_container_name',
-  Namespace = 'k8s_namespace_name',
-  PodName = 'k8s_pod_name',
-}
-
-const parse = (
-  data: Record<string, string>,
-  labelKind: KindLabel,
-  otelStreamLabel: OtelStreamLabel,
-  viaqStreamLabel: ViaQStreamLabel,
-) => {
-  if (data[otelStreamLabel]) {
-    return {
-      kind: labelKind,
-      name: data[otelStreamLabel],
-    };
-  } else if (data[viaqStreamLabel]) {
-    return {
-      kind: labelKind,
-      name: data[viaqStreamLabel],
-    };
-  }
-  return undefined;
-};
-
-const parseResources = (data: Record<string, string>): Array<Resource> => {
-  const container = parse(
-    data,
-    KindLabel.Container,
-    OtelStreamLabel.ContainerName,
-    ViaQStreamLabel.ContainerName,
-  );
-  const namespace = parse(
-    data,
-    KindLabel.Namespace,
-    OtelStreamLabel.Namespace,
-    ViaQStreamLabel.Namespace,
-  );
-  const pod = parse(data, KindLabel.Pod, OtelStreamLabel.PodName, ViaQStreamLabel.PodName);
-  return [namespace, pod, container].filter(notUndefined);
 };
 
 const streamToTableData = (stream: StreamLogData): Array<LogTableData> => {
