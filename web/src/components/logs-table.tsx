@@ -42,26 +42,58 @@ const isJSONObject = (value: string): boolean => {
   return trimmedValue.startsWith('{') && trimmedValue.endsWith('}');
 };
 
-const parseResources = (data: Record<string, string>): Array<Resource> => {
-  const container = data['kubernetes_container_name']
-    ? {
-        kind: 'Container',
-        name: data['kubernetes_container_name'],
-      }
-    : undefined;
-  const namespace = data['kubernetes_namespace_name']
-    ? {
-        kind: 'Namespace',
-        name: data['kubernetes_namespace_name'],
-      }
-    : undefined;
-  const pod = data['kubernetes_pod_name']
-    ? {
-        kind: 'Pod',
-        name: data['kubernetes_pod_name'],
-      }
-    : undefined;
+enum KindLabel {
+  Container = 'Container',
+  Namespace = 'Namespace',
+  Pod = 'Pod',
+}
 
+enum OtelStreamLabel {
+  ContainerName = 'k8s_container_name',
+  Namespace = 'k8s_namespace_name',
+  PodName = 'k8s_pod_name',
+}
+
+enum ViaQStreamLabel {
+  ContainerName = 'kubernetes_container_name',
+  Namespace = 'k8s_namespace_name',
+  PodName = 'k8s_pod_name',
+}
+
+const parse = (
+  data: Record<string, string>,
+  labelKind: KindLabel,
+  otelStreamLabel: OtelStreamLabel,
+  viaqStreamLabel: ViaQStreamLabel,
+) => {
+  if (data[otelStreamLabel]) {
+    return {
+      kind: labelKind,
+      name: data[otelStreamLabel],
+    };
+  } else if (data[viaqStreamLabel]) {
+    return {
+      kind: labelKind,
+      name: data[viaqStreamLabel],
+    };
+  }
+  return undefined;
+};
+
+const parseResources = (data: Record<string, string>): Array<Resource> => {
+  const container = parse(
+    data,
+    KindLabel.Container,
+    OtelStreamLabel.ContainerName,
+    ViaQStreamLabel.ContainerName,
+  );
+  const namespace = parse(
+    data,
+    KindLabel.Namespace,
+    OtelStreamLabel.Namespace,
+    ViaQStreamLabel.Namespace,
+  );
+  const pod = parse(data, KindLabel.Pod, OtelStreamLabel.PodName, ViaQStreamLabel.PodName);
   return [namespace, pod, container].filter(notUndefined);
 };
 
