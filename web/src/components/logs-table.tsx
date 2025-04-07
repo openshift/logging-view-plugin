@@ -18,7 +18,7 @@ import { LogDetail } from './log-detail';
 import './logs-table.css';
 import { StatsTable } from './stats-table';
 import { TableData, VirtualizedLogsTable } from './virtualized-logs-table';
-import { parseResources } from '../parse-resources';
+import { ResourceLabel, parseResources, parseName } from '../parse-resources';
 
 interface LogsTableProps {
   logsData?: QueryRangeResponse;
@@ -51,16 +51,19 @@ const streamToTableData = (stream: StreamLogData): Array<LogTableData> => {
     const timestamp = parseFloat(String(value[0]));
     const time = timestamp / 1e6;
     const formattedTime = dateToFormat(time, DateFormat.Full);
+    const severity = parseName(stream.stream, ResourceLabel.Severity);
+    const namespace = parseName(stream.stream, ResourceLabel.Namespace);
+    const podName = parseName(stream.stream, ResourceLabel.Pod);
 
     return {
       time: formattedTime,
       timestamp,
       message,
-      severity: severityFromString(stream.stream.level) ?? 'other',
+      severity: severityFromString(severity) ?? 'other',
       data: stream.stream,
       resources: parseResources(stream.stream),
-      namespace: stream.stream['kubernetes_namespace_name'],
-      podName: stream.stream['kubernetes_pod_name'],
+      namespace,
+      podName,
       type: 'log',
       // index is 0 here to match the type, but it will be recalculated when flattening the array
       logIndex: 0,

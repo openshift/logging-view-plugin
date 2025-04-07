@@ -5,6 +5,7 @@ export enum ResourceLabel {
   Container = 'Container',
   Namespace = 'Namespace',
   Pod = 'Pod',
+  Severity = 'Severity',
 }
 
 const ResourceToStreamLabels: Record<ResourceLabel, { otel: string; viaq: string }> = {
@@ -20,9 +21,13 @@ const ResourceToStreamLabels: Record<ResourceLabel, { otel: string; viaq: string
     otel: 'k8s_pod_name',
     viaq: 'kubernetes_pod_name',
   },
+  [ResourceLabel.Severity]: {
+    otel: 'severity_text',
+    viaq: 'level',
+  },
 };
 
-const parse = (data: Record<string, string>, resourceLabel: ResourceLabel) => {
+export const parse = (data: Record<string, string>, resourceLabel: ResourceLabel) => {
   const resource = ResourceToStreamLabels[resourceLabel];
   if (data[resource.otel]) {
     return {
@@ -44,4 +49,11 @@ export const parseResources = (data: Record<string, string>): Array<Resource> =>
   const pod = parse(data, ResourceLabel.Pod);
   const container = parse(data, ResourceLabel.Container);
   return [namespace, pod, container].filter(notUndefined);
+};
+
+export const parseName = (
+  data: Record<string, string>,
+  resourceLabel: ResourceLabel,
+): string | undefined => {
+  return parse(data, resourceLabel)?.name;
 };
