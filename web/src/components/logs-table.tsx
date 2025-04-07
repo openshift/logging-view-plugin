@@ -14,11 +14,11 @@ import {
 } from '../logs.types';
 import { severityFromString } from '../severity';
 import { TestIds } from '../test-ids';
-import { notUndefined } from '../value-utils';
 import { LogDetail } from './log-detail';
 import './logs-table.css';
 import { StatsTable } from './stats-table';
 import { TableData, VirtualizedLogsTable } from './virtualized-logs-table';
+import { parseResources } from '../parse-resources';
 
 interface LogsTableProps {
   logsData?: QueryRangeResponse;
@@ -40,29 +40,6 @@ const isJSONObject = (value: string): boolean => {
   const trimmedValue = value.trim();
 
   return trimmedValue.startsWith('{') && trimmedValue.endsWith('}');
-};
-
-const parseResources = (data: Record<string, string>): Array<Resource> => {
-  const container = data['kubernetes_container_name']
-    ? {
-        kind: 'Container',
-        name: data['kubernetes_container_name'],
-      }
-    : undefined;
-  const namespace = data['kubernetes_namespace_name']
-    ? {
-        kind: 'Namespace',
-        name: data['kubernetes_namespace_name'],
-      }
-    : undefined;
-  const pod = data['kubernetes_pod_name']
-    ? {
-        kind: 'Pod',
-        name: data['kubernetes_pod_name'],
-      }
-    : undefined;
-
-  return [namespace, pod, container].filter(notUndefined);
 };
 
 const streamToTableData = (stream: StreamLogData): Array<LogTableData> => {
