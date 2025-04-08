@@ -27,7 +27,7 @@ const ResourceToStreamLabels: Record<ResourceLabel, { otel: string; viaq: string
   },
 };
 
-export const parse = (data: Record<string, string>, resourceLabel: ResourceLabel) => {
+const parse = (data: Record<string, string>, resourceLabel: ResourceLabel) => {
   const resource = ResourceToStreamLabels[resourceLabel];
   if (data[resource.otel]) {
     return {
