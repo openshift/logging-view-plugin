@@ -1,4 +1,4 @@
-import { parseResources } from '../parse-resources';
+import { parseResources, parseName, ResourceLabel } from '../parse-resources';
 
 const mixedData = {
   __error__: 'JSONParserErr',
@@ -30,12 +30,14 @@ const viaqData = {
   kubernetes_container_name: 'klusterlet-agent-viaq-test',
   kubernetes_namespace_name: 'open-cluster-management-agent-viaq-test',
   kubernetes_pod_name: 'klusterlet-agent-7df874f76f-2kc4l-viaq-test',
+  level: 'warning-viaq-test',
 };
 
 const otelData = {
   k8s_container_name: 'klusterlet-agent-otel-test',
   k8s_namespace_name: 'open-cluster-management-agent-otel-test',
   k8s_pod_name: 'klusterlet-agent-7df874f76f-2kc4l-otel-test',
+  severity_text: 'warning-otel-test',
 };
 
 describe('Parse Resources Namespace, Name, Pod', () => {
@@ -92,5 +94,20 @@ describe('Parse Resources Namespace, Name, Pod', () => {
       },
     ];
     expect(resources).toEqual(expectOtel);
+  });
+});
+
+describe('Test parseName ', () => {
+  it('Should parse OpenTelemtry stream labels ', () => {
+    const severity = parseName(otelData, ResourceLabel.Severity);
+    expect(severity).toEqual(otelData.severity_text);
+  });
+  it('Should parse ViaQ stream labels ', () => {
+    const severity = parseName(viaqData, ResourceLabel.Severity);
+    expect(severity).toEqual(viaqData.level);
+  });
+  it('Should parse OpenTelemetry stream labels first when both sets of stream labels are present', () => {
+    const severity = parseName(otelData, ResourceLabel.Severity);
+    expect(severity).toEqual(otelData.severity_text);
   });
 });
