@@ -2,7 +2,7 @@ import { ResourceLink, RowProps, TableColumn } from '@openshift-console/dynamic-
 import { Split, SplitItem } from '@patternfly/react-core';
 import { ISortBy, SortByDirection, Td, ThProps } from '@patternfly/react-table';
 import React, { useCallback, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom-v5-compat';
 import { DateFormat, dateToFormat } from '../date-utils';
 import {
   Direction,

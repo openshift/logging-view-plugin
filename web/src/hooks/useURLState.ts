@@ -1,5 +1,5 @@
 import React from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom-v5-compat';
 import { filtersFromQuery } from '../attribute-filters';
 import { AttributeList, Filters } from '../components/filters/filter.types';
 import { Direction, TimeRange } from '../logs.types';
@@ -35,7 +35,7 @@ export const useURLState = ({
   attributes,
 }: UseURLStateHook) => {
   const queryParams = useQueryParams();
-  const history = useHistory();
+  const navigate = useNavigate();
   const location = useLocation();
 
   const initialTenant = queryParams.get(TENANT_PARAM_KEY) ?? defaultTenant;
@@ -68,29 +68,29 @@ export const useURLState = ({
 
   const setTenantInURL = (selectedTenant: string) => {
     queryParams.set(TENANT_PARAM_KEY, selectedTenant);
-    history.push(`${location.pathname}?${queryParams.toString()}`);
+    navigate(`${location.pathname}?${queryParams.toString()}`);
   };
 
   const setShowResourcesInURL = (showResources: boolean) => {
     queryParams.set(SHOW_RESOURCES_PARAM_KEY, showResources ? '1' : '0');
-    history.push(`${location.pathname}?${queryParams.toString()}`);
+    navigate(`${location.pathname}?${queryParams.toString()}`);
   };
 
   const setShowStatsInURL = (showStats: boolean) => {
     queryParams.set(SHOW_STATS_PARAM_KEY, showStats ? '1' : '0');
-    history.push(`${location.pathname}?${queryParams.toString()}`);
+    navigate(`${location.pathname}?${queryParams.toString()}`);
   };
 
   const setQueryInURL = (newQuery: string) => {
     const trimmedQuery = newQuery.trim();
     queryParams.set(QUERY_PARAM_KEY, trimmedQuery);
-    history.push(`${location.pathname}?${queryParams.toString()}`);
+    navigate(`${location.pathname}?${queryParams.toString()}`);
   };
 
   const setTimeRangeInURL = (selectedTimeRange: TimeRange) => {
     queryParams.set(TIME_RANGE_START, String(selectedTimeRange.start));
     queryParams.set(TIME_RANGE_END, String(selectedTimeRange.end));
-    history.push(`${location.pathname}?${queryParams.toString()}`);
+    navigate(`${location.pathname}?${queryParams.toString()}`);
   };
 
   const setDirectionInURL = (selectedDirection?: 'forward' | 'backward') => {
@@ -99,7 +99,7 @@ export const useURLState = ({
     } else {
       queryParams.delete(DIRECTION);
     }
-    history.push(`${location.pathname}?${queryParams.toString()}`);
+    navigate(`${location.pathname}?${queryParams.toString()}`);
   };
 
   React.useEffect(() => {

@@ -1,7 +1,7 @@
 import '@patternfly/patternfly/patternfly.css';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { BrowserRouter, Link, Route, useHistory, useParams } from 'react-router-dom';
+import { BrowserRouter, Link, Route, useNavigate, useParams } from 'react-router-dom-v5-compat';
 import LogsAlertMetrics from './components/alerts/logs-alerts-metrics';
 import i18n from './i18n';
 import './index.css';
@@ -19,7 +19,7 @@ import { TestIds } from './test-ids';
 
 const DevConsole = () => {
   const { ns: namespace } = useParams<{ ns: string }>();
-  const history = useHistory();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = React.useState(false);
 
   const onToggle = () => {
@@ -27,7 +27,7 @@ const DevConsole = () => {
   };
 
   const onSelectNamespace = (selectedNamespace: string) => () => {
-    history.push(`/dev-monitoring/ns/${selectedNamespace}/logs`);
+    navigate(`/dev-monitoring/ns/${selectedNamespace}/logs`);
     setIsOpen(false);
   };
 
