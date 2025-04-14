@@ -2,7 +2,7 @@ import { Button, Card, CardBody, Flex, Grid, PageSection, Tooltip } from '@patte
 import { SyncAltIcon } from '@patternfly/react-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom-v5-compat';
 import {
   availableDevConsoleAttributes,
   initialAvailableAttributes,

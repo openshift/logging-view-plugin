@@ -11,7 +11,7 @@ import {
 import { SyncAltIcon } from '@patternfly/react-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom-v5-compat';
 import { availablePodAttributes, filtersFromQuery, queryFromFilters } from '../attribute-filters';
 import { AttributeList, Filters } from '../components/filters/filter.types';
 import { LogsHistogram } from '../components/logs-histogram';
