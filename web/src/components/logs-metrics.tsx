@@ -19,6 +19,7 @@ import { TestIds } from '../test-ids';
 import { defaultTimeRange, intervalFromTimeRange, numericTimeRange } from '../time-range';
 import { CenteredContainer } from './centered-container';
 import './logs-metrics.css';
+import { formatValue } from './value-formatter';
 
 const colors = getThemeColors(ChartThemeColor.multiUnordered).line?.colorScale;
 
@@ -216,7 +217,7 @@ export const LogsMetrics: React.FC<LogsMetricsProps> = ({
                 )
               }
             />
-            <ChartAxis dependentAxis showGrid />
+            <ChartAxis dependentAxis showGrid tickFormat={formatValue} />
             <ChartGroup>
               {data.map((series) => (
                 <ChartLine name={series.name} key={series.name} data={series.data} />
