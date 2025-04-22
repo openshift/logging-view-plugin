@@ -1,7 +1,14 @@
 import '@patternfly/patternfly/patternfly.css';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { BrowserRouter, Link, Route, useNavigate, useParams } from 'react-router-dom-v5-compat';
+import {
+  BrowserRouter,
+  Link,
+  Route,
+  Routes,
+  useNavigate,
+  useParams,
+} from 'react-router-dom-v5-compat';
 import LogsAlertMetrics from './components/alerts/logs-alerts-metrics';
 import i18n from './i18n';
 import './index.css';
@@ -119,23 +126,22 @@ const EndToEndTestsApp = () => {
         </div>
 
         <main className="pf-v5-c-page__main" tabIndex={-1}>
-          <Route path="/monitoring/logs">
-            <LogsPage />
-          </Route>
-          <Route path="/dev-monitoring/ns/:ns/logs">
-            <DevConsole />
-          </Route>
-          <Route path="/k8s/ns/:ns/pods/:name">
-            <LogsDetailPage />
-          </Route>
-          <Route path="/monitoring/alerts/:alertname">
-            <LogsAlertMetrics
-              rule={{
-                labels: { tenantId: 'application' },
-                query: `sum by(job)(rate({ job=~".+" }[5m])) > 0`,
-              }}
+          <Routes>
+            <Route path="/monitoring/logs" element={<LogsPage />} />
+            <Route path="/dev-monitoring/ns/:ns/logs" element={<DevConsole />} />
+            <Route path="/k8s/ns/:ns/pods/:name" element={<LogsDetailPage />} />
+            <Route
+              path="/monitoring/alerts/:alertname"
+              element={
+                <LogsAlertMetrics
+                  rule={{
+                    labels: { tenantId: 'application' },
+                    query: `sum by(job)(rate({ job=~".+" }[5m])) > 0`,
+                  }}
+                />
+              }
             />
-          </Route>
+          </Routes>
         </main>
       </BrowserRouter>
     </div>
