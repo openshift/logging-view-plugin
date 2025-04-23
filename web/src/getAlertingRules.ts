@@ -1,3 +1,4 @@
+import { getConfig } from './backend-client';
 import { RulesResponse } from './logs.types';
 import { getRules } from './loki-client';
 import { namespaceBelongsToInfrastructureTenant } from './value-utils';
@@ -22,13 +23,15 @@ export const getAlertingRules = async (tenants: Array<string>, namespace?: strin
     return null;
   }
 
+  const config = await getConfig();
+
   const rulesResponses = await Promise.allSettled(
     tenants.map((tenant) => {
       if (abortControllers.has(tenant)) {
         abortControllers.get(tenant)?.();
       }
 
-      const { abort, request } = getRules({ tenant, namespace });
+      const { abort, request } = getRules({ tenant, namespace, config });
       abortControllers.set(tenant, abort);
 
       return request();

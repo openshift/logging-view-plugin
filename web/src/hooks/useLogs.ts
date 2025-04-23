@@ -1,14 +1,14 @@
 import { WSFactory } from '@openshift-console/dynamic-plugin-sdk/lib/utils/k8s/ws-factory';
 import React from 'react';
-import { getConfig } from '../backend-client';
 import {
   Config,
   Direction,
   isMatrixResult,
   isStreamsResult,
   QueryRangeResponse,
-  VolumeRangeResponse,
+  Schema,
   TimeRange,
+  VolumeRangeResponse,
 } from '../logs.types';
 import {
   connectToTailSocket,
@@ -20,14 +20,10 @@ import { intervalFromTimeRange, numericTimeRange, timeRangeFromDuration } from '
 import { millisecondsFromDuration } from '../value-utils';
 
 import { LogQLQuery } from '../logql-query';
+import { LogsContext } from './LogsConfigProvider';
 
 const DEFAULT_TIME_SPAN = '1h';
 const STREAMING_MAX_LOGS_LIMIT = 1e3;
-
-const defaultConfig: Config = {
-  isStreamingEnabledInDefaultPage: false,
-  logsLimit: 100,
-};
 
 const isAbortError = (error: unknown): boolean =>
   error instanceof Error && error.name === 'AbortError';
@@ -46,8 +42,6 @@ type State = {
   showVolumeGraph?: boolean;
   hasMoreLogsData?: boolean;
   isStreaming: boolean;
-  config: Config;
-  configLoaded: boolean;
 };
 
 type Action =
@@ -66,7 +60,7 @@ type Action =
     }
   | {
       type: 'logsResponse';
-      payload: { logsData: QueryRangeResponse };
+      payload: { logsData: QueryRangeResponse; config: Config };
     }
   | {
       type: 'startStreaming';
@@ -80,7 +74,7 @@ type Action =
     }
   | {
       type: 'moreLogsResponse';
-      payload: { logsData: QueryRangeResponse };
+      payload: { logsData: QueryRangeResponse; config: Config };
     }
   | {
       type: 'logsError';
@@ -89,10 +83,6 @@ type Action =
   | {
       type: 'histogramError';
       payload: { error: unknown };
-    }
-  | {
-      type: 'setConfig';
-      payload: { config: Config };
     }
   | {
       type: 'volumeRequest';
@@ -227,14 +217,14 @@ const reducer = (state: State, action: Action): State => {
         isLoadingLogsData: false,
         showVolumeGraph: false,
         logsData: action.payload.logsData,
-        hasMoreLogsData: hasMoreLogs(action.payload.logsData, state.config.logsLimit),
+        hasMoreLogsData: hasMoreLogs(action.payload.logsData, action.payload.config.logsLimit),
       };
     case 'moreLogsResponse':
       return {
         ...state,
         isLoadingMoreLogsData: false,
         logsData: appendData(state.logsData, action.payload.logsData),
-        hasMoreLogsData: hasMoreLogs(action.payload.logsData, state.config.logsLimit),
+        hasMoreLogsData: hasMoreLogs(action.payload.logsData, action.payload.config.logsLimit),
       };
     case 'logsError':
       return {
@@ -242,12 +232,6 @@ const reducer = (state: State, action: Action): State => {
         isLoadingLogsData: false,
         isLoadingMoreLogsData: false,
         logsError: action.payload.error,
-      };
-    case 'setConfig':
-      return {
-        ...state,
-        configLoaded: true,
-        config: action.payload.config,
       };
 
     default:
@@ -266,7 +250,6 @@ export const useLogs = (
   },
 ) => {
   const currentQuery = React.useRef<string | undefined>();
-  const currentConfig = React.useRef<Config>(defaultConfig);
   const currentTenant = React.useRef<string>(initialTenant);
   const currentTimeRange = React.useRef<TimeRange>(initialTimeRange);
   const currentTime = React.useRef<number>(Date.now());
@@ -280,6 +263,13 @@ export const useLogs = (
   const histogramAbort = React.useRef<() => void | undefined>();
   const volumeAbort = React.useRef<() => void | undefined>();
   const ws = React.useRef<WSFactory | null>();
+  const logsContext = React.useContext(LogsContext);
+
+  if (logsContext === undefined) {
+    throw new Error('useLogs must be used within a LogsProvider');
+  }
+
+  const { fetchConfig } = logsContext;
 
   const [
     {
@@ -296,8 +286,6 @@ export const useLogs = (
       showVolumeGraph,
       hasMoreLogsData,
       isStreaming,
-      config,
-      configLoaded,
     },
     dispatch,
   ] = React.useReducer(reducer, {
@@ -307,37 +295,20 @@ export const useLogs = (
     isLoadingMoreLogsData: false,
     hasMoreLogsData: false,
     isStreaming: false,
-    config: defaultConfig,
-    configLoaded: false,
   });
-
-  const fetchConfig = React.useCallback(async () => {
-    if (!configLoaded) {
-      try {
-        const configData = await getConfig();
-        const mergedConfig = { ...defaultConfig, ...configData };
-        dispatch({ type: 'setConfig', payload: { config: mergedConfig } });
-
-        currentConfig.current = mergedConfig;
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.warn('Error fetching configuration', e);
-      }
-    }
-
-    return currentConfig.current;
-  }, [configLoaded]);
 
   const getMoreLogs = async ({
     lastTimestamp,
     query,
     namespace,
     direction,
+    schema,
   }: {
     lastTimestamp: number;
     query: string;
     namespace?: string;
     direction?: Direction;
+    schema: Schema;
   }) => {
     if (query.length === 0) {
       dispatch({ type: 'logsError', payload: { error: new Error('Query is empty') } });
@@ -365,16 +336,17 @@ export const useLogs = (
         logsAbort.current();
       }
 
-      await fetchConfig();
+      const config = await fetchConfig();
 
       const { request, abort } = executeQueryRange({
         query,
         start,
         end,
-        config: currentConfig.current,
+        config,
         tenant: currentTenant.current,
         namespace,
         direction: currentDirection.current,
+        schema,
       });
 
       logsAbort.current = abort;
@@ -383,7 +355,7 @@ export const useLogs = (
 
       dispatch({
         type: 'moreLogsResponse',
-        payload: { logsData: queryResponse },
+        payload: { logsData: queryResponse, config },
       });
     } catch (error) {
       if (!isAbortError(error)) {
@@ -398,12 +370,14 @@ export const useLogs = (
     timeRange,
     namespace,
     direction,
+    schema,
   }: {
     query: string;
     tenant?: string;
     timeRange?: TimeRange;
     namespace?: string;
     direction?: Direction;
+    schema: Schema;
   }) => {
     if (query.length === 0) {
       dispatch({ type: 'logsError', payload: { error: new Error('Query is empty') } });
@@ -431,23 +405,24 @@ export const useLogs = (
         logsAbort.current();
       }
 
-      await fetchConfig();
+      const config = await fetchConfig();
 
       const { request, abort } = executeQueryRange({
         query,
         start,
         end,
-        config: currentConfig.current,
+        config,
         tenant: currentTenant.current,
         namespace,
         direction: currentDirection.current,
+        schema,
       });
 
       logsAbort.current = abort;
 
       const queryResponse = await request();
 
-      dispatch({ type: 'logsResponse', payload: { logsData: queryResponse } });
+      dispatch({ type: 'logsResponse', payload: { logsData: queryResponse, config } });
     } catch (error) {
       if (!isAbortError(error)) {
         dispatch({ type: 'logsError', payload: { error } });
@@ -467,10 +442,12 @@ export const useLogs = (
     query,
     tenant,
     namespace,
+    schema,
   }: {
     query: string;
     tenant?: string;
     namespace?: string;
+    schema: Schema;
   }) => {
     currentQuery.current = query;
     currentTenant.current = tenant ?? currentTenant.current;
@@ -486,6 +463,7 @@ export const useLogs = (
       query,
       tenant: currentTenant.current,
       namespace,
+      schema,
     });
 
     ws.current.onerror((error) => {
@@ -517,10 +495,12 @@ export const useLogs = (
     query,
     tenant,
     namespace,
+    schema,
   }: {
     query: string;
     tenant?: string;
     namespace?: string;
+    schema: Schema;
   }) => {
     currentQuery.current = query;
     currentTenant.current = tenant ?? currentTenant.current;
@@ -528,7 +508,7 @@ export const useLogs = (
     if (isStreaming) {
       pauseTailLog();
     } else {
-      startTailLog({ query, tenant, namespace });
+      startTailLog({ query, tenant, namespace, schema });
     }
   };
 
@@ -537,11 +517,13 @@ export const useLogs = (
     tenant,
     timeRange,
     namespace,
+    schema,
   }: {
     query: string;
     tenant?: string;
     timeRange?: TimeRange;
     namespace?: string;
+    schema: Schema;
   }) => {
     if (query.length === 0) {
       dispatch({ type: 'volumeError', payload: { error: new Error('Query is empty') } });
@@ -568,7 +550,7 @@ export const useLogs = (
         volumeAbort.current();
       }
 
-      await fetchConfig();
+      const config = await fetchConfig();
 
       // Volume API only accepts labels, so have to extract them from the query.
       // Only grabs the data within the { }
@@ -584,9 +566,10 @@ export const useLogs = (
         query,
         start,
         end,
-        config: currentConfig.current,
+        config,
         tenant: currentTenant.current,
         namespace,
+        schema,
       });
 
       volumeAbort.current = abort;
@@ -606,11 +589,13 @@ export const useLogs = (
     tenant,
     timeRange,
     namespace,
+    schema,
   }: {
     query: string;
     tenant?: string;
     timeRange?: TimeRange;
     namespace?: string;
+    schema: Schema;
   }) => {
     if (query.length === 0) {
       dispatch({ type: 'histogramError', payload: { error: new Error('Query is empty') } });
@@ -641,16 +626,17 @@ export const useLogs = (
 
       const { start, end } = numericTimeRange(currentTimeRange.current);
 
-      await fetchConfig();
+      const config = await fetchConfig();
 
       const { request, abort } = executeHistogramQuery({
         query,
         start,
         end,
         interval: intervalFromTimeRange(currentTimeRange.current),
-        config: currentConfig.current,
+        config,
         tenant: currentTenant.current,
         namespace,
+        schema,
       });
 
       histogramAbort.current = abort;
@@ -687,6 +673,5 @@ export const useLogs = (
     getHistogram,
     histogramError,
     toggleStreaming,
-    config,
   };
 };

@@ -16,6 +16,7 @@ import {
   isMatrixResult,
   MetricValue,
   QueryRangeResponse,
+  Schema,
   TimeRange,
   TimeRangeNumber,
 } from '../logs.types';
@@ -59,14 +60,21 @@ interface LogHistogramProps {
   interval?: number;
   isLoading?: boolean;
   error?: unknown;
+  schema?: Schema;
 }
 
 const resultHasAbreviation = (
   result: Record<string, string>,
   abbreviation: Array<string>,
-): boolean => !!result.level && abbreviation.includes(result.level);
+  schema: Schema | undefined,
+): boolean => {
+  if (schema == Schema.otel) {
+    return !!result.severity_text && abbreviation.includes(result.severity_text);
+  }
+  return !!result.level && abbreviation.includes(result.level);
+};
 
-const aggregateMetricsLogData = (response?: QueryRangeResponse): HistogramData => {
+const aggregateMetricsLogData = (response?: QueryRangeResponse, schema?: Schema): HistogramData => {
   const histogramData: HistogramData = {
     critical: [],
     error: [],
@@ -84,7 +92,7 @@ const aggregateMetricsLogData = (response?: QueryRangeResponse): HistogramData =
     for (const logData of data.result) {
       let logDataIngroup = false;
       for (const [group, abbreviations] of Object.entries(severityAbbreviations)) {
-        if (resultHasAbreviation(logData.metric, abbreviations)) {
+        if (resultHasAbreviation(logData.metric, abbreviations, schema)) {
           histogramData[group as Severity].push(...logData.values);
           logDataIngroup = true;
           break;
@@ -240,6 +248,7 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
   error,
   onChangeTimeRange,
   interval,
+  schema,
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
@@ -271,7 +280,7 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
       return { ticks: [], charts: null, availableGroups: [] };
     }
 
-    const data = aggregateMetricsLogData(histogramData);
+    const data = aggregateMetricsLogData(histogramData, schema);
     const chartsData = getChartsData(data, intervalValue);
 
     const tickCount = tickCountFromTimeRange(timeRangeValue, intervalValue);

@@ -1,10 +1,16 @@
+import { SchemaConfig } from '../logs.types';
 import { getFetchConfig } from '../loki-client';
 
 describe('Loki Client', () => {
   it('should generate a valid config', () => {
     [
       {
-        config: { config: undefined, tenant: 'application', logsLimit: 100 },
+        config: {
+          config: undefined,
+          tenant: 'application',
+          logsLimit: 100,
+          schema: SchemaConfig.viaq,
+        },
         expectedFetchConfig: {
           endpoint: '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application',
           requestInit: { timeout: undefined },
@@ -12,7 +18,7 @@ describe('Loki Client', () => {
       },
       {
         config: {
-          config: { useTenantInHeader: true, logsLimit: 100 },
+          config: { useTenantInHeader: true, logsLimit: 100, schema: SchemaConfig.viaq },
           tenant: 'application',
         },
         expectedFetchConfig: {
@@ -22,7 +28,7 @@ describe('Loki Client', () => {
       },
       {
         config: {
-          config: { useTenantInHeader: false, logsLimit: 100 },
+          config: { useTenantInHeader: false, logsLimit: 100, schema: SchemaConfig.viaq },
           tenant: 'infrastructure',
         },
         expectedFetchConfig: {
@@ -32,7 +38,12 @@ describe('Loki Client', () => {
       },
       {
         config: {
-          config: { useTenantInHeader: false, logsLimit: 100, timeout: 2 },
+          config: {
+            useTenantInHeader: false,
+            logsLimit: 100,
+            timeout: 2,
+            schema: SchemaConfig.viaq,
+          },
           tenant: 'infrastructure',
         },
         expectedFetchConfig: {
