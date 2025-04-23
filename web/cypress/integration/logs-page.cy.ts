@@ -410,7 +410,7 @@ describe('Logs Page', () => {
         .invoke('val')
         .should(
           'equal',
-          '{ log_type="application", kubernetes_namespace_name="gitops" } |= `line filter` | json | level=~"error|err|eror|info|inf|information|notice"',
+          '{ kubernetes_namespace_name="gitops" } |= `line filter` | json | level=~"error|err|eror|info|inf|information|notice"',
         );
     });
 
@@ -682,7 +682,7 @@ describe('Logs Page', () => {
         .invoke('val')
         .should(
           'equal',
-          '{ log_type="application", kubernetes_container_name="operator", kubernetes_pod_name="my-pod-2" } | json',
+          '{ kubernetes_container_name="operator", kubernetes_pod_name="my-pod-2" } | json',
         );
     });
 

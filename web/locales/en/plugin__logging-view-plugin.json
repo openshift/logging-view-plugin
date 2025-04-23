@@ -24,7 +24,7 @@
   "No datapoints found": "No datapoints found",
   "No data": "No data",
   "Invalid data": "Invalid data",
-  "Invalid log stream selector. Please select a namespace, pod or container as filter, or add a log stream selector like: ": "Invalid log stream selector. Please select a namespace, pod or container as filter, or add a log stream selector like: ",
+  "Invalid log stream selector. Please select a namespace, pod or container as filter.": "Invalid log stream selector. Please select a namespace, pod or container as filter.",
   "Show Resources": "Show Resources",
   "Hide Resources": "Hide Resources",
   "Show Stats": "Show Stats",

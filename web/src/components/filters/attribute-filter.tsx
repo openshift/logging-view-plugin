@@ -11,7 +11,7 @@ import {
   ToolbarGroup,
 } from '@patternfly/react-core';
 import { FilterIcon } from '@patternfly/react-icons';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDebounce } from '../../hooks/useDebounce';
 import { TestIds } from '../../test-ids';
@@ -57,6 +57,12 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
       setTextInputValue(initialText ?? '');
     }
   }, [textAttribute, filters]);
+
+  useEffect(() => {
+    if (!selectedAttributeId) {
+      setSelectedAttributeId(attributeList[0]?.id);
+    }
+  }, [attributeList]);
 
   const handleAttributeSelect = (
     _: React.MouseEvent<Element, MouseEvent> | undefined,

@@ -1,3 +1,5 @@
+import { DEFAULT_SCHEMA, Schema, SchemaConfig } from './logs.types';
+
 /**
  * Converts a value into a string with scale prefix
  * @example
@@ -87,4 +89,18 @@ export const capitalize = (str?: string): string => {
     return '';
   }
   return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+export const getSchema = (value: string | null | undefined | SchemaConfig): Schema => {
+  switch (value) {
+    case Schema.otel:
+    case SchemaConfig.otel:
+      return Schema.otel;
+    case Schema.viaq:
+    case SchemaConfig.viaq:
+      return Schema.viaq;
+
+    default:
+      return DEFAULT_SCHEMA;
+  }
 };

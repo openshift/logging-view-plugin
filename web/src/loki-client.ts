@@ -5,12 +5,14 @@ import {
   Config,
   Direction,
   LabelValueResponse,
-  QueryRangeResponse,
-  VolumeRangeResponse,
-  RulesResponse,
   MatrixResult,
+  QueryRangeResponse,
+  RulesResponse,
+  Schema,
+  VolumeRangeResponse,
 } from './logs.types';
-import { durationFromTimestamp } from './value-utils';
+import { getStreamLabelsFromSchema, ResourceLabel } from './parse-resources';
+import { durationFromTimestamp, getSchema } from './value-utils';
 
 const LOKI_ENDPOINT = '/api/proxy/plugin/logging-view-plugin/backend';
 
@@ -22,6 +24,7 @@ type QueryRangeParams = {
   namespace?: string;
   tenant: string;
   direction?: Direction;
+  schema: Schema;
 };
 
 type VolumeRangeParams = {
@@ -32,6 +35,7 @@ type VolumeRangeParams = {
   namespace?: string;
   tenant: string;
   targetLabels?: string;
+  schema: Schema;
 };
 
 type HistogramQuerParams = {
@@ -42,6 +46,7 @@ type HistogramQuerParams = {
   config?: Config;
   namespace?: string;
   tenant: string;
+  schema: Schema;
 };
 
 type LokiTailQueryParams = {
@@ -52,6 +57,7 @@ type LokiTailQueryParams = {
   config?: Config;
   namespace?: string;
   tenant: string;
+  schema: Schema;
 };
 
 const MAX_RANGE_REQUEST = 60 * 60 * 6 * 1000; // 6 hours
@@ -115,10 +121,12 @@ export const executeQueryRange = ({
   tenant,
   namespace,
   direction,
+  schema,
 }: QueryRangeParams): CancellableFetch<QueryRangeResponse> => {
   const extendedQuery = queryWithNamespace({
     query,
     namespace,
+    schema,
   });
 
   const params: Record<string, string> = {
@@ -147,10 +155,12 @@ export const executeVolumeRange = ({
   config,
   tenant,
   namespace,
+  schema,
 }: VolumeRangeParams): CancellableFetch<VolumeRangeResponse> => {
   const extendedQuery = queryWithNamespace({
     query,
     namespace,
+    schema,
   });
 
   const params: Record<string, string> = {
@@ -191,15 +201,20 @@ export const executeHistogramQuery = ({
   config,
   tenant,
   namespace,
+  schema,
 }: HistogramQuerParams): CancellableFetch<QueryRangeResponse<MatrixResult>> => {
   const intervalString = durationFromTimestamp(interval);
+  const labels = getStreamLabelsFromSchema(schema);
+  const labelSeverity = labels[ResourceLabel.Severity];
 
   const extendedQuery = queryWithNamespace({
     query,
     namespace,
+    schema,
   });
 
-  const histogramQuery = `sum by (level) (count_over_time(${extendedQuery} [${intervalString}]))`;
+  // eslint-disable-next-line max-len
+  const histogramQuery = `sum by (${labelSeverity}) (count_over_time(${extendedQuery} [${intervalString}]))`;
 
   const params = {
     query: histogramQuery,
@@ -271,10 +286,17 @@ export const executeHistogramQuery = ({
   );
 };
 
-export const connectToTailSocket = ({ query, config, tenant, namespace }: LokiTailQueryParams) => {
+export const connectToTailSocket = ({
+  query,
+  config,
+  tenant,
+  namespace,
+  schema,
+}: LokiTailQueryParams) => {
   const extendedQuery = queryWithNamespace({
     query,
     namespace,
+    schema,
   });
 
   const params = {
@@ -310,8 +332,10 @@ export const getRules = ({
 
   let url = `${endpoint}/prometheus/api/v1/rules`;
 
-  const alertingRulesNamespaceLabelKey =
-    config?.alertingRuleNamespaceLabelKey || 'kubernetes_namespace_name';
+  const labelMatchers = getStreamLabelsFromSchema(getSchema(config?.schema));
+  const namespaceLabel = labelMatchers[ResourceLabel.Namespace];
+
+  const alertingRulesNamespaceLabelKey = config?.alertingRuleNamespaceLabelKey || namespaceLabel;
 
   if (namespace) {
     url = `${url}?${alertingRulesNamespaceLabelKey}=${namespace}`;

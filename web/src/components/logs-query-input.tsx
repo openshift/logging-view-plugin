@@ -59,9 +59,9 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
               variant="danger"
               title={
                 !isValid
-                  ? `${t(
-                      'Invalid log stream selector. Please select a namespace, pod or container as filter, or add a log stream selector like: ',
-                    )} { log_type =~ ".+" } | json`
+                  ? t(
+                      'Invalid log stream selector. Please select a namespace, pod or container as filter.',
+                    )
                   : invalidQueryErrorMessage
               }
               aria-live="polite"

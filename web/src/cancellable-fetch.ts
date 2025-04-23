@@ -46,8 +46,8 @@ export const cancellableFetch = <T>(
   const abortController = new AbortController();
   const abort = () => abortController.abort();
 
-  const fetchPromise = () =>
-    fetch(url, {
+  const fetchPromise = async () => {
+    const response = await fetch(url, {
       ...init,
       headers: {
         ...init?.headers,
@@ -55,13 +55,14 @@ export const cancellableFetch = <T>(
         ...(init?.method === 'POST' ? { 'X-CSRFToken': getCSRFToken() } : {}),
       },
       signal: abortController.signal,
-    }).then(async (response) => {
-      if (!response.ok) {
-        const text = await response.text();
-        throw new FetchError(text, response.status);
-      }
-      return response.json();
     });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new FetchError(text, response.status);
+    }
+    return response.json();
+  };
 
   const timeout = init?.timeout ?? 30 * 1000;
 
