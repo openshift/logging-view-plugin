@@ -160,9 +160,7 @@ describe('Logs Dev Page', () => {
     cy.wait('@queryRangeStreams').then(({ request }) => {
       const url = new URL(request.url);
       const query = url.searchParams.get('query');
-      expect(query).to.equal(
-        '{ log_type="application", kubernetes_namespace_name="my-namespace" } | json',
-      );
+      expect(query).to.equal('{ kubernetes_namespace_name="my-namespace" } | json');
     });
   });
 
@@ -186,9 +184,7 @@ describe('Logs Dev Page', () => {
     cy.wait('@queryRangeStreams').then(({ request }) => {
       const url = new URL(request.url);
       const query = url.searchParams.get('query');
-      expect(query).to.equal(
-        '{ log_type="application", kubernetes_namespace_name="my-namespace" } | json',
-      );
+      expect(query).to.equal('{ kubernetes_namespace_name="my-namespace" } | json');
     });
 
     cy.getByTestId(TestIds.NamespaceToggle).click();
@@ -197,9 +193,7 @@ describe('Logs Dev Page', () => {
     cy.wait('@queryRangeStreams').then(({ request }) => {
       const url = new URL(request.url);
       const query = url.searchParams.get('query');
-      expect(query).to.equal(
-        '{ log_type="application", kubernetes_namespace_name="my-namespace-two" } | json',
-      );
+      expect(query).to.equal('{ kubernetes_namespace_name="my-namespace-two" } | json');
     });
   });
 
@@ -231,9 +225,7 @@ describe('Logs Dev Page', () => {
     cy.wait('@queryRangeStreams').then(({ request }) => {
       const url = new URL(request.url);
       const query = url.searchParams.get('query');
-      expect(query).to.equal(
-        '{ log_type="application", kubernetes_namespace_name="my-namespace" } | json',
-      );
+      expect(query).to.equal('{ kubernetes_namespace_name="my-namespace" } | json');
     });
 
     cy.getByTestId(TestIds.NamespaceToggle).click();
@@ -246,9 +238,7 @@ describe('Logs Dev Page', () => {
         '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/infrastructure/loki/api/v1/query_range',
       );
       const query = url.searchParams.get('query');
-      expect(query).to.equal(
-        '{ log_type="infrastructure", kubernetes_namespace_name="openshift-cluster-version" } | json',
-      );
+      expect(query).to.equal('{ kubernetes_namespace_name="openshift-cluster-version" } | json');
     });
   });
 

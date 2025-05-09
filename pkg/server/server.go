@@ -40,6 +40,7 @@ type PluginConfig struct {
 	AlertingRuleNamespaceLabelKey   string        `json:"alertingRuleNamespaceLabelKey,omitempty" yaml:"alertingRuleNamespaceLabelKey,omitempty"`
 	Timeout                         time.Duration `json:"timeout,omitempty" yaml:"timeout,omitempty"`
 	LogsLimit                       int           `json:"logsLimit,omitempty" yaml:"logsLimit,omitempty"`
+	Schema                          string        `json:"schema,omitempty" yaml:"schema,omitempty"`
 }
 
 func (pluginConfig *PluginConfig) MarshalJSON() ([]byte, error) {

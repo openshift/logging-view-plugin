@@ -13,10 +13,11 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   availableAttributes,
-  initialAvailableAttributes,
   filtersFromQuery,
+  initialAvailableAttributes,
   queryFromFilters,
 } from '../attribute-filters';
+import { CenteredContainer } from '../components/centered-container';
 import { Filters } from '../components/filters/filter.types';
 import { LogsHistogram } from '../components/logs-histogram';
 import { LogsMetrics } from '../components/logs-metrics';
@@ -25,34 +26,19 @@ import { LogsToolbar } from '../components/logs-toolbar';
 import { RefreshIntervalDropdown } from '../components/refresh-interval-dropdown';
 import { TimeRangeDropdown } from '../components/time-range-dropdown';
 import { ToggleHistogramButton } from '../components/toggle-histogram-button';
+import { downloadCSV } from '../download-csv';
+import { LogsConfigProvider, useLogsConfig } from '../hooks/LogsConfigProvider';
 import { useLogs } from '../hooks/useLogs';
 import { defaultQueryFromTenant, useURLState } from '../hooks/useURLState';
 import { Direction, isMatrixResult } from '../logs.types';
 import { TestIds } from '../test-ids';
-import { CenteredContainer } from '../components/centered-container';
-import { downloadCSV } from '../download-csv';
 
 const LogsPage: React.FC = () => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
   const [isHistogramVisible, setIsHistogramVisible] = React.useState(false);
-  const {
-    query,
-    setQueryInURL,
-    tenant,
-    setTenantInURL,
-    areResourcesShown,
-    setShowResourcesInURL,
-    areStatsShown,
-    setShowStatsInURL,
-    filters,
-    setFilters,
-    setTimeRangeInURL,
-    timeRange,
-    interval,
-    direction,
-    setDirectionInURL,
-  } = useURLState({ attributes: initialAvailableAttributes });
+
+  const { config } = useLogsConfig();
 
   const {
     histogramData,
@@ -73,16 +59,38 @@ const LogsPage: React.FC = () => {
     hasMoreLogsData,
     getHistogram,
     toggleStreaming,
-    config,
   } = useLogs();
 
+  const {
+    query,
+    setQueryInURL,
+    tenant,
+    setTenantInURL,
+    schema,
+    setSchemaInURL,
+    areResourcesShown,
+    setShowResourcesInURL,
+    areStatsShown,
+    setShowStatsInURL,
+    filters,
+    setFilters,
+    setTimeRangeInURL,
+    timeRange,
+    interval,
+    direction,
+    setDirectionInURL,
+    attributes,
+  } = useURLState({
+    getAttributes: availableAttributes,
+  });
+
   const handleToggleStreaming = () => {
-    toggleStreaming({ query });
+    toggleStreaming({ query, schema });
   };
 
   const handleLoadMoreData = (lastTimestamp: number) => {
     if (!isLoadingMoreLogsData) {
-      getMoreLogs({ lastTimestamp, query, direction });
+      getMoreLogs({ lastTimestamp, query, direction, schema });
     }
   };
 
@@ -91,15 +99,15 @@ const LogsPage: React.FC = () => {
   };
 
   const runQuery = ({ queryToUse }: { queryToUse?: string } = {}) => {
-    getLogs({ query: queryToUse ?? query, tenant, timeRange, direction });
+    getLogs({ query: queryToUse ?? query, tenant, timeRange, direction, schema });
 
     if (isHistogramVisible) {
-      getHistogram({ query: queryToUse ?? query, tenant, timeRange });
+      getHistogram({ query: queryToUse ?? query, tenant, timeRange, schema });
     }
   };
 
   const runVolume = () => {
-    getVolume({ query, tenant, timeRange });
+    getVolume({ query, tenant, timeRange, schema });
   };
 
   const handleFiltersChange = (selectedFilters?: Filters) => {
@@ -112,7 +120,8 @@ const LogsPage: React.FC = () => {
 
     const updatedFilters = filtersFromQuery({
       query: queryFromInput,
-      attributes: initialAvailableAttributes,
+      attributes: initialAvailableAttributes(schema),
+      schema: schema,
     });
 
     setFilters(updatedFilters);
@@ -120,7 +129,7 @@ const LogsPage: React.FC = () => {
 
   const updateQuery = (selectedFilters?: Filters, selectedTenant?: string): string => {
     if ((!selectedFilters || Object.keys(selectedFilters).length === 0) && !selectedTenant) {
-      const defaultQuery = defaultQueryFromTenant();
+      const defaultQuery = defaultQueryFromTenant({ schema });
 
       setQueryInURL(defaultQuery);
 
@@ -129,8 +138,9 @@ const LogsPage: React.FC = () => {
       const updatedQuery = queryFromFilters({
         existingQuery: query,
         filters: selectedFilters,
-        attributes: initialAvailableAttributes,
+        attributes: initialAvailableAttributes(schema),
         tenant: selectedTenant,
+        schema,
       });
 
       setQueryInURL(updatedQuery);
@@ -138,11 +148,6 @@ const LogsPage: React.FC = () => {
       return updatedQuery;
     }
   };
-
-  const attributeList = React.useMemo(
-    () => (tenant ? availableAttributes(tenant, config) : []),
-    [tenant, config],
-  );
 
   const handleRefreshClick = () => {
     runQuery();
@@ -206,6 +211,7 @@ const LogsPage: React.FC = () => {
             isLoading={isLoadingHistogramData}
             error={histogramError}
             onChangeTimeRange={setTimeRangeInURL}
+            schema={schema}
           />
         )}
         <LogsToolbar
@@ -223,10 +229,12 @@ const LogsPage: React.FC = () => {
           showStats={areStatsShown}
           onShowStatsToggle={setShowStatsInURL}
           isDisabled={isQueryEmpty}
-          attributeList={attributeList}
+          attributeList={attributes}
           filters={filters}
           onFiltersChange={handleFiltersChange}
           onDownloadCSV={() => downloadCSV(logsData)}
+          schema={schema}
+          onSchemaSelect={setSchemaInURL}
         />
 
         {isLoadingLogsData ? (
@@ -277,4 +285,12 @@ const LogsPage: React.FC = () => {
   );
 };
 
-export default LogsPage;
+const LogsPageWrapper: React.FC = () => {
+  return (
+    <LogsConfigProvider>
+      <LogsPage />
+    </LogsConfigProvider>
+  );
+};
+
+export default LogsPageWrapper;
