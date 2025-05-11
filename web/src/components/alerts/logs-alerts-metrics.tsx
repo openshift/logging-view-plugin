@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { LogsConfigProvider, useLogsConfig } from '../../hooks/LogsConfigProvider';
 import { useLogs } from '../../hooks/useLogs';
 import { Rule, TimeRange } from '../../logs.types';
+import { getSchema } from '../../value-utils';
 import { LogsMetrics } from '../logs-metrics';
 import { TimeRangeDropdown } from '../time-range-dropdown';
 
@@ -13,14 +15,15 @@ const LOKI_TENANT_LABEL_KEY = 'tenantId';
 
 const LogsAlertMetrics: React.FC<LogsAlertMetricsProps> = ({ rule }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
-  const { getLogs, logsData, logsError, isLoadingLogsData, config } = useLogs();
+  const { getLogs, logsData, logsError, isLoadingLogsData } = useLogs();
+  const { config } = useLogsConfig();
 
   const tenant = rule?.labels?.[config.alertingRuleTenantLabelKey ?? LOKI_TENANT_LABEL_KEY];
   const [timeRange, setTimeRange] = React.useState<TimeRange | undefined>();
 
   useEffect(() => {
     if (rule?.query && tenant) {
-      getLogs({ query: rule.query, timeRange, tenant });
+      getLogs({ query: rule.query, timeRange, tenant, schema: getSchema(config.schema) });
     }
   }, [rule?.query, timeRange]);
 
@@ -47,4 +50,12 @@ const LogsAlertMetrics: React.FC<LogsAlertMetricsProps> = ({ rule }) => {
   );
 };
 
-export default LogsAlertMetrics;
+const LogsAlertMetricsWrapper: React.FC<LogsAlertMetricsProps> = (props) => {
+  return (
+    <LogsConfigProvider>
+      <LogsAlertMetrics {...props} />
+    </LogsConfigProvider>
+  );
+};
+
+export default LogsAlertMetricsWrapper;

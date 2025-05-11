@@ -19,9 +19,9 @@ export const useAttributeValueData = (attribute: Attribute): UseAttributeValueDa
       setAttributeError(undefined);
       if (attribute.options) {
         if (Array.isArray(attribute.options)) {
+          setAttributeLoading(false);
           setAttributeOptions(attribute.options);
         } else {
-          setAttributeLoading(true);
           attribute
             .options(searchQuery)
             .then((asyncOptions) => {

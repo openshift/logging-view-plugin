@@ -7,48 +7,58 @@ import {
   getSeverityFilterPipelineStage,
   queryFromFilters,
 } from '../attribute-filters';
-import { AttributeList } from '../components/filters/filter.types';
+import { AttributeList, Filters } from '../components/filters/filter.types';
+import { LabelMatcher, PipelineStage } from '../logql-query';
+import { Schema } from '../logs.types';
+import { getStreamLabelsFromSchema, ResourceLabel } from '../parse-resources';
 
-export const availableAttributes: AttributeList = [
-  {
-    name: 'Content',
-    id: 'content',
-    valueType: 'text',
-  },
-  {
-    name: 'Namespaces',
-    label: 'kubernetes_namespace_name',
-    id: 'namespace',
-    options: () =>
-      Promise.resolve([
-        { option: 'Namespace 1', value: 'namespace-1' },
-        { option: 'Namespace 2', value: 'namespace-2' },
-      ]),
-    valueType: 'checkbox-select',
-  },
-  {
-    name: 'Pods',
-    label: 'kubernetes_pod_name',
-    id: 'pod',
-    options: () =>
-      Promise.resolve([
-        { option: 'Pod 1', value: 'pod-1' },
-        { option: 'Pod 2', value: 'pod-2' },
-      ]),
-    valueType: 'checkbox-select',
-  },
-  {
-    name: 'Containers',
-    label: 'kubernetes_container_name',
-    id: 'container',
-    options: () =>
-      Promise.resolve([
-        { option: 'Container 1', value: 'container-1' },
-        { value: 'container-2', option: 'Container 2' },
-      ]),
-    valueType: 'checkbox-select',
-  },
-];
+const availableAttributes = (schema: Schema): AttributeList => {
+  const labelMatchers = getStreamLabelsFromSchema(schema);
+  const namespaceLabel = labelMatchers[ResourceLabel.Namespace];
+  const podLabel = labelMatchers[ResourceLabel.Pod];
+  const containerLabel = labelMatchers[ResourceLabel.Container];
+
+  return [
+    {
+      name: 'Content',
+      id: 'content',
+      valueType: 'text',
+    },
+    {
+      name: 'Namespaces',
+      label: namespaceLabel,
+      id: 'namespace',
+      options: () =>
+        Promise.resolve([
+          { option: 'Namespace 1', value: 'namespace-1' },
+          { option: 'Namespace 2', value: 'namespace-2' },
+        ]),
+      valueType: 'checkbox-select',
+    },
+    {
+      name: 'Pods',
+      label: podLabel,
+      id: 'pod',
+      options: () =>
+        Promise.resolve([
+          { option: 'Pod 1', value: 'pod-1' },
+          { option: 'Pod 2', value: 'pod-2' },
+        ]),
+      valueType: 'checkbox-select',
+    },
+    {
+      name: 'Containers',
+      label: containerLabel,
+      id: 'container',
+      options: () =>
+        Promise.resolve([
+          { option: 'Container 1', value: 'container-1' },
+          { value: 'container-2', option: 'Container 2' },
+        ]),
+      valueType: 'checkbox-select',
+    },
+  ];
+};
 
 describe('Attribute filters', () => {
   it('should return matchers from filters', () => {
@@ -93,10 +103,45 @@ describe('Attribute filters', () => {
           },
         ],
       },
-    ].forEach(({ filters, expected }) => {
-      const matchers = getMatchersFromFilters(filters);
-      expect(matchers).toEqual(expected);
-    });
+      {
+        filters: {
+          namespace: new Set(['my-namespace', 'other-namespace']),
+          pod: new Set(['pod-1', 'pod-2']),
+          container: new Set(['container-1', 'container-2']),
+        },
+        schema: Schema.otel,
+        expected: [
+          {
+            label: 'k8s_namespace_name',
+            operator: '=~',
+            value: '"my-namespace|other-namespace"',
+          },
+          {
+            label: 'k8s_pod_name',
+            operator: '=~',
+            value: '"pod-1|pod-2"',
+          },
+          {
+            label: 'k8s_container_name',
+            operator: '=~',
+            value: '"container-1|container-2"',
+          },
+        ],
+      },
+    ].forEach(
+      ({
+        filters,
+        expected,
+        schema,
+      }: {
+        filters: Filters;
+        expected: LabelMatcher[];
+        schema?: Schema;
+      }) => {
+        const matchers = getMatchersFromFilters({ filters, schema: schema ?? Schema.viaq });
+        expect(matchers).toEqual(expected);
+      },
+    );
   });
 
   it('should get content pipeline stage from filters', () => {
@@ -164,13 +209,32 @@ describe('Attribute filters', () => {
         },
       },
       {
+        namespace: 'otel-namespace',
+        schema: Schema.otel,
+        expected: {
+          label: 'k8s_namespace_name',
+          operator: '=',
+          value: '"otel-namespace"',
+        },
+      },
+      {
         namespace: undefined,
         expected: undefined,
       },
-    ].forEach(({ namespace, expected }) => {
-      const selectors = getNamespaceMatcher(namespace);
-      expect(selectors).toEqual(expected);
-    });
+    ].forEach(
+      ({
+        namespace,
+        expected,
+        schema,
+      }: {
+        namespace: string | undefined;
+        expected: LabelMatcher | undefined;
+        schema?: Schema;
+      }) => {
+        const selectors = getNamespaceMatcher({ namespace, schema: schema ?? Schema.viaq });
+        expect(selectors).toEqual(expected);
+      },
+    );
   });
 
   test('getSeverityFilterPipeline', () => {
@@ -214,6 +278,17 @@ describe('Attribute filters', () => {
       },
       {
         filters: {
+          severity: new Set(['error', 'info', 'unknown']),
+        },
+        schema: Schema.otel,
+        expected: {
+          operator: '|',
+          value:
+            'severity_text="unknown" or severity_text="" or severity_text=~"error|err|eror|info|inf|information|notice"',
+        },
+      },
+      {
+        filters: {
           severity: new Set(['unknown']),
         },
         expected: {
@@ -221,10 +296,20 @@ describe('Attribute filters', () => {
           value: 'level="unknown" or level=""',
         },
       },
-    ].forEach(({ filters, expected }) => {
-      const pipeline = getSeverityFilterPipelineStage(filters);
-      expect(pipeline).toEqual(expected);
-    });
+    ].forEach(
+      ({
+        filters,
+        expected,
+        schema,
+      }: {
+        filters: Filters | undefined;
+        expected: PipelineStage | undefined;
+        schema?: Schema;
+      }) => {
+        const pipeline = getSeverityFilterPipelineStage({ filters, schema: schema ?? Schema.viaq });
+        expect(pipeline).toEqual(expected);
+      },
+    );
   });
 
   test('filtersFromQuery', () => {
@@ -321,13 +406,24 @@ describe('Attribute filters', () => {
       },
       {
         query:
+          '{ k8s_pod_name=~"a-pod|b-pod", k8s_namespace_name=~"ns-1|ns-2", label="test", k8s_container_name="container-1" } |=`some line content` | other="filter" | severity_text="err|eror" or severity_text="unknown" or severity_text=""',
+        schema: Schema.otel,
+        expectedFilters: {
+          pod: new Set(['a-pod', 'b-pod']),
+          namespace: new Set(['ns-1', 'ns-2']),
+          container: new Set(['container-1']),
+          content: new Set([`some line content`]),
+          severity: new Set(['error', 'unknown']),
+        },
+      },
+      {
+        query:
           '{ kubernetes_pod_name=~"a-pod|b-pod", kubernetes_namespace_name=~"ns-1|ns-2", label="test", kubernetes_container_name="container-1" } |=`some line content` | other="filter" | level',
         expectedFilters: {
           pod: new Set(['a-pod', 'b-pod']),
           namespace: new Set(['ns-1', 'ns-2']),
           container: new Set(['container-1']),
           content: new Set([`some line content`]),
-          severity: new Set(),
         },
       },
       {
@@ -338,7 +434,6 @@ describe('Attribute filters', () => {
           namespace: new Set(['ns-1', 'ns-2']),
           container: new Set(['container-1']),
           content: new Set([`"some line content"`]),
-          severity: new Set(),
         },
       },
       {
@@ -349,16 +444,37 @@ describe('Attribute filters', () => {
           namespace: new Set(['ns-1', 'ns-2']),
           container: new Set(['container-1']),
           content: new Set([`"some-line-content"`]),
-          severity: new Set(),
         },
       },
-    ].forEach(({ query, expectedFilters }) => {
-      const filters = filtersFromQuery({
+      {
+        query:
+          '{ k8s_pod_name=~"a-pod|b-pod", k8s_namespace_name=~"ns-1|ns-2", label="test", k8s_container_name="container-1" } |=`"some-line-content"` | other="filter" | level',
+        expectedFilters: {
+          pod: new Set(['a-pod', 'b-pod']),
+          namespace: new Set(['ns-1', 'ns-2']),
+          container: new Set(['container-1']),
+          content: new Set([`"some-line-content"`]),
+        },
+        schema: Schema.otel,
+      },
+    ].forEach(
+      ({
         query,
-        attributes: availableAttributes,
-      });
-      expect(filters).toEqual(expectedFilters);
-    });
+        expectedFilters,
+        schema,
+      }: {
+        query: string | undefined;
+        expectedFilters: Filters;
+        schema?: Schema;
+      }) => {
+        const filters = filtersFromQuery({
+          query,
+          attributes: availableAttributes(schema ?? Schema.viaq),
+          schema: schema ?? Schema.viaq,
+        });
+        expect(filters).toEqual(expectedFilters);
+      },
+    );
   });
 
   test('query from filters', () => {
@@ -518,14 +634,41 @@ describe('Attribute filters', () => {
         expectedQuery:
           '{ kubernetes_namespace_name=~"namespace-3|namespace-4", label="test" } | other="filter"',
       },
-    ].forEach(({ initialQuery, filters, expectedQuery }) => {
-      expect(
-        queryFromFilters({
-          existingQuery: initialQuery,
-          filters,
-          attributes: availableAttributes,
-        }),
-      ).toEqual(expectedQuery);
-    });
+      // Add otel labels keeping the viaq labels
+      {
+        initialQuery:
+          '{ kubernetes_pod_name=~"a-pod|b-pod", kubernetes_namespace_name=~"ns-1|ns-2", label="test", kubernetes_container_name="container-1" } |="some line content" | other="filter" | level=~"err|error|eror" or level="unknown" or level=""',
+        filters: {
+          namespace: new Set(['namespace-3', 'namespace-4']),
+          content: new Set<string>(),
+          severity: new Set<string>(),
+          pod: new Set<string>(),
+        },
+        schema: Schema.otel,
+        expectedQuery:
+          '{ kubernetes_pod_name=~"a-pod|b-pod", kubernetes_namespace_name=~"ns-1|ns-2", label="test", kubernetes_container_name="container-1", k8s_namespace_name=~"namespace-3|namespace-4" } | other="filter" | level=~"err|error|eror" or level="unknown" or level=""',
+      },
+    ].forEach(
+      ({
+        initialQuery,
+        filters,
+        expectedQuery,
+        schema,
+      }: {
+        initialQuery: string;
+        filters?: Filters;
+        expectedQuery: string;
+        schema?: Schema;
+      }) => {
+        expect(
+          queryFromFilters({
+            existingQuery: initialQuery,
+            filters,
+            attributes: availableAttributes(schema ?? Schema.viaq),
+            schema: schema ?? Schema.viaq,
+          }),
+        ).toEqual(expectedQuery);
+      },
+    );
   });
 });
