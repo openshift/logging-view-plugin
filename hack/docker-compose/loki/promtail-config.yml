@@ -31,12 +31,17 @@ scrape_configs:
           expression: '.*"lvl":"(?P<level>[a-zA-Z]+)"'
       - labels:
           level:
+      - regex:
+          expression: '.*"lvl":"(?P<severity_text>[a-zA-Z]+)"'
+      - labels:
+          severity_text:
     static_configs:
       - targets:
           - localhost
         labels:
           job: varlogs-duplicate
-          kubernetes_namespace_name: log-test
+          kubernetes_namespace_name: kube-public
+          k8s_namespace_name: kube-public
           log_type: application
           __path__: /var/log/*log
           kubernetes_pod_name: alertmanager-main-0
