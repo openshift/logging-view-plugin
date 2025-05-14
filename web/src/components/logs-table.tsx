@@ -2,7 +2,7 @@ import { ResourceLink, RowProps, TableColumn } from '@openshift-console/dynamic-
 import { Split, SplitItem } from '@patternfly/react-core';
 import { ISortBy, SortByDirection, Td, ThProps } from '@patternfly/react-table';
 import React, { useCallback, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router-dom-v5-compat';
 import { DateFormat, dateToFormat } from '../date-utils';
 import {
   Direction,
@@ -14,11 +14,11 @@ import {
 } from '../logs.types';
 import { severityFromString } from '../severity';
 import { TestIds } from '../test-ids';
-import { notUndefined } from '../value-utils';
 import { LogDetail } from './log-detail';
 import './logs-table.css';
 import { StatsTable } from './stats-table';
 import { TableData, VirtualizedLogsTable } from './virtualized-logs-table';
+import { ResourceLabel, parseResources, parseName } from '../parse-resources';
 
 interface LogsTableProps {
   logsData?: QueryRangeResponse;
@@ -42,29 +42,6 @@ const isJSONObject = (value: string): boolean => {
   return trimmedValue.startsWith('{') && trimmedValue.endsWith('}');
 };
 
-const parseResources = (data: Record<string, string>): Array<Resource> => {
-  const container = data['kubernetes_container_name']
-    ? {
-        kind: 'Container',
-        name: data['kubernetes_container_name'],
-      }
-    : undefined;
-  const namespace = data['kubernetes_namespace_name']
-    ? {
-        kind: 'Namespace',
-        name: data['kubernetes_namespace_name'],
-      }
-    : undefined;
-  const pod = data['kubernetes_pod_name']
-    ? {
-        kind: 'Pod',
-        name: data['kubernetes_pod_name'],
-      }
-    : undefined;
-
-  return [namespace, pod, container].filter(notUndefined);
-};
-
 const streamToTableData = (stream: StreamLogData): Array<LogTableData> => {
   const values = stream.values;
 
@@ -74,16 +51,19 @@ const streamToTableData = (stream: StreamLogData): Array<LogTableData> => {
     const timestamp = parseFloat(String(value[0]));
     const time = timestamp / 1e6;
     const formattedTime = dateToFormat(time, DateFormat.Full);
+    const severity = parseName(stream.stream, ResourceLabel.Severity);
+    const namespace = parseName(stream.stream, ResourceLabel.Namespace);
+    const podName = parseName(stream.stream, ResourceLabel.Pod);
 
     return {
       time: formattedTime,
       timestamp,
       message,
-      severity: severityFromString(stream.stream.level) ?? 'other',
+      severity: severityFromString(severity) ?? 'other',
       data: stream.stream,
       resources: parseResources(stream.stream),
-      namespace: stream.stream['kubernetes_namespace_name'],
-      podName: stream.stream['kubernetes_pod_name'],
+      namespace,
+      podName,
       type: 'log',
       // index is 0 here to match the type, but it will be recalculated when flattening the array
       logIndex: 0,
@@ -106,7 +86,7 @@ const aggregateStreamLogData = (response?: QueryRangeResponse): Array<LogTableDa
 };
 
 const getSeverityClass = (severity: string) => {
-  return severity ? `co-logs-table__severity-${severity}` : '';
+  return severity ? `lv-plugin__table__severity-${severity}` : '';
 };
 
 // sort with an appropriate numeric comparator for big floats
@@ -121,14 +101,14 @@ const columns: Array<TableColumn<LogTableData>> = [
     id: 'expand',
     title: ' ',
     props: {
-      className: 'co-logs-table__expand',
+      className: 'lv-plugin__table__expand',
     },
   },
   {
     id: 'date',
     title: 'Date',
     props: {
-      className: 'co-logs-table__time co-logs-table__time-header',
+      className: 'lv-plugin__table__time lv-plugin__table__time-header',
     },
     sort: (data, sortDirection) =>
       data.sort((a, b) =>
@@ -196,20 +176,20 @@ const TableRow = ({ expandedItems, handleRowToggle, showResources, colSpan }: Ta
       <>
         <Td
           expand={{ isExpanded, onToggle: handleRowToggle, rowIndex: obj.logIndex }}
-          className="co-logs-table__expand"
+          className="lv-plugin__table__expand"
           id="expand"
         />
-        <TableData id="date" activeColumnIDs={activeColumnIDs} className="co-logs-table__time">
+        <TableData id="date" activeColumnIDs={activeColumnIDs} className="lv-plugin__table__time">
           {obj.time}
         </TableData>
         <TableData
           id="message"
           activeColumnIDs={activeColumnIDs}
-          className="co-logs-table__message"
+          className="lv-plugin__table__message"
         >
           <div>{obj.message}</div>
           {showResources && (
-            <Split className="co-logs-table__resources" hasGutter>
+            <Split className="lv-plugin__table__resources" hasGutter>
               {obj.resources?.map((resource) => (
                 <ResourceLinkList key={resource.kind} resource={resource} data={obj} />
               ))}
@@ -219,7 +199,7 @@ const TableRow = ({ expandedItems, handleRowToggle, showResources, colSpan }: Ta
       </>
     ) : isExpanded ? (
       <TableData
-        className="co-logs-table__details"
+        className="lv-plugin__table__details"
         id="expand"
         activeColumnIDs={activeColumnIDs}
         colSpan={colSpan}
@@ -326,7 +306,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   };
 
   return (
-    <div data-test={TestIds.LogsTable} className="co-logs-table">
+    <div data-test={TestIds.LogsTable} className="lv-plugin__table">
       {showStats && <StatsTable logsData={logsData} />}
       {children}
 
@@ -341,11 +321,11 @@ export const LogsTable: React.FC<LogsTableProps> = ({
         columns={columns}
         getSortParams={getSortParams}
         getRowClassName={(row) =>
-          `co-logs-table__row ${getSeverityClass(row.severity)} ${
+          `lv-plugin__table__row ${getSeverityClass(row.severity)} ${
             expandedItems.has(row.logIndex)
               ? row.type === 'log'
-                ? 'co-logs-table__row--expanded'
-                : 'co-logs-table__row--expanded-details'
+                ? 'lv-plugin__table__row--expanded'
+                : 'lv-plugin__table__row--expanded-details'
               : ''
           }`
         }

@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "openshift-console-plugin.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "openshift-console-plugin.labels" . | nindent 4 }}
+    app.openshift.io/runtime-namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.plugin.replicas }}
+  selector:
+    matchLabels:
+      {{- include "openshift-console-plugin.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+            {{- include "openshift-console-plugin.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: {{ template "openshift-console-plugin.name" . }}
+          image: {{ required "Plugin image must be specified!" .Values.plugin.image }}
+          args:
+            - "-port={{ .Values.plugin.port }}"
+            - "-cert=/var/serving-cert/tls.crt"
+            - "-key=/var/serving-cert/tls.key"
+            - "-plugin-config-path=/etc/plugin/config.yaml"
+            - "-static-path=/opt/app-root/web/dist"
+            - "-config-path=/opt/app-root/config"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - containerPort: {{ .Values.plugin.port }}
+              protocol: TCP
+          imagePullPolicy: Always
+          resources:
+            {{- toYaml .Values.plugin.resources | nindent 12 }}
+          volumeMounts:
+            - name: plugin-cert
+              readOnly: true
+              mountPath: /var/serving-cert
+            - name: plugin-conf
+              readOnly: true
+              mountPath: /etc/plugin
+      volumes:
+        - name: plugin-cert
+          secret:
+            secretName: {{ template "openshift-console-plugin.certificateSecret" . }}
+            defaultMode: 420
+        - name: plugin-conf
+          configMap:
+            name: {{ template "openshift-console-plugin.name" . }}
+            defaultMode: 420
+      restartPolicy: Always
+      dnsPolicy: ClusterFirst
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%

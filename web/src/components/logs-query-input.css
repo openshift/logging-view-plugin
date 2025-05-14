@@ -1,14 +1,14 @@
-.co-logs-expression-input {
+.lv-plugin__expression-input {
   display: flex;
   align-items: flex-start;
 }
 
-.co-logs-expression-input__form {
+.lv-plugin__expression-input__form {
   margin-right: var(--pf-v5-global--spacer--md);
   width: 100%;
 }
 
-textarea.pf-v5-c-form-control.co-logs-expression-input__searchInput {
+textarea.pf-v5-c-form-control.lv-plugin__expression-input__searchInput {
   font-family: var(--pf-v5-c-code-block__pre--FontFamily), monospace;
   font-size: var(--pf-v5-c-code-block__pre--FontSize);
 }

@@ -33,7 +33,7 @@ export const ToggleButton: React.FC<ToggleButtonProps> = ({
   return (
     <Button
       type="button"
-      className="co-logs-toggle-button"
+      className="lv-plugin__toggle-button"
       onClick={handleToggle}
       variant="link"
       data-test={dataTest}

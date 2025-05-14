@@ -1,15 +1,27 @@
-import React from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
-import { filtersFromQuery } from '../attribute-filters';
+import React, { DependencyList } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
+import { filtersFromQuery, queryFromFilters } from '../attribute-filters';
 import { AttributeList, Filters } from '../components/filters/filter.types';
-import { Direction, TimeRange } from '../logs.types';
+import { Config, Direction, Schema, TimeRange } from '../logs.types';
+import { ResourceLabel, ResourceToStreamLabels } from '../parse-resources';
 import { intervalFromTimeRange } from '../time-range';
+import { getSchema } from '../value-utils';
+import { useLogsConfig } from './LogsConfigProvider';
 import { useQueryParams } from './useQueryParams';
 
 interface UseURLStateHook {
-  defaultQuery?: string;
   defaultTenant?: string;
-  attributes: AttributeList;
+  getDefaultQuery?({ tenant, schema }: { tenant: string; schema: Schema }): string;
+  getAttributes?: ({
+    tenant,
+    config,
+    schema,
+  }: {
+    tenant: string;
+    config: Config;
+    schema: Schema;
+  }) => AttributeList | undefined;
+  attributesDependencies?: DependencyList;
 }
 
 const QUERY_PARAM_KEY = 'q';
@@ -17,30 +29,50 @@ const TIME_RANGE_START = 'start';
 const TIME_RANGE_END = 'end';
 const DIRECTION = 'direction';
 const TENANT_PARAM_KEY = 'tenant';
+const SCHEMA_PARAM_KEY = 'schema';
 const SHOW_RESOURCES_PARAM_KEY = 'showResources';
 const SHOW_STATS_PARAM_KEY = 'showStats';
 
-const DEFAULT_TENANT = 'application';
+export const DEFAULT_TENANT = 'application';
 const DEFAULT_SHOW_RESOURCES = '0';
 const DEFAULT_SHOW_STATS = '0';
-export const defaultQueryFromTenant = (tenant: string = DEFAULT_TENANT) =>
-  `{ log_type="${tenant}" } | json`;
+
+export const defaultQueryFromTenant = ({
+  tenant = DEFAULT_TENANT,
+  schema,
+}: {
+  tenant?: string;
+  schema: Schema;
+}) => {
+  const logType = ResourceToStreamLabels[ResourceLabel.LogType];
+  if (schema === Schema.otel) {
+    return `{ ${logType.otel}="${tenant}" } `;
+  }
+  return `{ ${logType.viaq}="${tenant}" } | json`;
+};
 
 const getDirectionValue = (value?: string | null): Direction =>
   value !== null ? (value === 'forward' ? 'forward' : 'backward') : 'backward';
 
 export const useURLState = ({
-  defaultQuery,
   defaultTenant = DEFAULT_TENANT,
-  attributes,
+  getDefaultQuery,
+  getAttributes,
+  attributesDependencies,
 }: UseURLStateHook) => {
   const queryParams = useQueryParams();
-  const history = useHistory();
+  const navigate = useNavigate();
   const location = useLocation();
+  const { config } = useLogsConfig();
 
   const initialTenant = queryParams.get(TENANT_PARAM_KEY) ?? defaultTenant;
+  const initialSchema: Schema = getSchema(queryParams.get(SCHEMA_PARAM_KEY) ?? config?.schema);
+
   const initialQuery =
-    queryParams.get(QUERY_PARAM_KEY) ?? defaultQuery ?? defaultQueryFromTenant(initialTenant);
+    queryParams.get(QUERY_PARAM_KEY) ??
+    getDefaultQuery?.({ tenant: initialTenant, schema: initialSchema }) ??
+    defaultQueryFromTenant({ tenant: initialTenant, schema: initialSchema });
+
   const initialTimeRangeStart = queryParams.get(TIME_RANGE_START);
   const initialTimeRangeEnd = queryParams.get(TIME_RANGE_END);
   const initialDirection = queryParams.get(DIRECTION);
@@ -51,9 +83,15 @@ export const useURLState = ({
 
   const [query, setQuery] = React.useState(initialQuery);
   const [tenant, setTenant] = React.useState(initialTenant);
-  const [filters, setFilters] = React.useState<Filters | undefined>(
-    filtersFromQuery({ query: initialQuery, attributes }),
+  const [schema, setSchema] = React.useState(initialSchema);
+  const attributes = React.useMemo<AttributeList>(
+    () => (getAttributes ? getAttributes({ tenant, config, schema }) ?? [] : []),
+    [tenant, config, schema, ...(attributesDependencies || [])],
   );
+  const [filters, setFilters] = React.useState<Filters | undefined>(
+    filtersFromQuery({ query: initialQuery, attributes, schema }),
+  );
+
   const [areResourcesShown, setAreResourcesShown] = React.useState<boolean>(initialResorcesShown);
   const [areStatsShown, setAreStatsShown] = React.useState<boolean>(intitalStatsShown);
   const [direction, setDirection] = React.useState<Direction>(getDirectionValue(initialDirection));
@@ -68,29 +106,51 @@ export const useURLState = ({
 
   const setTenantInURL = (selectedTenant: string) => {
     queryParams.set(TENANT_PARAM_KEY, selectedTenant);
-    history.push(`${location.pathname}?${queryParams.toString()}`);
+    navigate(`${location.pathname}?${queryParams.toString()}`);
+  };
+
+  const setSchemaInURL = (selectedSchema: Schema) => {
+    if (selectedSchema) {
+      queryParams.set(SCHEMA_PARAM_KEY, selectedSchema as string);
+
+      // re create query based on current filters and new schema
+      const newQuery = queryFromFilters({
+        existingQuery: '',
+        filters,
+        attributes,
+        tenant,
+        schema: selectedSchema,
+        addJSONParser: true,
+      });
+      queryParams.set(QUERY_PARAM_KEY, newQuery);
+
+      navigate(`${location.pathname}?${queryParams.toString()}`);
+    } else {
+      queryParams.delete(SCHEMA_PARAM_KEY);
+      navigate(`${location.pathname}?${queryParams.toString()}`);
+    }
   };
 
   const setShowResourcesInURL = (showResources: boolean) => {
     queryParams.set(SHOW_RESOURCES_PARAM_KEY, showResources ? '1' : '0');
-    history.push(`${location.pathname}?${queryParams.toString()}`);
+    navigate(`${location.pathname}?${queryParams.toString()}`);
   };
 
   const setShowStatsInURL = (showStats: boolean) => {
     queryParams.set(SHOW_STATS_PARAM_KEY, showStats ? '1' : '0');
-    history.push(`${location.pathname}?${queryParams.toString()}`);
+    navigate(`${location.pathname}?${queryParams.toString()}`);
   };
 
   const setQueryInURL = (newQuery: string) => {
     const trimmedQuery = newQuery.trim();
     queryParams.set(QUERY_PARAM_KEY, trimmedQuery);
-    history.push(`${location.pathname}?${queryParams.toString()}`);
+    navigate(`${location.pathname}?${queryParams.toString()}`);
   };
 
   const setTimeRangeInURL = (selectedTimeRange: TimeRange) => {
     queryParams.set(TIME_RANGE_START, String(selectedTimeRange.start));
     queryParams.set(TIME_RANGE_END, String(selectedTimeRange.end));
-    history.push(`${location.pathname}?${queryParams.toString()}`);
+    navigate(`${location.pathname}?${queryParams.toString()}`);
   };
 
   const setDirectionInURL = (selectedDirection?: 'forward' | 'backward') => {
@@ -99,10 +159,11 @@ export const useURLState = ({
     } else {
       queryParams.delete(DIRECTION);
     }
-    history.push(`${location.pathname}?${queryParams.toString()}`);
+    navigate(`${location.pathname}?${queryParams.toString()}`);
   };
 
   React.useEffect(() => {
+    const schemaValue = getSchema(queryParams.get(SCHEMA_PARAM_KEY) ?? config?.schema);
     const queryValue = queryParams.get(QUERY_PARAM_KEY) ?? initialQuery;
     const tenantValue = queryParams.get(TENANT_PARAM_KEY) ?? DEFAULT_TENANT;
     const showResourcesValue = queryParams.get(SHOW_RESOURCES_PARAM_KEY) ?? DEFAULT_SHOW_RESOURCES;
@@ -113,10 +174,13 @@ export const useURLState = ({
 
     setQuery(queryValue.trim());
     setTenant(tenantValue);
+    setSchema(schemaValue);
     setDirection(getDirectionValue(directionValue));
     setAreResourcesShown(showResourcesValue === '1');
     setAreStatsShown(showStatsValue === '1');
-    setFilters(filtersFromQuery({ query: queryValue, attributes }));
+    setFilters(
+      filtersFromQuery({ query: queryValue, attributes: attributes, schema: schemaValue }),
+    );
     setTimeRange((prevTimeRange) => {
       if (!timeRangeStartValue || !timeRangeEndValue) {
         return undefined;
@@ -134,13 +198,16 @@ export const useURLState = ({
         end: timeRangeEndValue,
       };
     });
-  }, [queryParams]);
+  }, [queryParams, attributes]);
 
   return {
+    initialQuery,
     query,
     setQueryInURL,
     tenant,
     setTenantInURL,
+    schema,
+    setSchemaInURL,
     areResourcesShown,
     setShowResourcesInURL,
     areStatsShown,
@@ -150,6 +217,7 @@ export const useURLState = ({
     timeRange,
     setTimeRangeInURL,
     setDirectionInURL,
+    attributes,
     direction,
     interval: timeRange ? intervalFromTimeRange(timeRange) : undefined,
   };

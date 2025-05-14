@@ -1,0 +1,55 @@
+---
+plugin:
+  name: logging-view-plugin
+  description: Logging view Plugin
+  image: quay.io/openshift-observability-ui/logging-view-plugin:latest
+  imagePullPolicy: IfNotPresent
+  replicas: 1
+  port: 9443
+  securityContext:
+    enabled: true
+  podSecurityContext:
+    enabled: true
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  containerSecurityContext:
+    enabled: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+  resources:
+    requests:
+      cpu: 10m
+      memory: 50Mi
+  basePath: /
+  certificateSecretName: plugin-serving-cert
+  pluginConfigName: logging-view-plugin-config
+  serviceAccount:
+    create: true
+    annotations: {}
+    name: ""
+  patcherServiceAccount:
+    create: true
+    annotations: {}
+    name: ""
+  jobs:
+    patchConsoles:
+      enabled: true
+      image: "registry.redhat.io/openshift4/ose-tools-rhel8@sha256:af22cf89b7f1791b943f507d15c62ed5265d7390b24ab598eefe34f63c07fa9d"
+      podSecurityContext:
+        enabled: true
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containerSecurityContext:
+        enabled: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL
+      resources:
+        requests:
+          cpu: 10m
+          memory: 50Mi

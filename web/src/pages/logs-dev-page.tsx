@@ -2,11 +2,11 @@ import { Button, Card, CardBody, Flex, Grid, PageSection, Tooltip } from '@patte
 import { SyncAltIcon } from '@patternfly/react-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom-v5-compat';
 import {
   availableDevConsoleAttributes,
-  initialAvailableAttributes,
   filtersFromQuery,
+  initialAvailableAttributes,
   queryFromFilters,
 } from '../attribute-filters';
 import { CenteredContainer } from '../components/centered-container';
@@ -18,12 +18,13 @@ import { LogsToolbar } from '../components/logs-toolbar';
 import { RefreshIntervalDropdown } from '../components/refresh-interval-dropdown';
 import { TimeRangeDropdown } from '../components/time-range-dropdown';
 import { ToggleHistogramButton } from '../components/toggle-histogram-button';
+import { downloadCSV } from '../download-csv';
+import { LogsConfigProvider, useLogsConfig } from '../hooks/LogsConfigProvider';
 import { useLogs } from '../hooks/useLogs';
 import { defaultQueryFromTenant, useURLState } from '../hooks/useURLState';
 import { Direction, isMatrixResult } from '../logs.types';
 import { TestIds } from '../test-ids';
 import { getInitialTenantFromNamespace } from '../value-utils';
-import { downloadCSV } from '../download-csv';
 
 /*
 This comment creates an entry in the translations catalogue for console extensions
@@ -43,21 +44,7 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
   const [isHistogramVisible, setIsHistogramVisible] = React.useState(false);
   let tenant = getInitialTenantFromNamespace(namespace);
 
-  const {
-    query,
-    setQueryInURL,
-    areResourcesShown,
-    setShowResourcesInURL,
-    areStatsShown,
-    setShowStatsInURL,
-    filters,
-    setFilters,
-    setTimeRangeInURL,
-    timeRange,
-    interval,
-    direction,
-    setDirectionInURL,
-  } = useURLState({ attributes: initialAvailableAttributes, defaultTenant: tenant });
+  const { config } = useLogsConfig();
 
   const {
     histogramData,
@@ -78,16 +65,39 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
     hasMoreLogsData,
     getHistogram,
     toggleStreaming,
-    config,
   } = useLogs();
 
+  const {
+    query,
+    setQueryInURL,
+    schema,
+    setSchemaInURL,
+    areResourcesShown,
+    setShowResourcesInURL,
+    areStatsShown,
+    setShowStatsInURL,
+    filters,
+    setFilters,
+    setTimeRangeInURL,
+    timeRange,
+    interval,
+    direction,
+    setDirectionInURL,
+    attributes,
+  } = useURLState({
+    defaultTenant: tenant,
+    getAttributes: ({ config: c, schema: s }) =>
+      availableDevConsoleAttributes(getInitialTenantFromNamespace(namespace), c, s),
+    attributesDependencies: [namespace],
+  });
+
   const handleToggleStreaming = () => {
-    toggleStreaming({ query });
+    toggleStreaming({ query, schema });
   };
 
   const handleLoadMoreData = (lastTimestamp: number) => {
     if (!isLoadingMoreLogsData) {
-      getMoreLogs({ lastTimestamp, query, namespace, direction });
+      getMoreLogs({ lastTimestamp, query, namespace, direction, schema });
     }
   };
 
@@ -101,15 +111,16 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
       timeRange,
       direction,
       tenant,
+      schema,
     });
 
     if (isHistogramVisible) {
-      getHistogram({ query: queryToUse ?? query, timeRange, tenant });
+      getHistogram({ query: queryToUse ?? query, timeRange, tenant, schema });
     }
   };
 
   const runVolume = () => {
-    getVolume({ query, tenant, namespace, timeRange });
+    getVolume({ query, tenant, namespace, timeRange, schema });
   };
 
   const handleFiltersChange = (selectedFilters?: Filters) => {
@@ -122,7 +133,8 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
 
     const updatedFilters = filtersFromQuery({
       query: queryFromInput,
-      attributes: initialAvailableAttributes,
+      attributes: initialAvailableAttributes(schema),
+      schema: schema,
     });
 
     setFilters(updatedFilters);
@@ -137,10 +149,11 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
 
     if (hasNoSelectedfilters) {
       const updatedQuery = queryFromFilters({
-        existingQuery: defaultQueryFromTenant(selectedTenant),
+        existingQuery: defaultQueryFromTenant({ tenant: selectedTenant, schema }),
         filters: { namespace: new Set(namespace ? [namespace] : []) },
-        attributes: initialAvailableAttributes,
+        attributes: initialAvailableAttributes(schema),
         tenant: selectedTenant,
+        schema,
       });
 
       setQueryInURL(updatedQuery);
@@ -150,8 +163,9 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
       const updatedQuery = queryFromFilters({
         existingQuery: query,
         filters: selectedFilters,
-        attributes: initialAvailableAttributes,
+        attributes: initialAvailableAttributes(schema),
         tenant: selectedTenant,
+        schema,
       });
 
       setQueryInURL(updatedQuery);
@@ -159,14 +173,6 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
       return updatedQuery;
     }
   };
-
-  const attributeList = React.useMemo(
-    () =>
-      namespace
-        ? availableDevConsoleAttributes(getInitialTenantFromNamespace(namespace), config)
-        : [],
-    [namespace, config],
-  );
 
   React.useEffect(() => {
     tenant = getInitialTenantFromNamespace(namespace);
@@ -259,10 +265,12 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
           onShowStatsToggle={setShowStatsInURL}
           enableTenantDropdown={false}
           isDisabled={isRunQueryDisabled}
-          attributeList={attributeList}
+          attributeList={attributes}
           filters={filters}
           onFiltersChange={handleFiltersChange}
           onDownloadCSV={() => downloadCSV(logsData)}
+          schema={schema}
+          onSchemaSelect={setSchemaInURL}
         />
 
         {isLoadingLogsData ? (
@@ -313,4 +321,12 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
   );
 };
 
-export default LogsDevPage;
+const LogsDevPageWrapper: React.FC<LogsDevPageProps> = (props) => {
+  return (
+    <LogsConfigProvider>
+      <LogsDevPage {...props} />
+    </LogsConfigProvider>
+  );
+};
+
+export default LogsDevPageWrapper;

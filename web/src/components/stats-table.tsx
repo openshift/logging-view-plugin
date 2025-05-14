@@ -55,15 +55,15 @@ export const StatsTable: React.FC<StatsTableProps> = ({ logsData }) => {
 
   return (
     <div data-test={TestIds.LogsStats}>
-      <div className="co-stats-title">{t('Statistics')}</div>
-      <div className="co-stats__content">
-        <Table className="co-stats-table" variant="compact" aria-label={t('Statistics')}>
+      <div className="lv-plugin__stats-title">{t('Statistics')}</div>
+      <div className="lv-plugin__stats__content">
+        <Table className="lv-plugin__stats-table" variant="compact" aria-label={t('Statistics')}>
           <Thead>
-            <Th className="co-stats-table__header"></Th>
+            <Th className="lv-plugin__stats-table__header"></Th>
             <Th></Th>
-            <Th className="co-stats-table__header"></Th>
+            <Th className="lv-plugin__stats-table__header"></Th>
             <Th></Th>
-            <Th className="co-stats-table__header"></Th>
+            <Th className="lv-plugin__stats-table__header"></Th>
             <Th></Th>
           </Thead>
 

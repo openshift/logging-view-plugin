@@ -1,7 +1,7 @@
-.co-logs__attribute-filter .pf-v5-c-select__toggle-wrapper {
+.lv-plugin__attribute-filter .pf-v5-c-select__toggle-wrapper {
   flex-wrap: nowrap;
 }
 
-.co-logs__attribute-filter .co-logs__attribute-filter__text {
+.lv-plugin__attribute-filter .lv-plugin__attribute-filter__text {
   min-width: 200px;
 }

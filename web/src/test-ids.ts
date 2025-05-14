@@ -22,4 +22,5 @@ export enum TestIds {
   AttributeOptions = 'AttributeOptions',
   NamespaceDropdown = 'NamespaceDropdown',
   NamespaceToggle = 'NamespaceToggle',
+  SchemaToggle = 'SchemaToggle',
 }

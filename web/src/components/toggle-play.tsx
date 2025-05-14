@@ -17,7 +17,7 @@ export const TogglePlay: React.FC<TogglePlayProps> = ({ onClick, active, isDisab
   return (
     <Button
       variant="plain"
-      className={`co-logs-toggle-play ${active ? 'co-logs-toggle-play--active' : ''}`}
+      className={`lv-plugin__toggle-play ${active ? 'lv-plugin__toggle-play--active' : ''}`}
       onClick={onClick}
       aria-label={active ? t('Pause streaming') : t('Start streaming')}
       isDisabled={isDisabled}

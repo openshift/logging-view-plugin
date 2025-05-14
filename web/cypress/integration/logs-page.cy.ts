@@ -410,7 +410,7 @@ describe('Logs Page', () => {
         .invoke('val')
         .should(
           'equal',
-          '{ log_type="application", kubernetes_namespace_name="gitops" } |= `line filter` | json | level=~"error|err|eror|info|inf|information|notice"',
+          '{ kubernetes_namespace_name="gitops" } |= `line filter` | json | level=~"error|err|eror|info|inf|information|notice"',
         );
     });
 
@@ -532,7 +532,7 @@ describe('Logs Page', () => {
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
       .within(() => {
-        cy.get('.co-logs-table__message').first().contains('formatted string');
+        cy.get('.lv-plugin__table__message').first().contains('formatted string');
       });
 
     cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
@@ -550,7 +550,7 @@ describe('Logs Page', () => {
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
       .within(() => {
-        cy.get('.co-logs-table__message').first().contains('a message');
+        cy.get('.lv-plugin__table__message').first().contains('a message');
       });
 
     cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
@@ -682,7 +682,7 @@ describe('Logs Page', () => {
         .invoke('val')
         .should(
           'equal',
-          '{ log_type="application", kubernetes_container_name="operator", kubernetes_pod_name="my-pod-2" } | json',
+          '{ kubernetes_container_name="operator", kubernetes_pod_name="my-pod-2" } | json',
         );
     });
 

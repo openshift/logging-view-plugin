@@ -1,10 +1,16 @@
 import { cancellableFetch } from './cancellable-fetch';
-import { Config } from './logs.types';
+import { Config, SchemaConfig } from './logs.types';
 
 const BACKEND_ENDPOINT = '/api/plugins/logging-view-plugin';
 
 let singletonRequest: Promise<Config> | null = null;
 let throttleTimeout: NodeJS.Timeout | null = null;
+
+export const defaultConfig: Config = {
+  isStreamingEnabledInDefaultPage: false,
+  logsLimit: 100,
+  schema: SchemaConfig.viaq,
+};
 
 export const getConfig = async (): Promise<Config> => {
   if (singletonRequest) {
@@ -19,9 +25,18 @@ export const getConfig = async (): Promise<Config> => {
     return singletonRequest;
   }
 
-  const { request } = cancellableFetch<Config>(`${BACKEND_ENDPOINT}/config`);
+  try {
+    const { request } = cancellableFetch<Config>(`${BACKEND_ENDPOINT}/config`);
 
-  singletonRequest = request();
+    singletonRequest = request();
+    const config = await singletonRequest;
 
-  return singletonRequest;
+    return config;
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error('Error fetching logging plugin configuration', e);
+  } finally {
+    // eslint-disable-next-line no-unsafe-finally
+    return Promise.resolve(defaultConfig);
+  }
 };

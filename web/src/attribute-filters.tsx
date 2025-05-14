@@ -1,11 +1,12 @@
 import { K8sResourceCommon } from '@openshift-console/dynamic-plugin-sdk';
-import { getInitialTenantFromNamespace, notEmptyString, notUndefined } from './value-utils';
 import { cancellableFetch } from './cancellable-fetch';
 import { AttributeList, Filters, Option } from './components/filters/filter.types';
-import { LogQLQuery, LabelMatcher, PipelineStage } from './logql-query';
-import { Severity, severityAbbreviations, severityFromString } from './severity';
+import { LabelMatcher, LogQLQuery, PipelineStage } from './logql-query';
+import { Config, Schema } from './logs.types';
 import { executeLabelValue } from './loki-client';
-import { Config } from './logs.types';
+import { getStreamLabelsFromSchema, ResourceLabel } from './parse-resources';
+import { Severity, severityAbbreviations, severityFromString } from './severity';
+import { getInitialTenantFromNamespace, notEmptyString, notUndefined } from './value-utils';
 
 const RESOURCES_ENDPOINT = '/api/kubernetes/api/v1';
 
@@ -128,189 +129,256 @@ const resourceDataSource =
     return listItems.flatMap(mapper).filter(({ value }) => notEmptyString(value));
   };
 
+const getAttributeLabels = (schema: Schema) => {
+  const labels = getStreamLabelsFromSchema(schema);
+  const namespaceLabel = labels[ResourceLabel.Namespace];
+  const podLabel = labels[ResourceLabel.Pod];
+  const containerLabel = labels[ResourceLabel.Container];
+  return { namespaceLabel, podLabel, containerLabel };
+};
+
 // The logs-page and the logs-dev-page both need a default set of attributes to pass
 // to queryFromFilters and filtersFromQuery which only need id and label
-export const initialAvailableAttributes: AttributeList = [
-  {
-    name: 'Namespaces',
-    label: 'kubernetes_namespace_name',
-    id: 'namespace',
-    valueType: 'checkbox-select',
-  },
-  {
-    name: 'Pods',
-    label: 'kubernetes_pod_name',
-    id: 'pod',
-    valueType: 'checkbox-select',
-  },
-  {
-    name: 'Containers',
-    label: 'kubernetes_container_name',
-    id: 'container',
-    valueType: 'checkbox-select',
-  },
-];
+export const initialAvailableAttributes = (schema: Schema): AttributeList => {
+  const labels = getStreamLabelsFromSchema(schema);
+  const namespaceLabel = labels[ResourceLabel.Namespace];
+  const podLabel = labels[ResourceLabel.Pod];
+  const containerLabel = labels[ResourceLabel.Container];
 
-export const availableAttributes = (tenant: string, config: Config): AttributeList => [
-  {
-    name: 'Content',
-    id: 'content',
-    valueType: 'text',
-  },
-  {
-    name: 'Namespaces',
-    label: 'kubernetes_namespace_name',
-    id: 'namespace',
-    options: resourceDataSource({ resource: 'namespaces' }),
-    valueType: 'checkbox-select',
-  },
-  {
-    name: 'Pods',
-    label: 'kubernetes_pod_name',
-    id: 'pod',
-    options: getPodAttributeOptions(tenant, config),
-    valueType: 'checkbox-select',
-  },
-  {
-    name: 'Containers',
-    label: 'kubernetes_container_name',
-    id: 'container',
-    options: resourceDataSource({
-      resource: 'pods',
-      mapper: (resource) =>
-        resource?.spec?.containers.map((container) => ({
-          option: `${resource?.metadata?.name} / ${container.name}`,
-          value: `${resource?.metadata?.name} / ${container.name}`,
-        })) ?? [],
-    }),
-    expandSelection: (selections) => {
-      const podSelections = new Set<string>();
-      const containerSelections = new Set<string>();
+  return [
+    {
+      name: 'Namespaces',
+      label: namespaceLabel,
+      id: 'namespace',
+      valueType: 'checkbox-select',
+    },
+    {
+      name: 'Pods',
+      label: podLabel,
+      id: 'pod',
+      valueType: 'checkbox-select',
+    },
+    {
+      name: 'Containers',
+      label: containerLabel,
+      id: 'container',
+      valueType: 'checkbox-select',
+    },
+  ];
+};
 
-      for (const container of selections.values()) {
-        if (container.includes(' / ')) {
-          const [pod, containerName] = container.split(' / ');
-          podSelections.add(pod);
-          containerSelections.add(containerName);
+export const availableAttributes = ({
+  tenant,
+  config,
+  schema,
+}: {
+  tenant: string;
+  config: Config;
+  schema: Schema;
+}): AttributeList => {
+  const { namespaceLabel, podLabel, containerLabel } = getAttributeLabels(schema);
+
+  return [
+    {
+      name: 'Content',
+      id: 'content',
+      valueType: 'text',
+    },
+    {
+      name: 'Namespaces',
+      label: namespaceLabel,
+      id: 'namespace',
+      options: resourceDataSource({ resource: 'namespaces' }),
+      valueType: 'checkbox-select',
+    },
+    {
+      name: 'Pods',
+      label: podLabel,
+      id: 'pod',
+      options: getPodAttributeOptions(tenant, config, schema),
+      valueType: 'checkbox-select',
+    },
+    {
+      name: 'Containers',
+      label: containerLabel,
+      id: 'container',
+      options: resourceDataSource({
+        resource: 'pods',
+        mapper: (resource) =>
+          resource?.spec?.containers.map((container) => ({
+            option: `${resource?.metadata?.name} / ${container.name}`,
+            value: `${resource?.metadata?.name} / ${container.name}`,
+          })) ?? [],
+      }),
+      expandSelection: (selections) => {
+        const podSelections = new Set<string>();
+        const containerSelections = new Set<string>();
+
+        for (const container of selections.values()) {
+          if (container.includes(' / ')) {
+            const [pod, containerName] = container.split(' / ');
+            podSelections.add(pod);
+            containerSelections.add(containerName);
+          }
         }
-      }
 
-      return new Map([
-        ['pod', podSelections],
-        ['container', containerSelections],
-      ]);
+        return new Map([
+          ['pod', podSelections],
+          ['container', containerSelections],
+        ]);
+      },
+      isItemSelected: (value, filters) => {
+        const parts = value.split(' / ');
+        if (parts.length !== 2) {
+          return false;
+        }
+
+        const [pod, container] = parts;
+
+        if (
+          (!filters.pod || filters.pod.size === 0) &&
+          filters.container &&
+          filters.container.size > 0
+        ) {
+          return filters.container.has(container);
+        }
+
+        if (
+          !filters.pod ||
+          filters.pod.size === 0 ||
+          !filters.container ||
+          filters.container.size === 0
+        ) {
+          return false;
+        }
+
+        return filters.pod.has(pod) && filters.container.has(container);
+      },
+      valueType: 'checkbox-select',
     },
-    isItemSelected: (value, filters) => {
-      const parts = value.split(' / ');
-      if (parts.length !== 2) {
-        return false;
-      }
+  ];
+};
 
-      const [pod, container] = parts;
+export const availableDevConsoleAttributes = (
+  tenant: string,
+  config: Config,
+  schema: Schema,
+): AttributeList => {
+  const { namespaceLabel, podLabel, containerLabel } = getAttributeLabels(schema);
 
-      if (
-        (!filters.pod || filters.pod.size === 0) &&
-        filters.container &&
-        filters.container.size > 0
-      ) {
-        return filters.container.has(container);
-      }
-
-      if (
-        !filters.pod ||
-        filters.pod.size === 0 ||
-        !filters.container ||
-        filters.container.size === 0
-      ) {
-        return false;
-      }
-
-      return filters.pod.has(pod) && filters.container.has(container);
+  return [
+    {
+      name: 'Content',
+      id: 'content',
+      valueType: 'text',
     },
-    valueType: 'checkbox-select',
-  },
-];
-
-export const availableDevConsoleAttributes = (tenant: string, config: Config): AttributeList => [
-  {
-    name: 'Content',
-    id: 'content',
-    valueType: 'text',
-  },
-  {
-    name: 'Namespaces',
-    label: 'kubernetes_namespace_name',
-    id: 'namespace',
-    options: projectsDataSource(),
-    valueType: 'checkbox-select',
-  },
-  {
-    name: 'Pods',
-    label: 'kubernetes_pod_name',
-    id: 'pod',
-    options: lokiLabelValuesDataSource({
-      config,
-      tenant,
-      labelName: 'kubernetes_pod_name',
-    }),
-    valueType: 'checkbox-select',
-  },
-  {
-    name: 'Containers',
-    label: 'kubernetes_container_name',
-    id: 'container',
-    options: lokiLabelValuesDataSource({
-      config,
-      tenant,
-      labelName: 'kubernetes_container_name',
-    }),
-    valueType: 'checkbox-select',
-  },
-];
+    {
+      name: 'Namespaces',
+      label: namespaceLabel,
+      id: 'namespace',
+      options: projectsDataSource(),
+      valueType: 'checkbox-select',
+    },
+    {
+      name: 'Pods',
+      label: podLabel,
+      id: 'pod',
+      options: lokiLabelValuesDataSource({
+        config,
+        tenant,
+        labelName: podLabel,
+      }),
+      valueType: 'checkbox-select',
+    },
+    {
+      name: 'Containers',
+      label: containerLabel,
+      id: 'container',
+      options: lokiLabelValuesDataSource({
+        config,
+        tenant,
+        labelName: containerLabel,
+      }),
+      valueType: 'checkbox-select',
+    },
+  ];
+};
 
 export const availablePodAttributes = (
   namespace: string,
   podId: string,
   config: Config,
-): AttributeList => [
-  {
-    name: 'Content',
-    id: 'content',
-    valueType: 'text',
-  },
-  {
-    name: 'Containers',
-    label: 'kubernetes_container_name',
-    id: 'container',
-    options: lokiLabelValuesDataSource({
-      config,
-      query: `{ kubernetes_pod_name="${podId}" }`,
-      labelName: 'kubernetes_container_name',
-      tenant: getInitialTenantFromNamespace(namespace),
-    }),
-    valueType: 'checkbox-select',
-  },
-];
+  schema: Schema,
+): AttributeList => {
+  const streamLabels = getStreamLabelsFromSchema(schema);
+  const namespaceLabel = streamLabels[ResourceLabel.Namespace];
+  const podLabel = streamLabels[ResourceLabel.Pod];
+  const containerLabel = streamLabels[ResourceLabel.Container];
+
+  return [
+    {
+      name: 'Content',
+      id: 'content',
+      valueType: 'text',
+    },
+    {
+      name: 'Pods',
+      label: podLabel,
+      id: 'pod',
+      options: lokiLabelValuesDataSource({
+        config,
+        query: `{ ${namespaceLabel}="${namespace}" }`,
+        labelName: podLabel,
+        tenant: getInitialTenantFromNamespace(namespace),
+      }),
+      valueType: 'checkbox-select',
+    },
+    {
+      name: 'Containers',
+      label: containerLabel,
+      id: 'container',
+      options: lokiLabelValuesDataSource({
+        config,
+        query: `{ ${podLabel}="${podId}" }`,
+        labelName: containerLabel,
+        tenant: getInitialTenantFromNamespace(namespace),
+      }),
+      valueType: 'checkbox-select',
+    },
+  ];
+};
 
 export const queryFromFilters = ({
   existingQuery,
   filters,
   attributes,
   tenant,
+  schema,
+  addJSONParser,
 }: {
   existingQuery: string;
   filters?: Filters;
   attributes: AttributeList;
   tenant?: string;
+  schema: Schema;
+  addJSONParser?: boolean;
 }): string => {
   const query = new LogQLQuery(existingQuery);
+
+  const streamLabels = getStreamLabelsFromSchema(schema);
+  const tenantLabel = streamLabels[ResourceLabel.LogType];
+  const severityLabel = streamLabels[ResourceLabel.Severity];
 
   if (!filters) {
     return query.toString();
   }
 
   if (tenant) {
-    query.addSelectorMatcher({ label: 'log_type', operator: '=', value: `"${tenant}"` });
+    query.addSelectorMatcher({
+      label: tenantLabel,
+      operator: '=',
+      value: `"${tenant}"`,
+    });
   }
 
   const contentPipelineStage = getContentPipelineStage(filters);
@@ -325,19 +393,21 @@ export const queryFromFilters = ({
     query.removePipelineStage({ operator: '|=' });
   }
 
-  const severityPipelineStage = getSeverityFilterPipelineStage(filters);
+  const severityPipelineStage = getSeverityFilterPipelineStage({ filters, schema });
 
   if (severityPipelineStage) {
-    query.removePipelineStage({}, { matchLabel: 'level' }).addPipelineStage(severityPipelineStage, {
-      placement: 'end',
-    });
+    query
+      .removePipelineStage({}, { matchLabel: `${severityLabel}` })
+      .addPipelineStage(severityPipelineStage, {
+        placement: 'end',
+      });
   }
 
   if (filters?.severity === undefined || filters.severity.size === 0) {
-    query.removePipelineStage({}, { matchLabel: 'level' });
+    query.removePipelineStage({}, { matchLabel: `${severityLabel}` });
   }
 
-  query.addSelectorMatcher(getMatchersFromFilters(filters));
+  query.addSelectorMatcher(getMatchersFromFilters({ filters, schema }));
 
   attributes.forEach(({ id, label }) => {
     if (label) {
@@ -348,6 +418,15 @@ export const queryFromFilters = ({
     }
   });
 
+  // Remove the tenant label matcher if the query has other selectors
+  if (tenant && query.streamSelector.filter((a) => a.label !== tenantLabel).length > 0) {
+    query.removeSelectorMatcher({ label: tenantLabel });
+  }
+
+  if (schema === Schema.viaq && !!addJSONParser) {
+    query.addPipelineStage({ operator: '| json' }, { placement: 'start' });
+  }
+
   return query.toString();
 };
 
@@ -357,12 +436,17 @@ const removeBacktick = (value?: string) => (value ? value.replace(/`/g, '') : ''
 export const filtersFromQuery = ({
   query,
   attributes,
+  schema,
 }: {
   query?: string;
   attributes: AttributeList;
+  schema: Schema.viaq | Schema.otel;
 }): Filters => {
   const filters: Filters = {};
   const logQLQuery = new LogQLQuery(query ?? '');
+
+  const streamLabels = getStreamLabelsFromSchema(schema);
+  const severityLabel = streamLabels[ResourceLabel.Severity];
 
   for (const { label, id } of attributes) {
     if (label && label.length > 0) {
@@ -377,7 +461,7 @@ export const filtersFromQuery = ({
   for (const pipelineStage of logQLQuery.pipeline) {
     if (
       pipelineStage.operator === '|' &&
-      pipelineStage.labelsInFilter?.every(({ label }) => label === 'level') &&
+      pipelineStage.labelsInFilter?.every(({ label }) => label === `${severityLabel}`) &&
       !filters.severity
     ) {
       const severityValues: Array<Severity> = pipelineStage.labelsInFilter
@@ -385,7 +469,9 @@ export const filtersFromQuery = ({
         .map(removeQuotes)
         .map(severityFromString)
         .filter(notUndefined);
-      filters.severity = new Set(severityValues);
+      if (severityValues.length > 0) {
+        filters.severity = new Set(severityValues);
+      }
     } else if (pipelineStage.operator === '|=' && !filters.content) {
       filters.content = new Set([removeBacktick(pipelineStage.value)]);
     }
@@ -394,13 +480,22 @@ export const filtersFromQuery = ({
   return filters;
 };
 
-export const getNamespaceMatcher = (namespace?: string): LabelMatcher | undefined => {
+export const getNamespaceMatcher = ({
+  namespace,
+  schema,
+}: {
+  namespace?: string;
+  schema: Schema;
+}): LabelMatcher | undefined => {
   if (namespace === undefined) {
     return undefined;
   }
 
+  const streamLabels = getStreamLabelsFromSchema(schema);
+  const namespaceLabel = streamLabels[ResourceLabel.Namespace];
+
   return {
-    label: 'kubernetes_namespace_name',
+    label: namespaceLabel,
     operator: '=',
     value: `"${namespace}"`,
   };
@@ -412,10 +507,18 @@ const isK8sValueARegex = (value: string) => {
   return testRegex.test(value);
 };
 
-export const queryWithNamespace = ({ query, namespace }: { query: string; namespace?: string }) => {
+export const queryWithNamespace = ({
+  query,
+  namespace,
+  schema,
+}: {
+  query: string;
+  namespace?: string;
+  schema: Schema;
+}) => {
   const logQLQuery = new LogQLQuery(query ?? '');
 
-  logQLQuery.addSelectorMatcher(getNamespaceMatcher(namespace));
+  logQLQuery.addSelectorMatcher(getNamespaceMatcher({ namespace, schema }));
 
   return logQLQuery.toString();
 };
@@ -446,25 +549,35 @@ export const getK8sMatcherFromSet = (
   };
 };
 
-export const getMatchersFromFilters = (filters?: Filters): Array<LabelMatcher> => {
+export const getMatchersFromFilters = ({
+  filters,
+  schema,
+}: {
+  filters?: Filters;
+  schema: Schema;
+}): Array<LabelMatcher> => {
   if (!filters) {
     return [];
   }
 
   const matchers: Array<LabelMatcher | undefined> = [];
+  const labels = getStreamLabelsFromSchema(schema);
+  const namespaceLabel = labels[ResourceLabel.Namespace];
+  const podLabel = labels[ResourceLabel.Pod];
+  const containerLabel = labels[ResourceLabel.Container];
 
   for (const key of Object.keys(filters)) {
     const value = filters[key];
     if (value) {
       switch (key) {
         case 'namespace':
-          matchers.push(getK8sMatcherFromSet('kubernetes_namespace_name', value));
+          matchers.push(getK8sMatcherFromSet(namespaceLabel, value));
           break;
         case 'pod':
-          matchers.push(getK8sMatcherFromSet('kubernetes_pod_name', value));
+          matchers.push(getK8sMatcherFromSet(podLabel, value));
           break;
         case 'container':
-          matchers.push(getK8sMatcherFromSet('kubernetes_container_name', value));
+          matchers.push(getK8sMatcherFromSet(containerLabel, value));
           break;
       }
     }
@@ -493,18 +606,29 @@ export const getContentPipelineStage = (filters?: Filters): PipelineStage | unde
   return { operator: '|=', value: `\`${textValue}\`` };
 };
 
-export const getSeverityFilterPipelineStage = (filters?: Filters): PipelineStage | undefined => {
+export const getSeverityFilterPipelineStage = ({
+  filters,
+  schema,
+}: {
+  filters?: Filters;
+  schema: Schema;
+}): PipelineStage | undefined => {
   if (!filters) {
     return undefined;
   }
 
   const severity = filters.severity;
 
+  const labels = getStreamLabelsFromSchema(schema);
+  const severityLabel = labels.Severity;
+
   if (!severity) {
     return undefined;
   }
 
-  const unknownFilter = severity.has('unknown') ? 'level="unknown" or level=""' : '';
+  const unknownFilter = severity.has('unknown')
+    ? `${severityLabel}="unknown" or ${severityLabel}=""`
+    : '';
 
   const severityFilters = Array.from(severity).flatMap((group: string | undefined) => {
     if (group === 'unknown' || group === undefined) {
@@ -514,20 +638,27 @@ export const getSeverityFilterPipelineStage = (filters?: Filters): PipelineStage
     return severityAbbreviations[group as Severity];
   });
 
-  const levelsfilter = severityFilters.length > 0 ? `level=~"${severityFilters.join('|')}"` : '';
+  const levelsfilter =
+    severityFilters.length > 0 ? `${severityLabel}=~"${severityFilters.join('|')}"` : '';
 
   const allFilters = [unknownFilter, levelsfilter].filter(notEmptyString);
 
   return allFilters.length > 0 ? { operator: '|', value: allFilters.join(' or ') } : undefined;
 };
 
-const getPodAttributeOptions = (tenant: string, config: Config): (() => Promise<Option[]>) => {
+const getPodAttributeOptions = (
+  tenant: string,
+  config: Config,
+  schema: Schema,
+): (() => Promise<Option[]>) => {
+  const { podLabel } = getAttributeLabels(schema);
+
   return () =>
     Promise.allSettled<Promise<Option[]>>([
       lokiLabelValuesDataSource({
         config,
         tenant,
-        labelName: 'kubernetes_pod_name',
+        labelName: podLabel,
       })(),
       resourceDataSource({ resource: 'pods' })(),
     ])

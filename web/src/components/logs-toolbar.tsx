@@ -16,6 +16,8 @@ import {
 } from '@patternfly/react-core';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLogsConfig } from '../hooks/LogsConfigProvider';
+import { Schema, SchemaConfig } from '../logs.types';
 import { Severity, severityFromString } from '../severity';
 import { TestIds } from '../test-ids';
 import { notUndefined } from '../value-utils';
@@ -23,13 +25,14 @@ import { ExecuteQueryButton } from './execute-query-button';
 import { ExecuteVolumeButton } from './execute-volume-button';
 import { AttributeFilter } from './filters/attribute-filter';
 import { AttributeList, Filters } from './filters/filter.types';
+import { isOption } from './filters/filters-from-params';
 import { LogsQueryInput } from './logs-query-input';
 import './logs-toolbar.css';
+import { SchemaDropdown } from './schema-dropdown';
 import { Spacer } from './spacer';
 import { TenantDropdown } from './tenant-dropdown';
 import { ToggleButton } from './toggle-button';
 import { TogglePlay } from './toggle-play';
-import { isOption } from './filters/filters-from-params';
 
 interface LogsToolbarProps {
   query: string;
@@ -39,6 +42,7 @@ interface LogsToolbarProps {
   invalidQueryErrorMessage?: string | null;
   tenant?: string;
   onTenantSelect?: (tenant: string) => void;
+  onSchemaSelect?: (schema: Schema) => void;
   enableStreaming?: boolean;
   isStreaming?: boolean;
   severityFilter?: Set<Severity>;
@@ -54,6 +58,7 @@ interface LogsToolbarProps {
   filters?: Filters;
   attributeList?: AttributeList;
   onDownloadCSV?: () => void;
+  schema: Schema;
 }
 
 const availableSeverityFilters: Array<Severity> = [
@@ -74,6 +79,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
   invalidQueryErrorMessage,
   tenant = 'application',
   onTenantSelect,
+  onSchemaSelect,
   onStreamingToggle,
   onShowResourcesToggle,
   onDownloadCSV,
@@ -87,11 +93,22 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
   filters,
   onFiltersChange,
   attributeList,
+  schema,
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
   const [isSeverityExpanded, setIsSeverityExpanded] = React.useState(false);
   const [isQueryShown, setIsQueryShown] = React.useState(false);
+  const [isSchemaShown, setIsSchemaShown] = React.useState(false);
+
+  const { config } = useLogsConfig();
+
+  React.useEffect(() => {
+    if (config?.schema === SchemaConfig.select) {
+      setIsSchemaShown(true);
+    }
+  }, [config?.schema]);
+
   const severityFilter: Set<Severity> = filters?.severity
     ? new Set(Array.from(filters?.severity).map(severityFromString).filter(notUndefined))
     : new Set();
@@ -155,7 +172,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
   );
 
   return (
-    <Toolbar isSticky clearAllFilters={handleClearAllFilters} className="co-logs-toolbar">
+    <Toolbar isSticky clearAllFilters={handleClearAllFilters} className="lv-plugin__toolbar">
       <ToolbarContent>
         {attributeList && (
           <AttributeFilter
@@ -164,13 +181,14 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
             onFiltersChange={onFiltersChange}
           />
         )}
+
         <ToolbarGroup>
           <ToolbarFilter
             chips={severityFilterArray}
             deleteChip={onDeleteSeverityFilter}
             deleteChipGroup={onDeleteSeverityGroup}
             categoryName="Severity"
-            className="co-logs-severity-filter"
+            className="lv-plugin__severity-filter"
             data-test={TestIds.SeverityDropdown}
           >
             <Select
@@ -208,6 +226,12 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
           </ToolbarGroup>
         )}
 
+        {isSchemaShown && (
+          <ToolbarGroup>
+            <SchemaDropdown onSchemaSelected={onSchemaSelect} schema={schema} />
+          </ToolbarGroup>
+        )}
+
         <ToolbarGroup>
           <ToggleButton
             isToggled={showResources}
@@ -215,9 +239,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
             untoggledText={t('Show Resources')}
             toggledText={t('Hide Resources')}
           />
-        </ToolbarGroup>
 
-        <ToolbarGroup>
           <ToggleButton
             isToggled={showStats}
             onToggle={onShowStatsToggle}
@@ -227,41 +249,43 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
           />
         </ToolbarGroup>
 
-        {onDownloadCSV && (
-          <ToolbarGroup>
-            <Button variant="secondary" isInline onClick={onDownloadCSV}>
-              {t('Export as CSV')}
-            </Button>
-          </ToolbarGroup>
-        )}
-
         <ToolbarGroup>
-          <ExecuteVolumeButton onClick={onVolumeRun} isDisabled={isDisabled} />
-        </ToolbarGroup>
-
-        {!isQueryShown && (
-          <>
+          {onDownloadCSV && (
             <ToolbarGroup>
-              <ExecuteQueryButton onClick={onQueryRun} isDisabled={isDisabled} />
+              <Button variant="secondary" isInline onClick={onDownloadCSV}>
+                {t('Export as CSV')}
+              </Button>
             </ToolbarGroup>
-            {invalidQueryErrorMessage && (
+          )}
+
+          <ToolbarGroup>
+            <ExecuteVolumeButton onClick={onVolumeRun} isDisabled={isDisabled} />
+          </ToolbarGroup>
+
+          {!isQueryShown && (
+            <>
               <ToolbarGroup>
-                <Alert variant="danger" isInline isPlain title={invalidQueryErrorMessage} />
+                <ExecuteQueryButton onClick={onQueryRun} isDisabled={isDisabled} />
               </ToolbarGroup>
-            )}
-          </>
-        )}
+              {invalidQueryErrorMessage && (
+                <ToolbarGroup>
+                  <Alert variant="danger" isInline isPlain title={invalidQueryErrorMessage} />
+                </ToolbarGroup>
+              )}
+            </>
+          )}
 
-        <Spacer />
+          <Spacer />
 
-        <ToolbarGroup>
-          <ToggleButton
-            isToggled={isQueryShown}
-            onToggle={setIsQueryShown}
-            untoggledText={t('Show Query')}
-            toggledText={t('Hide Query')}
-            data-test={TestIds.ShowQueryToggle}
-          />
+          <ToolbarGroup>
+            <ToggleButton
+              isToggled={isQueryShown}
+              onToggle={setIsQueryShown}
+              untoggledText={t('Show Query')}
+              toggledText={t('Hide Query')}
+              data-test={TestIds.ShowQueryToggle}
+            />
+          </ToolbarGroup>
         </ToolbarGroup>
 
         {enableStreaming && (

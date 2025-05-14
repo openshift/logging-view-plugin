@@ -38,7 +38,7 @@ install-backend:
 
 .PHONY: build-backend
 build-backend:
-	go build $(BUILD_OPTS) -mod=readonly -o plugin-backend -mod=readonly cmd/plugin-backend.go
+	go build $(BUILD_OPTS) -mod=readonly -o plugin-backend cmd/plugin-backend.go
 
 .PHONY: test-unit-backend
 test-unit-backend:
@@ -59,6 +59,19 @@ start-frontend:
 start-backend: build-backend
 	./plugin-backend -port 9002 -features "$(FEATURES)"
 
+.PHONY: start-devspace-backend
+start-devspace-backend:
+	/opt/app-root/plugin-backend -port=9443 -cert=/var/serving-cert/tls.crt -key=/var/serving-cert/tls.key -plugin-config-path=/etc/plugin/config.yaml -static-path=/opt/app-root/web/dist -config-path=/opt/app-root/config
+
 .PHONY: build-image
-build-image: install-backend build-backend install-frontend build-frontend
+build-image:
 	./scripts/image.sh -t latest
+
+export REGISTRY_ORG?=openshift-observability-ui
+export TAG?=latest
+IMAGE=quay.io/${REGISTRY_ORG}/logging-view-plugin:${TAG}
+
+deploy:
+	helm uninstall logging-view-plugin -n logging-view-plugin || true
+	PUSH=1 scripts/build-image.sh
+	helm install logging-view-plugin charts/openshift-console-plugin -n logging-view-plugin --create-namespace --set plugin.image=$(IMAGE)

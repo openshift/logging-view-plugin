@@ -11,23 +11,25 @@ import {
 import { SyncAltIcon } from '@patternfly/react-icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router';
+import { useParams } from 'react-router-dom-v5-compat';
 import { availablePodAttributes, filtersFromQuery, queryFromFilters } from '../attribute-filters';
-import { AttributeList, Filters } from '../components/filters/filter.types';
+import { CenteredContainer } from '../components/centered-container';
+import { Filters } from '../components/filters/filter.types';
 import { LogsHistogram } from '../components/logs-histogram';
+import { LogsMetrics } from '../components/logs-metrics';
 import { LogsTable } from '../components/logs-table';
 import { LogsToolbar } from '../components/logs-toolbar';
 import { RefreshIntervalDropdown } from '../components/refresh-interval-dropdown';
 import { TimeRangeDropdown } from '../components/time-range-dropdown';
 import { ToggleHistogramButton } from '../components/toggle-histogram-button';
+import { downloadCSV } from '../download-csv';
+import { LogsConfigProvider } from '../hooks/LogsConfigProvider';
 import { useLogs } from '../hooks/useLogs';
 import { useURLState } from '../hooks/useURLState';
-import { Direction, isMatrixResult } from '../logs.types';
+import { Direction, isMatrixResult, Schema } from '../logs.types';
+import { getStreamLabelsFromSchema, ResourceLabel } from '../parse-resources';
 import { TestIds } from '../test-ids';
 import { getInitialTenantFromNamespace } from '../value-utils';
-import { CenteredContainer } from '../components/centered-container';
-import { LogsMetrics } from '../components/logs-metrics';
-import { downloadCSV } from '../download-csv';
 
 /*
 This comment creates an entry in the translations catalogue for console extensions
@@ -51,7 +53,6 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
     useParams<{ name: string; ns: string }>();
   const namespace = namespaceFromParams || namespaceFromProps;
   const podname = podnameFromParams || podNameFromProps;
-  const defaultQuery = `{ kubernetes_pod_name = "${podname}" } | json`;
   const [isHistogramVisible, setIsHistogramVisible] = React.useState(false);
 
   const {
@@ -73,17 +74,14 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
     histogramData,
     isLoadingHistogramData,
     histogramError,
-    config,
   } = useLogs();
 
-  const attributesForPod: AttributeList = React.useMemo(
-    () => (namespace && podname ? availablePodAttributes(namespace, podname, config) : []),
-    [podname, config],
-  );
-
   const {
+    initialQuery,
     query,
     setQueryInURL,
+    schema,
+    setSchemaInURL,
     areResourcesShown,
     setShowResourcesInURL,
     areStatsShown,
@@ -95,20 +93,32 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
     timeRange,
     direction,
     setDirectionInURL,
+    attributes,
   } = useURLState({
-    defaultQuery,
-    attributes: attributesForPod,
+    getDefaultQuery: ({ schema: s }) => {
+      const labelMatchers = getStreamLabelsFromSchema(s);
+      const podLabel = labelMatchers[ResourceLabel.Pod];
+
+      return `{ ${podLabel} = "${podname}" }${s == Schema.viaq ? ' | json' : ''}`;
+    },
+    getAttributes: ({ config: c, schema: s }) => {
+      if (namespace && podname) {
+        return availablePodAttributes(namespace, podname, c, s);
+      }
+    },
+    attributesDependencies: [namespace, podname],
   });
+
   const initialTenant = getInitialTenantFromNamespace(namespace);
   const tenant = React.useRef(initialTenant);
 
   const handleToggleStreaming = () => {
-    toggleStreaming({ query });
+    toggleStreaming({ query, schema });
   };
 
   const handleLoadMoreData = (lastTimestamp: number) => {
     if (!isLoadingMoreLogsData) {
-      getMoreLogs({ lastTimestamp, query, namespace, direction });
+      getMoreLogs({ lastTimestamp, query, namespace, direction, schema });
     }
   };
 
@@ -117,27 +127,28 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
   };
 
   const runQuery = () => {
-    getLogs({ query, tenant: tenant.current, namespace, timeRange, direction });
+    getLogs({ query, tenant: tenant.current, namespace, timeRange, direction, schema });
 
     if (isHistogramVisible) {
-      getHistogram({ query, tenant: tenant.current, namespace, timeRange });
+      getHistogram({ query, tenant: tenant.current, namespace, timeRange, schema });
     }
   };
 
   const runVolume = () => {
-    getVolume({ query, tenant: tenant.current, namespace, timeRange });
+    getVolume({ query, tenant: tenant.current, namespace, timeRange, schema });
   };
 
   const handleFiltersChange = (selectedFilters?: Filters) => {
     setFilters(selectedFilters);
 
     if (!selectedFilters || Object.keys(selectedFilters).length === 0) {
-      setQueryInURL(defaultQuery);
+      setQueryInURL(initialQuery);
     } else {
       const updatedQuery = queryFromFilters({
         existingQuery: query,
         filters: selectedFilters,
-        attributes: attributesForPod,
+        attributes,
+        schema,
       });
       setQueryInURL(updatedQuery);
     }
@@ -148,7 +159,8 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
 
     const updatedFilters = filtersFromQuery({
       query: queryFromInput,
-      attributes: attributesForPod,
+      attributes,
+      schema,
     });
 
     setFilters(updatedFilters);
@@ -226,10 +238,12 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
           enableStreaming
           enableTenantDropdown={false}
           isDisabled={isQueryEmpty}
-          attributeList={attributesForPod}
+          attributeList={attributes}
           filters={filters}
           onFiltersChange={handleFiltersChange}
           onDownloadCSV={() => downloadCSV(logsData)}
+          schema={schema}
+          onSchemaSelect={setSchemaInURL}
         />
 
         {isLoadingLogsData ? (
@@ -280,4 +294,12 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
   );
 };
 
-export default LogsDetailPage;
+const LogsDetailPageWrapper: React.FC<LogsDetailPageProps> = (props) => {
+  return (
+    <LogsConfigProvider>
+      <LogsDetailPage {...props} />
+    </LogsConfigProvider>
+  );
+};
+
+export default LogsDetailPageWrapper;

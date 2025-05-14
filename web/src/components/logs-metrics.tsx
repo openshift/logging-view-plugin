@@ -242,7 +242,7 @@ export const LogsMetrics: React.FC<LogsMetricsProps> = ({
                     <Tr key={series.childName}>
                       <Th isStickyColumn stickyMinWidth="20px" style={{ width: '20px' }}>
                         <div
-                          className="co-logs-metrics-legent-table-color"
+                          className="lv-plugin__metrics-legent-table-color"
                           style={{ backgroundColor: colors?.[index] }}
                         />
                       </Th>

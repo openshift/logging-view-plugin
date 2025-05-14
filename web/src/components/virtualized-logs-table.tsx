@@ -263,8 +263,8 @@ export const VirtualizedLogsTable = ({
   }, [shouldResize]);
 
   return (
-    <div className="co-logs-virtualized-table">
-      <Table aria-label="Logs Table" variant="compact" className="co-logs-table" isStriped>
+    <div className="lv-plugin__virtualized-table">
+      <Table aria-label="Logs Table" variant="compact" className="lv-plugin__table" isStriped>
         <Thead>
           <Tr>
             {columns.map(({ title, props }, columnIndex) => {
@@ -273,7 +273,7 @@ export const VirtualizedLogsTable = ({
                 <Th
                   sort={sortParams}
                   key={title}
-                  className="co-logs-table__row-header"
+                  className="lv-plugin__table__row-header"
                   {...(props ?? {})}
                 >
                   {title}
@@ -284,9 +284,9 @@ export const VirtualizedLogsTable = ({
         </Thead>
         {error ? (
           <Tbody>
-            <Tr className="co-logs-table__row-info">
+            <Tr className="lv-plugin__table__row-info">
               <Td colSpan={colSpan} key="error-row">
-                <div className="co-logs-table__row-error">
+                <div className="lv-plugin__table__row-error">
                   <ErrorMessage error={error} />
                 </div>
               </Td>
@@ -294,9 +294,9 @@ export const VirtualizedLogsTable = ({
           </Tbody>
         ) : isStreaming ? (
           <Tbody>
-            <Tr className="co-logs-table__row-info">
+            <Tr className="lv-plugin__table__row-info">
               <Td colSpan={colSpan} key="streaming-row">
-                <div className="co-logs-table__row-streaming">
+                <div className="lv-plugin__table__row-streaming">
                   <Alert variant="info" isInline isPlain title={t('Streaming Logs...')} />
                 </div>
               </Td>
@@ -304,7 +304,7 @@ export const VirtualizedLogsTable = ({
           </Tbody>
         ) : isLoading ? (
           <Tbody>
-            <Tr className="co-logs-table__row-info">
+            <Tr className="lv-plugin__table__row-info">
               <Td colSpan={colSpan} key="loading-row">
                 {t('Loading...')}
               </Td>
@@ -313,7 +313,7 @@ export const VirtualizedLogsTable = ({
         ) : (
           dataIsEmpty && (
             <Tbody>
-              <Tr className="co-logs-table__row-info">
+              <Tr className="lv-plugin__table__row-info">
                 <Td colSpan={colSpan} key="data-empty-row">
                   <CenteredContainer>
                     <Alert variant="warning" isInline isPlain title={t('No datapoints found')} />
@@ -354,7 +354,7 @@ export const VirtualizedLogsTable = ({
         {!isLoading && hasMoreLogsData && (
           <Tbody>
             <Tr
-              className="co-logs-table__row-info co-logs-table__row-more-data"
+              className="lv-plugin__table__row-info lv-plugin__table__row-more-data"
               onClick={() => {
                 setScrollToIndex(data.length - 1);
                 onLoadMore?.();
