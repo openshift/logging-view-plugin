@@ -35,8 +35,7 @@ export const getConfig = async (): Promise<Config> => {
   } catch (e) {
     // eslint-disable-next-line no-console
     console.error('Error fetching logging plugin configuration', e);
-  } finally {
-    // eslint-disable-next-line no-unsafe-finally
+
     return Promise.resolve(defaultConfig);
   }
 };

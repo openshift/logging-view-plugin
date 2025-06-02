@@ -1,8 +1,8 @@
-import React, { DependencyList } from 'react';
+import React, { DependencyList, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
 import { filtersFromQuery, queryFromFilters } from '../attribute-filters';
 import { AttributeList, Filters } from '../components/filters/filter.types';
-import { Config, Direction, Schema, TimeRange } from '../logs.types';
+import { Config, Direction, Schema, SchemaConfig, TimeRange } from '../logs.types';
 import { ResourceLabel, ResourceToStreamLabels } from '../parse-resources';
 import { intervalFromTimeRange } from '../time-range';
 import { getSchema } from '../value-utils';
@@ -46,7 +46,7 @@ export const defaultQueryFromTenant = ({
 }) => {
   const logType = ResourceToStreamLabels[ResourceLabel.LogType];
   if (schema === Schema.otel) {
-    return `{ ${logType.otel}="${tenant}" } `;
+    return `{ ${logType.otel}="${tenant}" }`;
   }
   return `{ ${logType.viaq}="${tenant}" } | json`;
 };
@@ -63,7 +63,7 @@ export const useURLState = ({
   const queryParams = useQueryParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { config } = useLogsConfig();
+  const { config, configLoaded } = useLogsConfig();
 
   const initialTenant = queryParams.get(TENANT_PARAM_KEY) ?? defaultTenant;
   const initialSchema: Schema = getSchema(queryParams.get(SCHEMA_PARAM_KEY) ?? config?.schema);
@@ -141,10 +141,13 @@ export const useURLState = ({
     navigate(`${location.pathname}?${queryParams.toString()}`);
   };
 
-  const setQueryInURL = (newQuery: string) => {
+  const setQueryInURL = (newQuery: string, replace?: boolean) => {
     const trimmedQuery = newQuery.trim();
     queryParams.set(QUERY_PARAM_KEY, trimmedQuery);
-    navigate(`${location.pathname}?${queryParams.toString()}`);
+    navigate(
+      `${location.pathname}?${queryParams.toString()}`,
+      replace ? { replace: true } : undefined,
+    );
   };
 
   const setTimeRangeInURL = (selectedTimeRange: TimeRange) => {
@@ -162,7 +165,34 @@ export const useURLState = ({
     navigate(`${location.pathname}?${queryParams.toString()}`);
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
+    if (config?.schema != SchemaConfig.select) {
+      const queryFromParams = queryParams.get(QUERY_PARAM_KEY);
+
+      const queryInNewSchema =
+        getDefaultQuery?.({ tenant: initialTenant, schema: initialSchema }) ??
+        defaultQueryFromTenant({ tenant: initialTenant, schema: initialSchema });
+
+      if (!queryFromParams) {
+        setQueryInURL(queryInNewSchema, true);
+      } else {
+        // only replace the current query if its the default query
+        const defaultOtelQuery =
+          getDefaultQuery?.({ tenant: initialTenant, schema: Schema.otel }) ??
+          defaultQueryFromTenant({ tenant: initialTenant, schema: Schema.otel });
+
+        const defaultViaqQuery =
+          getDefaultQuery?.({ tenant: initialTenant, schema: Schema.viaq }) ??
+          defaultQueryFromTenant({ tenant: initialTenant, schema: Schema.viaq });
+
+        if (queryFromParams == defaultOtelQuery || queryFromParams == defaultViaqQuery) {
+          setQueryInURL(queryInNewSchema, true);
+        }
+      }
+    }
+  }, [initialSchema, schema, configLoaded]);
+
+  useEffect(() => {
     const schemaValue = getSchema(queryParams.get(SCHEMA_PARAM_KEY) ?? config?.schema);
     const queryValue = queryParams.get(QUERY_PARAM_KEY) ?? initialQuery;
     const tenantValue = queryParams.get(TENANT_PARAM_KEY) ?? DEFAULT_TENANT;
@@ -198,7 +228,7 @@ export const useURLState = ({
         end: timeRangeEndValue,
       };
     });
-  }, [queryParams, attributes]);
+  }, [queryParams, attributes, config?.schema]);
 
   return {
     initialQuery,

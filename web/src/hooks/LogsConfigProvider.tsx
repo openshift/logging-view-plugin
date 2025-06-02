@@ -5,6 +5,7 @@ import { Config } from '../logs.types';
 interface LogsContextType {
   config: Config;
   fetchConfig: () => Promise<Config>;
+  configLoaded: boolean;
 }
 
 export const LogsContext = createContext<LogsContextType | undefined>(undefined);
@@ -20,8 +21,8 @@ export const LogsConfigProvider: React.FC<{ children?: React.ReactNode | undefin
       if (!configLoaded) {
         const configData = await getConfig();
         const mergedConfig = { ...defaultConfig, ...configData };
-        setConfigLoaded(true);
         setConfig(mergedConfig);
+        setConfigLoaded(true);
 
         return mergedConfig;
       }
@@ -35,7 +36,11 @@ export const LogsConfigProvider: React.FC<{ children?: React.ReactNode | undefin
     }
   }, [config]);
 
-  return <LogsContext.Provider value={{ config, fetchConfig }}>{children}</LogsContext.Provider>;
+  return (
+    <LogsContext.Provider value={{ config, fetchConfig, configLoaded }}>
+      {children}
+    </LogsContext.Provider>
+  );
 };
 
 export const useLogsConfig = (): LogsContextType => {
