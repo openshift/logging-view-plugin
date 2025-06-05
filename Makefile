@@ -6,7 +6,7 @@ install-frontend:
 
 .PHONY: install-frontend-ci
 install-frontend-ci:
-	cd web && npm ci
+	cd web && npm ci --ignore-scripts
 
 .PHONY: install-frontend-ci-clean
 install-frontend-ci-clean: install-frontend-ci
@@ -38,7 +38,7 @@ install-backend:
 
 .PHONY: build-backend
 build-backend:
-	go build -mod=readonly -o plugin-backend cmd/plugin-backend.go
+	go build $(BUILD_OPTS) -mod=readonly -o plugin-backend cmd/plugin-backend.go
 
 .PHONY: test-unit-backend
 test-unit-backend:
