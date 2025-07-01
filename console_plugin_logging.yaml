@@ -1,0 +1,43 @@
+apiVersion: console.openshift.io/v1
+kind: ConsolePlugin
+metadata:
+  creationTimestamp: "2025-05-25T09:16:53Z"
+  generation: 1
+  name: logging-view-plugin
+  ownerReferences:
+  - apiVersion: observability.openshift.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: UIPlugin
+    name: logging
+    uid: 61f63d46-5311-42ea-b560-169b7fb2dba0
+  resourceVersion: "177658"
+  uid: d49d861a-49ab-438b-835c-2a76e11f8046
+spec:
+  backend:
+    service:
+      basePath: /
+      name: logging
+      namespace: openshift-cluster-observability-operator
+      port: 9443
+    type: Service
+  displayName: Logging View
+  i18n:
+    loadType: Preload
+  proxy:
+  - alias: backend
+    authorization: UserToken
+    endpoint:
+      service:
+        name: logging-loki-gateway-http
+        namespace: openshift-logging
+        port: 8080
+      type: Service
+  - alias: korrel8r
+    authorization: UserToken
+    endpoint:
+      service:
+        name: korrel8r
+        namespace: openshift-cluster-observability-operator
+        port: 9443
+      type: Service
