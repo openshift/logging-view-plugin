@@ -1,4 +1,4 @@
-import { TestIds } from '../../src/test-ids';
+import { TestIds } from '../../../src/test-ids';
 import {
   queryRangeMatrixInvalidResponse,
   queryRangeMatrixValidResponse,
@@ -8,10 +8,10 @@ import {
   queryRangeStreamsWithLineFormatting,
   queryRangeStreamsWithMessage,
   volumeRangeMatrixValidResponse,
-} from '../fixtures/query-range-fixtures';
-import { namespaceListResponse, podsListResponse } from '../fixtures/resource-api-fixtures';
-import { formatTimeRange } from '../../src/time-range';
-import { configResponse } from '../fixtures/backend-fixtures';
+} from '../../fixtures/query-range-fixtures';
+import { namespaceListResponse, podsListResponse } from '../../fixtures/resource-api-fixtures';
+import { formatTimeRange } from '../../../src/time-range';
+import { configResponse } from '../../fixtures/backend-fixtures';
 
 const LOGS_PAGE_URL = '/monitoring/logs';
 const QUERY_RANGE_STREAMS_URL_MATCH =
