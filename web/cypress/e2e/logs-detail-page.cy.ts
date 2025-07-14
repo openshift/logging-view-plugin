@@ -15,6 +15,14 @@ const QUERY_RANGE_STREAMS_INFRASTRUCTURE_URL_MATCH =
 const TEST_MESSAGE = "loki_1 | level=info msg='test log'";
 
 describe('Logs Detail Page', () => {
+  before( function() {
+    cy.uiLoginAsClusterAdmin()
+  });
+
+  after( function() {
+    cy.uiLogout()
+  });
+
   it('executes a query when "run query" is pressed', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,

@@ -19,6 +19,14 @@ const LABEL_POD_VALUES_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/label/kubernetes_pod_name/values?*';
 
 describe('Logs Dev Page', () => {
+  before( function() {
+    cy.uiLoginAsClusterAdmin()
+  });
+
+  after( function() {
+    cy.uiLogout()
+  });
+
   it('renders correctly with an expected response', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,

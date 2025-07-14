@@ -29,15 +29,22 @@ const RESOURCE_URL_MATCH = '/api/kubernetes/api/v1/*';
 const TEST_MESSAGE = "loki_1 | level=info msg='test log'";
 
 describe('Logs Page', () => {
+
+  before( function() {
+    cy.uiLoginAsClusterAdmin();
+  });
+
+  after( function() {
+    cy.uiLogout();
+  });
+
   it('renders correctly with an expected response', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
       queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     );
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse());
-
     cy.visit(LOGS_PAGE_URL);
-
     cy.getByTestId(TestIds.RefreshIntervalDropdown).should('exist');
     cy.getByTestId(TestIds.TimeRangeDropdown).should('exist');
     cy.getByTestId(TestIds.SyncButton).should('exist');

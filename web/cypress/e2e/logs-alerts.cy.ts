@@ -10,6 +10,15 @@ const QUERY_RANGE_MATRIX_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/query_range?query=sum*';
 
 describe('Alerts logs metrics', () => {
+
+  before( function() {
+    cy.uiLoginAsClusterAdmin()
+  });
+
+  after( function() {
+    cy.uiLogout()
+  });
+
   it('renders correctly with an expected response', () => {
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse());
 
