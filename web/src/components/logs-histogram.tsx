@@ -262,7 +262,7 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
 
   React.useEffect(() => {
     setTimeRangeValue(numericTimeRange(timeRange));
-  }, [timeRange, interval]);
+  }, [timeRange, interval, histogramData]);
 
   const intervalValue = interval ?? intervalFromTimeRange(timeRangeValue);
 
