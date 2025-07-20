@@ -21,7 +21,7 @@ const TEST_MESSAGE = "loki_1 | level=info msg='test log'";
 describe('Logs Page', () => {
 
   before( function() {
-    cy.uiLoginAsClusterAdmin();
+    cy.uiLoginAsClusterAdmin("first_user");
   });
 
   after( function() {
@@ -29,6 +29,7 @@ describe('Logs Page', () => {
   });
 
   it.only('renders correctly with an expected response', () => {
+    cy.log("...................")
     cy.visit(LOGS_PAGE_URL);
     cy.getByTestId(TestIds.RefreshIntervalDropdown).should('exist');
     cy.getByTestId(TestIds.TimeRangeDropdown).should('exist');
