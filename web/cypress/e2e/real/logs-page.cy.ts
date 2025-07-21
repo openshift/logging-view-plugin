@@ -16,7 +16,7 @@ import { configResponse } from '../../fixtures/backend-fixtures';
 const LOGS_PAGE_URL = '/monitoring/logs';
 const CONFIG_URL_MATCH = '/api/plugins/logging-view-plugin/config';
 const RESOURCE_URL_MATCH = '/api/kubernetes/api/v1/*';
-const TEST_MESSAGE = "loki_1 | level=info msg='test log'";
+const TEST_MESSAGE = "kubernetes_pod_name";
 
 describe('Logs Page', () => {
 
@@ -28,8 +28,7 @@ describe('Logs Page', () => {
     cy.uiLogoutClusterAdmin("first_user")
   });
 
-  it.only('renders correctly with an expected response', () => {
-    cy.log("...................")
+  it('renders correctly with an expected response', () => {
     cy.visit(LOGS_PAGE_URL);
     cy.getByTestId(TestIds.RefreshIntervalDropdown).should('exist');
     cy.getByTestId(TestIds.TimeRangeDropdown).should('exist');
@@ -57,7 +56,7 @@ describe('Logs Page', () => {
       });
   });
 
-  it('tests if the volume graph is enabled and is viewable', () => {
+  it.only('tests if the volume graph is enabled and is viewable', () => {
     cy.visit(LOGS_PAGE_URL);
 
     cy.getByTestId(TestIds.ExecuteQueryButton).click();
