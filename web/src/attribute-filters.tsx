@@ -2,8 +2,8 @@ import { K8sResourceCommon } from '@openshift-console/dynamic-plugin-sdk';
 import { cancellableFetch } from './cancellable-fetch';
 import { AttributeList, Filters, Option } from './components/filters/filter.types';
 import { LabelMatcher, LogQLQuery, PipelineStage } from './logql-query';
-import { Config, Schema } from './logs.types';
-import { executeLabelValue } from './loki-client';
+import { Config, Schema, SeriesResponse } from './logs.types';
+import { executeLabelValue, executeSeries } from './loki-client';
 import { getStreamLabelsFromSchema, ResourceLabel } from './parse-resources';
 import { Severity, severityAbbreviations, severityFromString } from './severity';
 import { getInitialTenantFromNamespace, notEmptyString, notUndefined } from './value-utils';
@@ -82,6 +82,32 @@ const lokiLabelValuesDataSource =
         value: label,
       }))
       .filter(({ value }) => notEmptyString(value));
+  };
+
+const lokiSeriesDataSource =
+  ({
+    config,
+    match,
+    tenant,
+    mapper,
+  }: {
+    config: Config;
+    match: Array<string>;
+    tenant: string;
+    mapper: (data: SeriesResponse) => Array<{ option: string; value: string }>;
+  }) =>
+  async (): Promise<Array<{ option: string; value: string }>> => {
+    const { abort, request } = executeSeries({ match, tenant, config });
+
+    if (resourceAbort.lokiSeries) {
+      resourceAbort.lokiSeries();
+    }
+
+    resourceAbort.lokiSeries = abort;
+
+    const response = await request();
+
+    return mapper(response).filter(({ value }) => notEmptyString(value));
   };
 
 const resourceDataSource =
@@ -202,14 +228,7 @@ export const availableAttributes = ({
       name: 'Containers',
       label: containerLabel,
       id: 'container',
-      options: resourceDataSource({
-        resource: 'pods',
-        mapper: (resource) =>
-          resource?.spec?.containers.map((container) => ({
-            option: `${resource?.metadata?.name} / ${container.name}`,
-            value: `${resource?.metadata?.name} / ${container.name}`,
-          })) ?? [],
-      }),
+      options: getContainerAttributeOptions(tenant, config, schema),
       expandSelection: (selections) => {
         const podSelections = new Set<string>();
         const containerSelections = new Set<string>();
@@ -219,6 +238,8 @@ export const availableAttributes = ({
             const [pod, containerName] = container.split(' / ');
             podSelections.add(pod);
             containerSelections.add(containerName);
+          } else {
+            containerSelections.add(container);
           }
         }
 
@@ -228,6 +249,10 @@ export const availableAttributes = ({
         ]);
       },
       isItemSelected: (value, filters) => {
+        if (!value.includes('/')) {
+          return filters?.container?.has(value) ?? false;
+        }
+
         const parts = value.split(' / ');
         if (parts.length !== 2) {
           return false;
@@ -661,19 +686,66 @@ const getPodAttributeOptions = (
         labelName: podLabel,
       })(),
       resourceDataSource({ resource: 'pods' })(),
-    ])
-      .then((results) => {
-        const podsAsStrings = new Set<string>();
-        results.forEach((result) => {
-          if (result.status === 'fulfilled') {
-            result.value.forEach((option) => {
-              podsAsStrings.add(JSON.stringify(option));
-            });
-          }
-        });
-        return Array.from(podsAsStrings).map((stringOption) => JSON.parse(stringOption) as Option);
-      })
-      .catch(() => {
-        return [] as Option[];
+    ]).then((results) => {
+      const podOptions: Set<Option> = new Set();
+      results.forEach((result) => {
+        if (result.status === 'fulfilled') {
+          result.value.forEach((option) => {
+            podOptions.add(option);
+          });
+        }
       });
+      return Array.from(podOptions);
+    });
+};
+
+const getContainerAttributeOptions = (
+  tenant: string,
+  config: Config,
+  schema: Schema,
+): (() => Promise<Option[]>) => {
+  const { containerLabel, podLabel } = getAttributeLabels(schema);
+
+  const seriesQuery = `{ ${containerLabel}!="", ${podLabel}!="" }`;
+
+  return () =>
+    Promise.allSettled<Promise<Option[]>>([
+      lokiSeriesDataSource({
+        config,
+        tenant,
+        match: [seriesQuery],
+        mapper: (response) => {
+          const uniqueContainers = new Set<string>();
+
+          response.data.forEach((item) => {
+            if (item[containerLabel] && item[podLabel]) {
+              uniqueContainers.add(`${item[podLabel]} / ${item[containerLabel]}`);
+            }
+          });
+
+          return Array.from(uniqueContainers).map((container) => ({
+            option: container,
+            value: container,
+          }));
+        },
+      })(),
+      resourceDataSource({
+        resource: 'pods',
+        mapper: (resource) =>
+          resource?.spec?.containers.map((container) => ({
+            option: `${resource?.metadata?.name} / ${container.name}`,
+            value: `${resource?.metadata?.name} / ${container.name}`,
+          })) ?? [],
+      })(),
+    ]).then((results) => {
+      const uniqueContainers = new Set<Option>();
+      results.forEach((result) => {
+        if (result.status === 'fulfilled') {
+          result.value.forEach((option) => {
+            uniqueContainers.add(option);
+          });
+        }
+      });
+      return Array.from(uniqueContainers);
+    });
 };

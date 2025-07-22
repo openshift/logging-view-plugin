@@ -9,6 +9,7 @@ import {
   QueryRangeResponse,
   RulesResponse,
   Schema,
+  SeriesResponse,
   VolumeRangeResponse,
 } from './logs.types';
 import { getStreamLabelsFromSchema, ResourceLabel } from './parse-resources';
@@ -109,6 +110,29 @@ export const executeLabelValue = ({
 
   return cancellableFetch<LabelValueResponse>(
     `${endpoint}/loki/api/v1/label/${labelName}/values?${new URLSearchParams(params)}`,
+    requestInit,
+  );
+};
+
+export const executeSeries = ({
+  match,
+  config,
+  tenant,
+}: {
+  match: Array<string>;
+  config?: Config;
+  tenant: string;
+}): CancellableFetch<SeriesResponse> => {
+  const { endpoint, requestInit } = getFetchConfig({ config, tenant });
+
+  const params: Record<string, string> = {};
+
+  for (const m of match) {
+    params['match[]'] = m;
+  }
+
+  return cancellableFetch<SeriesResponse>(
+    `${endpoint}/loki/api/v1/series?${new URLSearchParams(params)}`,
     requestInit,
   );
 };

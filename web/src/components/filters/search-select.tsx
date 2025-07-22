@@ -319,6 +319,7 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
         aria-placeholder={t('Search')}
         className="lv-plugin__search-select"
         toggle={toggle}
+        maxMenuHeight="300px"
       >
         <SelectList isAriaMultiselectable>
           {getOptionComponents(

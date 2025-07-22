@@ -9,7 +9,11 @@ import {
   queryRangeStreamsWithMessage,
   volumeRangeMatrixValidResponse,
 } from '../fixtures/query-range-fixtures';
-import { namespaceListResponse, podsListResponse } from '../fixtures/resource-api-fixtures';
+import {
+  containersLabelValuesResponse,
+  namespaceListResponse,
+  podsListResponse,
+} from '../fixtures/resource-api-fixtures';
 import { formatTimeRange } from '../../src/time-range';
 import { configResponse } from '../fixtures/backend-fixtures';
 
@@ -24,6 +28,8 @@ const QUERY_RANGE_MATRIX_INFRASTRUCTURE_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/infrastructure/loki/api/v1/query_range?query=sum*';
 const VOLUME_QUERY_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/index/volume_range?query=*';
+const SERIES_POD_VALUES_URL_MATCH =
+  '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/series?*';
 const CONFIG_URL_MATCH = '/api/plugins/logging-view-plugin/config';
 const RESOURCE_URL_MATCH = '/api/kubernetes/api/v1/*';
 const TEST_MESSAGE = "loki_1 | level=info msg='test log'";
@@ -683,6 +689,69 @@ describe('Logs Page', () => {
         .should(
           'equal',
           '{ kubernetes_container_name="operator", kubernetes_pod_name="my-pod-2" } | json',
+        );
+    });
+
+    cy.get('@resourceQuery.all').should('have.length.at.least', 1);
+  });
+
+  it.only('container selection includes loki labels and k8s resources', () => {
+    cy.intercept(
+      QUERY_RANGE_STREAMS_URL_MATCH,
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
+    ).as('queryRangeStreams');
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrix',
+    );
+
+    cy.intercept(RESOURCE_URL_MATCH, podsListResponse).as('resourceQuery');
+    cy.intercept(SERIES_POD_VALUES_URL_MATCH, containersLabelValuesResponse).as(
+      'containersLabelValues',
+    );
+
+    cy.visit(LOGS_PAGE_URL);
+
+    cy.getByTestId(TestIds.ShowQueryToggle).click();
+
+    cy.getByTestId(TestIds.AttributeFilters).within(() => {
+      cy.getByTestId(TestIds.AvailableAttributes)
+        .first()
+        .click({ force: true })
+        .parent()
+        .within(() => {
+          cy.contains('Containers').click({ force: true });
+        });
+      cy.get('input').invoke('attr', 'placeholder').should('contain', 'Filter by Containers');
+      cy.getByTestId(TestIds.AttributeOptions).within(() => {
+        cy.get('button').click({ force: true });
+      });
+      cy.contains(/^my-pod-from-labels \/ my-container-from-labels$/).click({ force: true });
+
+      cy.contains(/^my-pod-from-labels \/ my-container-from-labels$/)
+        .find('input')
+        .should('be.checked');
+
+      cy.contains(/^my-pod-2 \/ operator$/).click({ force: true });
+
+      cy.contains(/^my-pod \/ operator$/)
+        .find('input')
+        .should('not.be.checked');
+
+      cy.contains(/^my-pod-2 \/ operator-2$/)
+        .find('input')
+        .should('not.be.checked');
+
+      cy.contains(/^my-pod-2 \/ operator$/)
+        .find('input')
+        .should('be.checked');
+    });
+
+    cy.getByTestId(TestIds.LogsQueryInput).within(() => {
+      cy.get('textarea')
+        .invoke('val')
+        .should(
+          'equal',
+          '{ kubernetes_container_name=~"my-container-from-labels|operator", kubernetes_pod_name=~"my-pod-from-labels|my-pod-2" } | json',
         );
     });
 
