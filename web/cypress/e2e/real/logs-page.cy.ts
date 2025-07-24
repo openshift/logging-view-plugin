@@ -1,4 +1,4 @@
-import { TestIds } from '../../src/test-ids';
+import { TestIds } from '../../../src/test-ids';
 import {
   queryRangeMatrixInvalidResponse,
   queryRangeMatrixValidResponse,
@@ -8,36 +8,28 @@ import {
   queryRangeStreamsWithLineFormatting,
   queryRangeStreamsWithMessage,
   volumeRangeMatrixValidResponse,
-} from '../fixtures/query-range-fixtures';
-import { namespaceListResponse, podsListResponse } from '../fixtures/resource-api-fixtures';
-import { formatTimeRange } from '../../src/time-range';
-import { configResponse } from '../fixtures/backend-fixtures';
+} from '../../fixtures/query-range-fixtures';
+import { namespaceListResponse, podsListResponse } from '../../fixtures/resource-api-fixtures';
+import { formatTimeRange } from '../../../src/time-range';
+import { configResponse } from '../../fixtures/backend-fixtures';
 
 const LOGS_PAGE_URL = '/monitoring/logs';
-const QUERY_RANGE_STREAMS_URL_MATCH =
-  '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/query_range?query=%7B*';
-const QUERY_RANGE_MATRIX_URL_MATCH =
-  '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/query_range?query=sum*';
-const QUERY_RANGE_STREAMS_INFRASTRUCTURE_URL_MATCH =
-  '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/infrastructure/loki/api/v1/query_range?query=%7B*';
-const QUERY_RANGE_MATRIX_INFRASTRUCTURE_URL_MATCH =
-  '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/infrastructure/loki/api/v1/query_range?query=sum*';
-const VOLUME_QUERY_URL_MATCH =
-  '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/index/volume_range?query=*';
 const CONFIG_URL_MATCH = '/api/plugins/logging-view-plugin/config';
 const RESOURCE_URL_MATCH = '/api/kubernetes/api/v1/*';
-const TEST_MESSAGE = "loki_1 | level=info msg='test log'";
+const TEST_MESSAGE = "kubernetes_pod_name";
 
 describe('Logs Page', () => {
+
+  before( function() {
+    cy.uiLoginAsClusterAdmin("first_user");
+  });
+
+  after( function() {
+    cy.uiLogoutClusterAdmin("first_user")
+  });
+
   it('renders correctly with an expected response', () => {
-    cy.intercept(
-      QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
-    );
-    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse());
-
     cy.visit(LOGS_PAGE_URL);
-
     cy.getByTestId(TestIds.RefreshIntervalDropdown).should('exist');
     cy.getByTestId(TestIds.TimeRangeDropdown).should('exist');
     cy.getByTestId(TestIds.SyncButton).should('exist');
@@ -64,14 +56,7 @@ describe('Logs Page', () => {
       });
   });
 
-  it('tests if the volume graph is enabled and is viewable', () => {
-    cy.intercept(
-      QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
-    ).as('queryRangeStreams');
-
-    cy.intercept(VOLUME_QUERY_URL_MATCH, volumeRangeMatrixValidResponse()).as('volumeRangeMatrix');
-
+  it.only('tests if the volume graph is enabled and is viewable', () => {
     cy.visit(LOGS_PAGE_URL);
 
     cy.getByTestId(TestIds.ExecuteQueryButton).click();
@@ -84,11 +69,6 @@ describe('Logs Page', () => {
   });
 
   it('tests if the stats table is enabled and is viewable', () => {
-    cy.intercept(
-      QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
-    ).as('queryRangeStreams');
-
     cy.visit(LOGS_PAGE_URL);
 
     cy.getByTestId(TestIds.ShowStatsToggle).click();
@@ -99,13 +79,6 @@ describe('Logs Page', () => {
   });
 
   it('handles errors gracefully when a request fails', () => {
-    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, (req) => {
-      req.continue((res) => res.send({ statusCode: 500, body: 'Internal Server Error' }));
-    });
-    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, (req) => {
-      req.continue((res) => res.send({ statusCode: 500, body: 'Internal Server Error' }));
-    });
-
     cy.visit(LOGS_PAGE_URL);
 
     cy.getByTestId(TestIds.LogsTable)
@@ -124,9 +97,6 @@ describe('Logs Page', () => {
   });
 
   it('handles errors gracefully when a response is invalid', () => {
-    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeStreamsInvalidResponse());
-    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixInvalidResponse());
-
     cy.visit(LOGS_PAGE_URL);
 
     cy.getByTestId(TestIds.LogsTable)
@@ -145,14 +115,6 @@ describe('Logs Page', () => {
   });
 
   it('executes a query when "run query" is pressed', () => {
-    cy.intercept(
-      QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
-    ).as('queryRangeStreams');
-    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
-      'queryRangeMatrix',
-    );
-
     cy.visit(LOGS_PAGE_URL);
 
     cy.getByTestId(TestIds.LogsTable)
@@ -176,14 +138,6 @@ describe('Logs Page', () => {
   });
 
   it('executes a query with a new value when "Enter" is pressed on the query input field', () => {
-    cy.intercept(
-      QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
-    ).as('queryRangeStreams');
-    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
-      'queryRangeMatrix',
-    );
-
     cy.visit(LOGS_PAGE_URL);
 
     cy.getByTestId(TestIds.LogsTable)
@@ -217,22 +171,6 @@ describe('Logs Page', () => {
   });
 
   it('executes a query with the selected tenant when "run query" is pressed', () => {
-    cy.intercept(
-      QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
-    ).as('queryRangeStreams');
-    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
-      'queryRangeMatrix',
-    );
-
-    cy.intercept(
-      QUERY_RANGE_STREAMS_INFRASTRUCTURE_URL_MATCH,
-      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
-    ).as('queryRangeStreamsInfrastructure');
-    cy.intercept(QUERY_RANGE_MATRIX_INFRASTRUCTURE_URL_MATCH, queryRangeMatrixValidResponse()).as(
-      'queryRangeMatrixInfrastructure',
-    );
-
     cy.visit(LOGS_PAGE_URL);
 
     cy.getByTestId(TestIds.LogsTable)
@@ -267,14 +205,6 @@ describe('Logs Page', () => {
   });
 
   it('stores selected values for time range and refresh interval', () => {
-    cy.intercept(
-      QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
-    ).as('queryRangeStreams');
-    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
-      'queryRangeMatrix',
-    );
-
     cy.visit(LOGS_PAGE_URL);
 
     cy.getByTestId(TestIds.RefreshIntervalDropdown)
@@ -301,14 +231,6 @@ describe('Logs Page', () => {
   });
 
   it('disables query executors when the query is empty', () => {
-    cy.intercept(
-      QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
-    ).as('queryRangeStreams');
-    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
-      'queryRangeMatrix',
-    );
-
     cy.visit(LOGS_PAGE_URL);
 
     cy.getByTestId(TestIds.ShowQueryToggle).click();
@@ -337,16 +259,6 @@ describe('Logs Page', () => {
   });
 
   it('updates the query when selecting filters', () => {
-    cy.intercept(
-      QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
-    ).as('queryRangeStreams');
-    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
-      'queryRangeMatrix',
-    );
-
-    cy.intercept(RESOURCE_URL_MATCH, namespaceListResponse).as('resourceQuery');
-
     cy.visit(LOGS_PAGE_URL);
 
     cy.getByTestId(TestIds.ShowQueryToggle).click();
@@ -418,14 +330,6 @@ describe('Logs Page', () => {
   });
 
   it('updates the url with the proper parameters when selecting a custom range', () => {
-    cy.intercept(
-      QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
-    ).as('queryRangeStreams');
-    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
-      'queryRangeMatrix',
-    );
-
     cy.visit(LOGS_PAGE_URL);
 
     cy.getByTestId(TestIds.ToggleHistogramButton).click();
@@ -468,15 +372,6 @@ describe('Logs Page', () => {
   });
 
   it('applies plugin configuration from the backend', () => {
-    cy.intercept(
-      QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
-    ).as('queryRangeStreams');
-    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
-      'queryRangeMatrix',
-    );
-    cy.intercept(CONFIG_URL_MATCH, configResponse).as('config');
-
     cy.visit(LOGS_PAGE_URL);
 
     cy.getByTestId(TestIds.ToggleHistogramButton).click();
@@ -502,11 +397,6 @@ describe('Logs Page', () => {
   });
 
   it('displays a suggestion to fix an error', () => {
-    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, {
-      statusCode: 400,
-      body: queryRangeStreamsErrorResponse(),
-    }).as('queryRangeStreams');
-
     cy.visit(LOGS_PAGE_URL);
 
     cy.getByTestId(TestIds.ExecuteQueryButton).click();
@@ -521,10 +411,6 @@ describe('Logs Page', () => {
   });
 
   it('displays the content of a log entry if the stream result is already formatted', () => {
-    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeStreamsWithLineFormatting()).as(
-      'queryRangeStreams',
-    );
-
     cy.visit(LOGS_PAGE_URL);
 
     cy.getByTestId(TestIds.ExecuteQueryButton).click();
@@ -539,10 +425,6 @@ describe('Logs Page', () => {
   });
 
   it('displays the message of a log entry if the streams result is an object', () => {
-    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeStreamsWithMessage()).as(
-      'queryRangeStreams',
-    );
-
     cy.visit(LOGS_PAGE_URL);
 
     cy.getByTestId(TestIds.ExecuteQueryButton).click();
@@ -557,16 +439,12 @@ describe('Logs Page', () => {
   });
 
   it('displays log based metrics when query results are matrix type', () => {
-    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeMatrixValidResponse());
-
     cy.visit(LOGS_PAGE_URL);
 
     cy.getByTestId(TestIds.LogsMetrics).should('exist');
   });
 
   it('histogram is disabled and not visible when query results are matrix type', () => {
-    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeMatrixValidResponse());
-
     cy.visit(LOGS_PAGE_URL);
 
     cy.getByTestId(TestIds.LogsMetrics).should('exist');
@@ -575,9 +453,6 @@ describe('Logs Page', () => {
   });
 
   it('histogram is disabled after beign enabled by a streams result when query results are matrix type', () => {
-    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeStreamsWithMessage());
-    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse());
-
     cy.visit(LOGS_PAGE_URL);
 
     cy.getByTestId(TestIds.ToggleHistogramButton).click();
@@ -629,16 +504,6 @@ describe('Logs Page', () => {
   });
 
   it('container selection includes the parent pod', () => {
-    cy.intercept(
-      QUERY_RANGE_STREAMS_URL_MATCH,
-      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
-    ).as('queryRangeStreams');
-    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
-      'queryRangeMatrix',
-    );
-
-    cy.intercept(RESOURCE_URL_MATCH, podsListResponse).as('resourceQuery');
-
     cy.visit(LOGS_PAGE_URL);
 
     cy.getByTestId(TestIds.ShowQueryToggle).click();

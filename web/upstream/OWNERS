@@ -1,0 +1,12 @@
+reviewers:
+  - rhamilto
+  - TheRealJon
+  - jhadvig
+  - cyril-ui-developer
+approvers:
+  - rhamilto
+  - TheRealJon
+  - jhadvig
+  - cyril-ui-developer
+labels:
+  - kind/cypress

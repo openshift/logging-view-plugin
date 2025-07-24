@@ -1,8 +1,8 @@
-import { TestIds } from '../../src/test-ids';
+import { TestIds } from '../../../src/test-ids';
 import {
   queryRangeMatrixValidResponse,
   queryRangeStreamsValidResponse,
-} from '../fixtures/query-range-fixtures';
+} from '../../fixtures/query-range-fixtures';
 
 const LOGS_DETAIL_PAGE_URL = '/k8s/ns/my-namespace/pods/test-pod-name';
 const LOGS_DETAIL_PAGE_URL_OPENSHIFT_NS = '/k8s/ns/openshift-api/pods/test-pod-name';
