@@ -1,3 +1,5 @@
+import { getConsoleRequestHeaders } from '@openshift-console/dynamic-plugin-sdk/lib/utils/fetch';
+
 export type CancellableFetch<T> = {
   request: () => Promise<T>;
   abort: () => void;
@@ -10,20 +12,6 @@ class TimeoutError extends Error {
     super(`Request: ${url} timed out after ${ms}ms.`);
   }
 }
-
-const getCSRFToken = () => {
-  const cookiePrefix = 'csrf-token=';
-  return (
-    document &&
-    document.cookie &&
-    document.cookie
-      .split(';')
-      .map((c) => c.trim())
-      .filter((c) => c.startsWith(cookiePrefix))
-      .map((c) => c.slice(cookiePrefix.length))
-      .pop()
-  );
-};
 
 class FetchError extends Error {
   status: number;
@@ -47,12 +35,13 @@ export const cancellableFetch = <T>(
   const abort = () => abortController.abort();
 
   const fetchPromise = async () => {
+    const consoleHeaders = getConsoleRequestHeaders();
     const response = await fetch(url, {
       ...init,
       headers: {
+        ...consoleHeaders,
         ...init?.headers,
         Accept: 'application/json',
-        ...(init?.method === 'POST' ? { 'X-CSRFToken': getCSRFToken() } : {}),
       },
       signal: abortController.signal,
     });
