@@ -48,6 +48,19 @@ export const podsLabelValuesResponse = {
   data: ['my-pod', 'default', 'gitops', 'gitops-service-argocd'],
 };
 
+export const containersLabelValuesResponse = {
+  data: [
+    {
+      kubernetes_pod_name: 'my-pod-from-labels',
+      kubernetes_container_name: 'my-container-from-labels',
+    },
+    { kubernetes_pod_name: 'my-pod-from-labels', kubernetes_container_name: 'my-container' },
+    { kubernetes_pod_name: 'my-pod-from-labels', kubernetes_container_name: 'container-1' },
+    { kubernetes_pod_name: 'my-pod-2', kubernetes_container_name: 'container-2' },
+    { kubernetes_pod_name: 'my-pod-3', kubernetes_container_name: 'container-3' },
+  ],
+};
+
 export const podsListResponse = {
   kind: 'PodList',
   apiVersion: 'v1',

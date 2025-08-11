@@ -98,6 +98,10 @@ export type LabelValueResponse = {
   data: Array<string>;
 };
 
+export type SeriesResponse = {
+  data: Array<Record<string, string>>;
+};
+
 export type Resource = {
   kind: string;
   name: string;
