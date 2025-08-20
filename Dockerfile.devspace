@@ -1,4 +1,4 @@
-FROM quay.io/redhat-cne/openshift-origin-release:rhel-9-golang-1.22-openshift-4.17 AS web-builder
+FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:rhel_9_golang_1.24 AS web-builder
 
 WORKDIR /opt/app-root
 
