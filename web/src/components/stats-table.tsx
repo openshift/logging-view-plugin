@@ -75,6 +75,8 @@ export const StatsTable: React.FC<StatsTableProps> = ({ logsData }) => {
 
               <Td></Td>
 
+              <Td></Td>
+
               <Td>
                 <strong>{t('Ingester')}</strong>
               </Td>
@@ -400,6 +402,20 @@ export const StatsTable: React.FC<StatsTableProps> = ({ logsData }) => {
               </Td>
               <Td></Td>
               <Td></Td>
+            </Tr>
+            <Tr>
+              <Td></Td>
+              <Td></Td>
+              <Td></Td>
+              <Td></Td>
+              <Tooltip content={t('Total time spent fetching chunk references')}>
+                <Td>Chunk Refs Fetch Time:</Td>
+              </Tooltip>
+              <Td>
+                <strong>
+                  {convertNano(logsData?.data.stats.querier?.store?.chunkRefsFetchTime) ?? 'NA'}
+                </strong>
+              </Td>
             </Tr>
           </Tbody>
         </Table>
