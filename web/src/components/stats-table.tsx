@@ -50,6 +50,44 @@ const convertNano = (time: number | undefined) => {
   return Math.round(time * 100) / 100 + ' ms';
 };
 
+// Helper functions for timing calculations
+const getChunkRefsFetchTime = (logsData?: QueryRangeResponse): number => {
+  const ingesterFetchTime = logsData?.data.stats.ingester?.store?.chunkRefsFetchTime || 0;
+  const querierFetchTime = logsData?.data.stats.querier?.store?.chunkRefsFetchTime || 0;
+  return (ingesterFetchTime + querierFetchTime) / 1000000000; // Convert nanosec to sec
+};
+
+const getChunksDownloadTime = (logsData?: QueryRangeResponse): number => {
+  const ingesterDownloadTime = logsData?.data.stats.ingester?.store?.chunksDownloadTime || 0;
+  const querierDownloadTime = logsData?.data.stats.querier?.store?.chunksDownloadTime || 0;
+  return (ingesterDownloadTime + querierDownloadTime) / 1000000000; // Convert nanosec to sec
+};
+
+const getQueryDuration = (logsData?: QueryRangeResponse): number => {
+  return logsData?.data.stats.summary?.execTime || 0;
+};
+
+const getQueueTime = (logsData?: QueryRangeResponse): number => {
+  return logsData?.data.stats.summary?.queueTime || 0;
+};
+
+const getTotalQueryTime = (logsData?: QueryRangeResponse): number => {
+  return getQueryDuration(logsData) + getQueueTime(logsData);
+};
+
+const getExecutionTime = (logsData?: QueryRangeResponse): number => {
+  const queryDuration = getQueryDuration(logsData);
+  const chunkRefsFetchTime = getChunkRefsFetchTime(logsData);
+  const chunksDownloadTime = getChunksDownloadTime(logsData);
+  return queryDuration - chunkRefsFetchTime - chunksDownloadTime;
+};
+
+const formatPercentage = (value: number, total: number): string => {
+  if (total === 0) return '0%';
+  const percentage = (value / total) * 100;
+  return Math.round(percentage * 100) / 100 + '%';
+};
+
 interface TableComponentProps {
   logsData?: QueryRangeResponse;
   title: string;
@@ -69,6 +107,76 @@ const SummaryStatsTable: React.FC<TableComponentProps> = ({ logsData, title }) =
           </Tr>
         </Thead>
         <Tbody>
+          <Tr>
+            <Td>
+              <Tooltip content={t('Total query time including queue and execution')}>
+                <span>{t('Total query time')}</span>
+              </Tooltip>
+            </Td>
+            <Td>
+              <strong>{convertTime(getTotalQueryTime(logsData)) ?? 'NA'}</strong>
+            </Td>
+          </Tr>
+          <Tr>
+            <Td>
+              <Tooltip content={t('Time spent queued waiting for query to be processed')}>
+                <span>{t('Time spent in Queued')}</span>
+              </Tooltip>
+            </Td>
+            <Td>
+              <strong>
+                {convertTime(getQueueTime(logsData)) ?? 'NA'} (
+                {formatPercentage(getQueueTime(logsData), getTotalQueryTime(logsData))})
+              </strong>
+            </Td>
+          </Tr>
+          <Tr>
+            <Td>
+              <Tooltip content={t('Time spent in actual execution.')}>
+                <span>{t('Time spent in Execution')}</span>
+              </Tooltip>
+            </Td>
+            <Td>
+              <strong>
+                {convertTime(getExecutionTime(logsData)) ?? 'NA'} (
+                {formatPercentage(getExecutionTime(logsData), getTotalQueryTime(logsData))})
+              </strong>
+            </Td>
+          </Tr>
+          <Tr>
+            <Td>
+              <Tooltip
+                content={t(
+                  'Time spent fetching chunk references from index for both ingester and querier',
+                )}
+              >
+                <span>{t('Time spent in Index')}</span>
+              </Tooltip>
+            </Td>
+            <Td>
+              <strong>
+                {convertTime(getChunkRefsFetchTime(logsData)) ?? 'NA'} (
+                {formatPercentage(getChunkRefsFetchTime(logsData), getTotalQueryTime(logsData))})
+              </strong>
+            </Td>
+          </Tr>
+          <Tr>
+            <Td>
+              <Tooltip
+                content={t(
+                  'Time spent downloading chunks from store for both ingester and querier',
+                )}
+              >
+                <span>{t('Time spent in Store')}</span>
+              </Tooltip>
+            </Td>
+            <Td>
+              <strong>
+                {convertTime(getChunksDownloadTime(logsData)) ?? 'NA'} (
+                {formatPercentage(getChunksDownloadTime(logsData), getTotalQueryTime(logsData))})
+              </strong>
+            </Td>
+          </Tr>
           <Tr>
             <Td>
               <Tooltip content={t('Total of bytes processed per second')}>
@@ -111,26 +219,6 @@ const SummaryStatsTable: React.FC<TableComponentProps> = ({ logsData, title }) =
             </Td>
             <Td>
               <strong>{logsData?.data.stats.summary?.totalLinesProcessed ?? 'NA'}</strong>
-            </Td>
-          </Tr>
-          <Tr>
-            <Td>
-              <Tooltip content={t('Total execution time')}>
-                <span>{t('Execution Time')}</span>
-              </Tooltip>
-            </Td>
-            <Td>
-              <strong>{convertTime(logsData?.data.stats.summary?.execTime) ?? 'NA'}</strong>
-            </Td>
-          </Tr>
-          <Tr>
-            <Td>
-              <Tooltip content={t('Total queue time')}>
-                <span>{t('Queue Time')}</span>
-              </Tooltip>
-            </Td>
-            <Td>
-              <strong>{convertTime(logsData?.data.stats.summary?.queueTime) ?? 'NA'}</strong>
             </Td>
           </Tr>
           <Tr>
@@ -257,6 +345,18 @@ const IngesterStatsTable: React.FC<TableComponentProps> = ({ logsData, title }) 
           </Tr>
           <Tr>
             <Td>
+              <Tooltip content={t('Total time spent fetching chunk references in seconds')}>
+                <span>{t('Chunk Refs Fetch Time')}</span>
+              </Tooltip>
+            </Td>
+            <Td>
+              <strong>
+                {convertNano(logsData?.data.stats.ingester?.store?.chunkRefsFetchTime) ?? 'NA'}
+              </strong>
+            </Td>
+          </Tr>
+          <Tr>
+            <Td>
               <Tooltip content={t('Total time spent downloading chunks in seconds')}>
                 <span>{t('Chunks Download Time')}</span>
               </Tooltip>
@@ -346,7 +446,7 @@ const IngesterStatsTable: React.FC<TableComponentProps> = ({ logsData, title }) 
   );
 };
 
-const StorageStatsTable: React.FC<TableComponentProps> = ({ logsData, title }) => {
+const QuerierStatsTable: React.FC<TableComponentProps> = ({ logsData, title }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
   return (
@@ -378,6 +478,18 @@ const StorageStatsTable: React.FC<TableComponentProps> = ({ logsData, title }) =
             </Td>
             <Td>
               <strong>{logsData?.data.stats.querier?.store?.totalChunksDownloaded ?? 'NA'}</strong>
+            </Td>
+          </Tr>
+          <Tr>
+            <Td>
+              <Tooltip content={t('Total time spent fetching chunk references')}>
+                <span>{t('Chunk Refs Fetch Time')}</span>
+              </Tooltip>
+            </Td>
+            <Td>
+              <strong>
+                {convertNano(logsData?.data.stats.querier?.store?.chunkRefsFetchTime) ?? 'NA'}
+              </strong>
             </Td>
           </Tr>
           <Tr>
@@ -463,18 +575,6 @@ const StorageStatsTable: React.FC<TableComponentProps> = ({ logsData, title }) =
               <strong>{logsData?.data.stats.querier?.store?.chunk?.totalDuplicates ?? 'NA'}</strong>
             </Td>
           </Tr>
-          <Tr>
-            <Td>
-              <Tooltip content={t('Total time spent fetching chunk references')}>
-                <span>{t('Chunk Refs Fetch Time')}</span>
-              </Tooltip>
-            </Td>
-            <Td>
-              <strong>
-                {convertNano(logsData?.data.stats.querier?.store?.chunkRefsFetchTime) ?? 'NA'}
-              </strong>
-            </Td>
-          </Tr>
         </Tbody>
       </Table>
     </div>
@@ -496,7 +596,7 @@ export const StatsTable: React.FC<StatsTableProps> = ({ logsData }) => {
             <IngesterStatsTable logsData={logsData} title={t('Ingester')} />
           </SplitItem>
           <SplitItem isFilled>
-            <StorageStatsTable logsData={logsData} title={t('Storage')} />
+            <QuerierStatsTable logsData={logsData} title={t('Querier')} />
           </SplitItem>
         </Split>
       </CardBody>
