@@ -1,8 +1,8 @@
-import { TestIds } from '../../src/test-ids';
+import { TestIds } from '../../../src/test-ids';
 import {
   queryRangeMatrixValidResponse,
   queryRangeStreamsValidResponse,
-} from '../fixtures/query-range-fixtures';
+} from '../../fixtures/query-range-fixtures';
 import { podsLabelValuesResponse } from '../fixtures/resource-api-fixtures';
 
 const LOGS_DEV_PAGE_URL = '/dev-monitoring/ns/my-namespace/logs';
@@ -19,6 +19,14 @@ const LABEL_POD_VALUES_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/label/kubernetes_pod_name/values?*';
 
 describe('Logs Dev Page', () => {
+  before( function() {
+    cy.uiLoginAsClusterAdmin('first_user')
+  });
+
+  after( function() {
+    cy.uiLogoutClusterAdmin('first_user')
+  });
+
   it('renders correctly with an expected response', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
