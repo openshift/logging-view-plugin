@@ -1,9 +1,9 @@
-import { TestIds } from '../../src/test-ids';
+import { TestIds } from '../../../src/test-ids';
 import {
   queryRangeMatrixValidResponse,
   queryRangeStreamsValidResponse,
-} from '../fixtures/query-range-fixtures';
-import { podsLabelValuesResponse } from '../fixtures/resource-api-fixtures';
+} from '../../fixtures/query-range-fixtures';
+import { podsLabelValuesResponse } from '../../fixtures/resource-api-fixtures';
 
 const LOGS_DEV_PAGE_URL = '/dev-monitoring/ns/my-namespace/logs';
 const QUERY_RANGE_STREAMS_URL_MATCH =

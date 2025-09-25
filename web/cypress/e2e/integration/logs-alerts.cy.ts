@@ -1,9 +1,9 @@
-import { TestIds } from '../../src/test-ids';
+import { TestIds } from '../../../src/test-ids';
 import {
   queryRangeMatrixEmptyResponse,
   queryRangeMatrixInvalidResponse,
   queryRangeMatrixValidResponse,
-} from '../fixtures/query-range-fixtures';
+} from '../../fixtures/query-range-fixtures';
 
 const LOGS_ALERTS_PAGE_URL = '/monitoring/alerts/test-alert';
 const QUERY_RANGE_MATRIX_URL_MATCH =
