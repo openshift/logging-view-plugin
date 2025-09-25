@@ -1,4 +1,4 @@
-FROM cypress/included:12.17.4
+FROM cypress/included:14.5.3
 
 WORKDIR /usr/src/app
 
@@ -11,6 +11,9 @@ COPY web/ /usr/src/app/
 
 RUN mkdir -p /.config
 RUN chmod 775 -R /.config
+
+RUN mkdir -p /root/.cache/Cypress
+RUN chmod 775 -R /root/.cache
 
 RUN npm run build:standalone
 
