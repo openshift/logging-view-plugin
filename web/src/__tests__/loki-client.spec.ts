@@ -1,5 +1,7 @@
 import { getFetchConfig } from '../loki-client';
 
+jest.mock('@openshift-console/dynamic-plugin-sdk');
+
 describe('Loki Client', () => {
   it('should generate a valid config', () => {
     [
