@@ -1,6 +1,6 @@
 {
   "name": "logging-view-plugin",
-  "version": "0.0.1",
+  "version": "6.1.0",
   "private": true,
   "repository": "git@github.com/jgbernalp/logging-console-plugin",
   "scripts": {
