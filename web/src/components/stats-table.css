@@ -1,16 +1,11 @@
-.lv-plugin__stats-title {
-  font-size: 16px;
+.lv-plugin__stats__card {
+  margin-bottom: var(--pf-v5-global--spacer--md);
 }
 
-.lv-plugin__stats__content {
-  padding: 20px;
-  padding-top: 5px;
-  padding-bottom: 40px;
-}
-.lv-plugin__stats-table {
-  background: none;
-}
-
-.lv-plugin__stats-table__header {
-  width: 205px;
+.lv-plugin__stats-section-title {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 2px solid var(--pf-v5-global--BorderColor--100);
 }

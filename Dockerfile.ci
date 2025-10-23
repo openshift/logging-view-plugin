@@ -4,7 +4,7 @@ ENV APP_ROOT=/opt/app-root \
     HOME=/opt/app-root/src \
     NPM_RUN=start \
     PLATFORM="el8" \
-    NODEJS_VERSION=18 \
+    NODEJS_VERSION=22 \
     NPM_RUN=start \
     NAME=nodejs
 
@@ -28,7 +28,7 @@ RUN make install-frontend-ci
 COPY web/ ${HOME}/web
 RUN make build-frontend
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.22-openshift-4.17 as go-builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.24-openshift-4.20 as go-builder
 
 WORKDIR /opt/app-root
 
@@ -47,7 +47,7 @@ ENV CGO_ENABLED=1
 
 RUN make build-backend BUILD_OPTS="-tags strictfipsruntime"
 
-FROM registry.ci.openshift.org/ocp/4.17:base-rhel9
+FROM registry.ci.openshift.org/ocp/4.20:base-rhel9
 
 USER 1001
 
