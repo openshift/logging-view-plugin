@@ -13,7 +13,7 @@ services:
       - ./loki/loki-config.yml:/etc/loki/local-config.yml
       - ./docker-compose-logs:/var/log
       - ./loki/rules:/loki/rules
-    command: -config.file=/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yml
     networks:
       - inner
 
