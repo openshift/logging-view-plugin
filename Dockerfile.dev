@@ -7,12 +7,12 @@ USER 0
 ENV HUSKY=0
 COPY web/package*.json web/
 COPY Makefile Makefile
-RUN make install-frontend-ci-clean
+RUN make install-frontend-ci
 
 COPY web/ web/
 RUN make build-frontend
 
-FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:rhel_9_golang_1.24 as go-builder
+FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:rhel_9_1.24 as go-builder
 
 WORKDIR /opt/app-root
 
@@ -26,12 +26,20 @@ COPY config/ config/
 COPY cmd/ cmd/
 COPY pkg/ pkg/
 
-RUN make build-backend
+ENV GOEXPERIMENT=strictfipsruntime
+ENV CGO_ENABLED=1
 
-FROM registry.access.redhat.com/ubi9/ubi-minimal
+RUN make build-backend BUILD_OPTS="-tags strictfipsruntime"
+
+FROM registry.redhat.io/rhel9-4-els/rhel:9.4
+
+RUN mkdir /licenses
+COPY LICENSE /licenses/.
+
+USER 1001
 
 COPY --from=web-builder /opt/app-root/web/dist /opt/app-root/web/dist
 COPY --from=go-builder /opt/app-root/plugin-backend /opt/app-root
-COPY --from=go-builder /opt/app-root/config /opt/app-root/config
+COPY config /opt/app-root/config
 
 ENTRYPOINT ["/opt/app-root/plugin-backend", "-config-path", "/opt/app-root/config", "-static-path", "/opt/app-root/web/dist"]
