@@ -1,41 +1,52 @@
 import React from 'react';
 import { Attribute, Option } from './filter.types';
+import { useBoolean } from '../../hooks/useBoolean';
 
-type UseAttributeValueDataHookResult = [
-  fetchData: (searchQuery?: string) => void,
-  data: Array<Option> | undefined,
-  error: Error | undefined,
-];
+type UseAttributeValueDataHookResult = {
+  getAttributeOptions: (searchQuery?: string) => void;
+  attributeOptions: Array<Option>;
+  attributeError: Error | undefined;
+  attributeLoading: boolean;
+};
+
+const uniqueOptions = (options: Array<Option>): Array<Option> =>
+  Array.from(new Set(options.map(({ option, value }) => `${option}|||${value}`))).map((str) => {
+    const [option, value] = str.split('|||');
+    return { option, value };
+  });
 
 export const useAttributeValueData = (attribute: Attribute): UseAttributeValueDataHookResult => {
-  const [data, setData] = React.useState<Array<Option> | undefined>();
-  const [error, setError] = React.useState<Error | undefined>();
+  const [attributeOptions, setAttributeOptions] = React.useState<Array<Option>>([]);
+  const { value: attributeLoading, setValue: setAttributeLoading } = useBoolean(true);
+  const [attributeError, setAttributeError] = React.useState<Error | undefined>();
 
-  const fetchData = React.useCallback(
+  const getAttributeOptions = React.useCallback(
     (searchQuery?: string) => {
-      setError(undefined);
+      setAttributeError(undefined);
       if (attribute.options) {
         if (Array.isArray(attribute.options)) {
-          setData(attribute.options);
+          setAttributeLoading(false);
+          setAttributeOptions(uniqueOptions(attribute.options));
         } else {
           attribute
             .options(searchQuery)
             .then((asyncOptions) => {
-              setData(asyncOptions);
+              setAttributeOptions(uniqueOptions(asyncOptions ?? []));
             })
             .catch((searchError) => {
               try {
                 const jsonError = JSON.parse(searchError.message);
-                setError(jsonError.message || searchError);
+                setAttributeError(jsonError.message || searchError);
               } catch {
-                setError(searchError);
+                setAttributeError(searchError);
               }
-            });
+            })
+            .finally(() => setAttributeLoading(false));
         }
       }
     },
     [attribute],
   );
 
-  return [fetchData, data, error];
+  return { getAttributeOptions, attributeOptions, attributeError, attributeLoading };
 };
