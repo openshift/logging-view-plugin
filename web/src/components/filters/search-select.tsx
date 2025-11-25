@@ -22,16 +22,14 @@ interface SearchSelectProps {
 }
 
 const ERROR_VALUE = '__attribute_error';
-const NO_RESULTS = 'no results';
 
 const createItemId = (value: string) => `select-multi-typeahead-${value.replace(' ', '-')}`;
 
-const sortOptions = (selections: Set<string>) => (a: SelectOptionProps, b: SelectOptionProps) => {
+const sortOptions = (selections: Array<string>) => (a: SelectOptionProps, b: SelectOptionProps) => {
   const aVal = typeof a.value === 'string' ? a.value : '';
   const bVal = typeof b.value === 'string' ? b.value : '';
-  const aSelected = selections.has(aVal);
-  const bSelected = selections.has(bVal);
-
+  const aSelected = selections.includes(aVal);
+  const bSelected = selections.includes(bVal);
   if (aSelected && !bSelected) {
     return -1;
   }
@@ -48,7 +46,7 @@ const getOptionComponents = (
   attributeOptions: SelectOptionProps[],
   attributeError: Error | undefined,
   attributeLoading: boolean,
-  selections: Set<string>,
+  selections: Array<string>,
 ) => {
   if (attributeLoading) {
     return [
@@ -77,7 +75,7 @@ const getOptionComponents = (
     <SelectOption
       key={String(attributeOption.value)}
       value={attributeOption.value}
-      isSelected={selections.has(String(attributeOption.value))}
+      isSelected={selections.includes(String(attributeOption.value))}
       id={createItemId(String(attributeOption.value))}
     >
       {attributeOption.children ?? attributeOption.value}
@@ -100,12 +98,8 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
     attributeLoading,
   } = useAttributeValueData(attribute);
   const [isOpen, setIsOpen] = React.useState(false);
-  const [selections, setSelections] = React.useState<Set<string>>(new Set());
-  const [viewableOptions, setViewableOptions] = React.useState<SelectOptionProps[]>([]);
+  const [selections, setSelections] = React.useState<Array<string>>([]);
 
-  const [inputValue, setInputValue] = React.useState<string>('');
-
-  const textInputRef = React.useRef<HTMLInputElement>();
   const listRef = React.useRef<HTMLDivElement>(null);
 
   const handleClickOutside = (event: MouseEvent) => {
@@ -121,49 +115,20 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
     };
   }, [isOpen]);
 
-  React.useEffect(() => {
-    let newSelectOptions: SelectOptionProps[] = attributeOptions.map((attributeOption) => {
-      return { ...attributeOption, hasCheckbox: true };
-    });
-    // Filter menu items based on the text input value when one exists
-    if (inputValue) {
-      newSelectOptions = newSelectOptions.filter((menuItem) =>
-        String(menuItem.value).toLowerCase().includes(inputValue.toLowerCase()),
-      );
-      // When no options are found after filtering, display 'No results found'
-      if (!newSelectOptions.length) {
-        newSelectOptions = [
-          {
-            'aria-disabled': true,
-            children: `No results found for "${inputValue}"`,
-            value: NO_RESULTS,
-          },
-        ];
-      }
-      // Open the menu when the input value changes and the new value is not empty
-      if (!isOpen) {
-        setIsOpen(true);
-      }
-    }
-    setViewableOptions(newSelectOptions);
-  }, [inputValue, attributeOptions]);
-
   const handleClear = () => {
-    setInputValue('');
-    setSelections(new Set());
+    setSelections([]);
     onSelect(new Set());
-    textInputRef?.current?.focus();
   };
 
   useEffect(() => {
-    if (attribute.isItemSelected && attributeOptions) {
+    if (attribute.isItemSelected) {
       const selectedItems = attributeOptions.filter((item) =>
         attribute.isItemSelected?.(item.value, filters),
       );
 
-      setSelections(new Set(selectedItems.map((item) => item.value)));
+      setSelections(selectedItems.map((item) => item.value));
     } else {
-      setSelections(filters[attribute.id] ?? new Set());
+      setSelections(Array.from(filters[attribute.id] ?? []));
     }
   }, [filters, attributeOptions]);
 
@@ -252,7 +217,7 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
         inlineFilterPlaceholderText={t('Search')}
         className="co-logs__search-select"
       >
-        {getOptionComponents(viewableOptions, attributeError, attributeLoading, selections)}
+        {getOptionComponents(attributeOptions, attributeError, attributeLoading, selections)}
       </Select>
     </div>
   );
