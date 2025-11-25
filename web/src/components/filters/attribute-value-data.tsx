@@ -9,6 +9,12 @@ type UseAttributeValueDataHookResult = {
   attributeLoading: boolean;
 };
 
+const uniqueOptions = (options: Array<Option>): Array<Option> =>
+  Array.from(new Set(options.map(({ option, value }) => `${option}|||${value}`))).map((str) => {
+    const [option, value] = str.split('|||');
+    return { option, value };
+  });
+
 export const useAttributeValueData = (attribute: Attribute): UseAttributeValueDataHookResult => {
   const [attributeOptions, setAttributeOptions] = React.useState<Array<Option>>([]);
   const { value: attributeLoading, setValue: setAttributeLoading } = useBoolean(true);
@@ -20,12 +26,12 @@ export const useAttributeValueData = (attribute: Attribute): UseAttributeValueDa
       if (attribute.options) {
         if (Array.isArray(attribute.options)) {
           setAttributeLoading(false);
-          setAttributeOptions(attribute.options);
+          setAttributeOptions(uniqueOptions(attribute.options));
         } else {
           attribute
             .options(searchQuery)
             .then((asyncOptions) => {
-              setAttributeOptions(asyncOptions ?? []);
+              setAttributeOptions(uniqueOptions(asyncOptions ?? []));
             })
             .catch((searchError) => {
               try {
