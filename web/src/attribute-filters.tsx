@@ -192,6 +192,8 @@ export const availableAttributes = (tenant: string, config: Config): AttributeLi
           const [pod, containerName] = container.split(' / ');
           podSelections.add(pod);
           containerSelections.add(containerName);
+        } else {
+          containerSelections.add(container);
         }
       }
 
@@ -201,6 +203,10 @@ export const availableAttributes = (tenant: string, config: Config): AttributeLi
       ]);
     },
     isItemSelected: (value, filters) => {
+      if (!value.includes('/')) {
+        return filters?.container?.has(value) ?? false;
+      }
+
       const parts = value.split(' / ');
       if (parts.length !== 2) {
         return false;
