@@ -1,3 +1,4 @@
+import { setUtilsConfig } from '@openshift-console/dynamic-plugin-sdk/lib/app/configSetup';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { defaultConfig, getConfig } from '../backend-client';
 import { Config } from '../logs.types';
@@ -14,7 +15,17 @@ export const LogsConfigProvider: React.FC<{ children?: React.ReactNode | undefin
   children,
 }) => {
   const [config, setConfig] = useState<Config>(defaultConfig);
-  const [configLoaded, setConfigLoaded] = useState(false);
+  const [configLoaded, setConfigLoaded] = useState(true);
+
+  useEffect(() => {
+    try {
+      setUtilsConfig({
+        appFetch: (fetchUrl: string, options?: RequestInit) => fetch(fetchUrl, options),
+      });
+    } catch (e) {
+      /* utils config already set */
+    }
+  }, []);
 
   const fetchConfig = useCallback(async () => {
     try {

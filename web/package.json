@@ -9,7 +9,6 @@
     "build": "npm run clean && NODE_ENV=production npm run ts-node node_modules/.bin/webpack",
     "build:dev": "npm run clean && npm run ts-node node_modules/.bin/webpack",
     "build:standalone": "npm run clean:standalone && npm run ts-node node_modules/.bin/webpack -- --config webpack.standalone.config.ts",
-    "build:standalone:instrumented": "npm run clean:standalone && npm run ts-node node_modules/.bin/webpack -- --config webpack.standalone.instrumented.config.ts",
     "start:dist": "serve -s ./dist -p 9003 -C",
     "start:standalone": "serve -s ./dist-standalone -p 9003 -C",
     "dev": "npm run ts-node node_modules/.bin/webpack serve",
@@ -31,7 +30,6 @@
     "prepare": "cd .. && husky install web/.husky"
   },
   "devDependencies": {
-    "@cypress/code-coverage": "^3.10.0",
     "@jsdevtools/coverage-istanbul-loader": "^3.0.5",
     "@openshift-console/dynamic-plugin-sdk": "^4.19.0-prerelease.1",
     "@openshift-console/dynamic-plugin-sdk-webpack": "4.19",
@@ -103,8 +101,5 @@
     "i18next": "^22.4.12",
     "react-i18next": "^11.18.6",
     "react-router-dom-v5-compat": "^6.30.0"
-  },
-  "nyc": {
-    "report-dir": "./coverage/cov-cypress"
   }
 }
