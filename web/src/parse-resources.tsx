@@ -19,12 +19,12 @@ export const getOtelLabels = (): Record<ResourceLabel | 'Schema', string> => {
   } as Record<ResourceLabel | 'Schema', string>;
 };
 
-export const getViaQLabels = (): Record<ResourceLabel | 'Schema', string> => {
-  const otelMap = Object.fromEntries(
+export const getViaqLabels = (): Record<ResourceLabel | 'Schema', string> => {
+  const viaqMap = Object.fromEntries(
     Object.entries(ResourceToStreamLabels).map(([key, value]) => [key, value.viaq]),
   );
   return {
-    ...otelMap,
+    ...viaqMap,
     Schema: Schema.viaq, // manually add Schema key
   } as Record<ResourceLabel | 'Schema', string>;
 };
@@ -33,7 +33,7 @@ export const getStreamLabelsFromSchema = (schema: Schema) => {
   if (schema == Schema.otel) {
     return getOtelLabels();
   }
-  return getViaQLabels();
+  return getViaqLabels();
 };
 
 export const ResourceToStreamLabels: Record<ResourceLabel, { otel: string; viaq: string }> = {
