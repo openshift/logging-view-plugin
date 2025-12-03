@@ -55,7 +55,7 @@ export const SchemaDropdown: React.FC<SchemaDropdownProps> = ({ onSchemaSelected
           otel
         </SelectOption>
         <SelectOption key={'viaq'} value={Schema.viaq} isSelected={schema === Schema.viaq}>
-          viaQ
+          viaq
         </SelectOption>
       </SelectList>
     </Select>
