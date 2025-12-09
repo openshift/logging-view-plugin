@@ -1,4 +1,8 @@
 FEATURES?=
+VERSION     ?= latest
+PLATFORMS   ?= linux/arm64,linux/amd64
+ORG         ?= openshift-observability-ui
+IMAGE       ?= quay.io/${ORG}/logging-view-plugin:${VERSION}
 
 .PHONY: install-frontend
 install-frontend:
@@ -62,3 +66,14 @@ start-backend: build-backend
 .PHONY: build-image
 build-image: install-backend build-backend install-frontend build-frontend
 	./scripts/image.sh -t latest
+
+deploy:
+	helm uninstall logging-view-plugin -n logging-view-plugin || true
+	PUSH=1 scripts/build-image.sh
+	helm install logging-view-plugin charts/openshift-console-plugin -n logging-view-plugin --create-namespace --set plugin.image=$(IMAGE)
+
+.PHONY: podman-cross-build
+podman-cross-build:
+	podman manifest create -a ${IMAGE}
+	podman build --platform=${PLATFORMS} --manifest ${IMAGE} -f Dockerfile.dev
+	podman manifest push ${IMAGE}
