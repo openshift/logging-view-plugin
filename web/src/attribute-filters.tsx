@@ -1,12 +1,17 @@
 import { K8sResourceCommon } from '@openshift-console/dynamic-plugin-sdk';
 import { cancellableFetch } from './cancellable-fetch';
-import { AttributeList, Filters, Option } from './components/filters/filter.types';
+import { Attribute, AttributeList, Filters, Option } from './components/filters/filter.types';
 import { LabelMatcher, LogQLQuery, PipelineStage } from './logql-query';
 import { Config, Schema, SeriesResponse } from './logs.types';
 import { executeLabelValue, executeSeries } from './loki-client';
 import { getStreamLabelsFromSchema, ResourceLabel } from './parse-resources';
 import { Severity, severityAbbreviations, severityFromString } from './severity';
-import { getInitialTenantFromNamespace, notEmptyString, notUndefined } from './value-utils';
+import {
+  getInitialTenantFromNamespace,
+  namespaceBelongsToInfrastructureTenant,
+  notEmptyString,
+  notUndefined,
+} from './value-utils';
 
 const RESOURCES_ENDPOINT = '/api/kubernetes/api/v1';
 
@@ -26,29 +31,34 @@ type K8sResourceListResponse = {
 };
 
 type ResourceOptionMapper = (resource: K8sResource) => Option | Array<Option>;
+type ResourceOptionFilter = (resource: K8sResource) => boolean;
 
 const resourceAbort: Record<string, null | (() => void)> = {};
 
-const projectsDataSource = () => async (): Promise<Array<{ option: string; value: string }>> => {
-  const { request, abort } = cancellableFetch<K8sResourceListResponse>(
-    `/api/kubernetes/apis/project.openshift.io/v1/projects`,
-  );
+const projectsDataSource =
+  (filter?: ResourceOptionFilter) =>
+  async (): Promise<Array<{ option: string; value: string }>> => {
+    const { request, abort } = cancellableFetch<K8sResourceListResponse>(
+      `/api/kubernetes/apis/project.openshift.io/v1/projects`,
+    );
 
-  if (resourceAbort.projects) {
-    resourceAbort.projects();
-  }
+    if (resourceAbort.projects) {
+      resourceAbort.projects();
+    }
 
-  resourceAbort.projects = abort;
+    resourceAbort.projects = abort;
 
-  const response = await request();
+    const response = await request();
 
-  return response.items
-    .map((project) => ({
-      option: project?.metadata?.name ?? '',
-      value: project?.metadata?.name ?? '',
-    }))
-    .filter(({ value }) => notEmptyString(value));
-};
+    const filteredItems = filter ? response.items.filter(filter) : response.items;
+
+    return filteredItems
+      .map((project) => ({
+        option: project?.metadata?.name ?? '',
+        value: project?.metadata?.name ?? '',
+      }))
+      .filter(({ value }) => notEmptyString(value));
+  };
 
 const lokiLabelValuesDataSource =
   ({
@@ -118,10 +128,12 @@ const resourceDataSource =
       option: resourceToMap?.metadata?.name ?? '',
       value: resourceToMap?.metadata?.name ?? '',
     }),
+    filter,
   }: {
     resource: 'pods' | 'namespaces' | string;
     namespace?: string;
     mapper?: ResourceOptionMapper;
+    filter?: ResourceOptionFilter;
   }) =>
   async (): Promise<Array<{ option: string; value: string }>> => {
     const endpoint = namespace
@@ -152,7 +164,9 @@ const resourceDataSource =
         break;
     }
 
-    return listItems.flatMap(mapper).filter(({ value }) => notEmptyString(value));
+    const filteredItems = filter ? listItems.filter(filter) : listItems;
+
+    return filteredItems.flatMap(mapper).filter(({ value }) => notEmptyString(value));
   };
 
 const getAttributeLabels = (schema: Schema) => {
@@ -204,17 +218,34 @@ export const availableAttributes = ({
 }): AttributeList => {
   const { namespaceLabel, podLabel, containerLabel } = getAttributeLabels(schema);
 
+  const contentAttribute: Attribute = {
+    name: 'Content',
+    id: 'content',
+    valueType: 'text',
+  };
+
+  // When tenant is audit, only the content attribute is available
+  if (tenant === 'audit') {
+    return [contentAttribute];
+  }
+
   return [
-    {
-      name: 'Content',
-      id: 'content',
-      valueType: 'text',
-    },
+    contentAttribute,
     {
       name: 'Namespaces',
       label: namespaceLabel,
       id: 'namespace',
-      options: resourceDataSource({ resource: 'namespaces' }),
+      options: resourceDataSource({
+        resource: 'namespaces',
+        filter: (resource) => {
+          switch (tenant) {
+            case 'infrastructure':
+              return namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
+          }
+
+          return true;
+        },
+      }),
       valueType: 'checkbox-select',
     },
     {
@@ -291,17 +322,31 @@ export const availableDevConsoleAttributes = (
 ): AttributeList => {
   const { namespaceLabel, podLabel, containerLabel } = getAttributeLabels(schema);
 
+  const contentAttribute: Attribute = {
+    name: 'Content',
+    id: 'content',
+    valueType: 'text',
+  };
+
+  // When tenant is audit, only the content attribute is available
+  if (tenant === 'audit') {
+    return [contentAttribute];
+  }
+
   return [
-    {
-      name: 'Content',
-      id: 'content',
-      valueType: 'text',
-    },
+    contentAttribute,
     {
       name: 'Namespaces',
       label: namespaceLabel,
       id: 'namespace',
-      options: projectsDataSource(),
+      options: projectsDataSource((resource) => {
+        switch (tenant) {
+          case 'infrastructure':
+            return namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
+        }
+
+        return true;
+      }),
       valueType: 'checkbox-select',
     },
     {
