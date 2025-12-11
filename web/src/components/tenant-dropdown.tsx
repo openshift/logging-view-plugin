@@ -19,6 +19,8 @@ export const TenantDropdown: React.FC<TenantDropdownProps> = ({
 
   const [isOpen, setIsOpen] = React.useState(false);
 
+  const selectRef = React.useRef<HTMLDivElement>(null);
+
   const onToggle = () => setIsOpen(!isOpen);
   const onSelect = (e?: React.MouseEvent | React.KeyboardEvent) => {
     const tenant = e?.currentTarget.id;
@@ -28,29 +30,46 @@ export const TenantDropdown: React.FC<TenantDropdownProps> = ({
     }
   };
 
+  const handleClickOutside = (event: MouseEvent) => {
+    if (isOpen && !selectRef.current?.contains(event.target as Node)) {
+      setIsOpen(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (isOpen) {
+      window.addEventListener('click', handleClickOutside);
+    }
+    return () => {
+      window.removeEventListener('click', handleClickOutside);
+    };
+  }, [isOpen]);
+
   return (
-    <OptionsMenu
-      id="logging-view-tenant-dropdown"
-      data-test={TestIds.TenantDropdown}
-      disabled={isDisabled}
-      menuItems={TENANTS.map((tenant) => (
-        <OptionsMenuItem
-          onSelect={onSelect}
-          isSelected={selectedTenant === tenant}
-          key={tenant}
-          id={tenant}
-        >
-          {tenant}
-        </OptionsMenuItem>
-      ))}
-      isOpen={isOpen}
-      toggle={
-        <OptionsMenuToggle
-          isDisabled={isDisabled}
-          onToggle={onToggle}
-          toggleTemplate={selectedTenant ?? t('Select a tenant')}
-        />
-      }
-    />
+    <div ref={selectRef}>
+      <OptionsMenu
+        id="logging-view-tenant-dropdown"
+        data-test={TestIds.TenantDropdown}
+        disabled={isDisabled}
+        menuItems={TENANTS.map((tenant) => (
+          <OptionsMenuItem
+            onSelect={onSelect}
+            isSelected={selectedTenant === tenant}
+            key={tenant}
+            id={tenant}
+          >
+            {tenant}
+          </OptionsMenuItem>
+        ))}
+        isOpen={isOpen}
+        toggle={
+          <OptionsMenuToggle
+            isDisabled={isDisabled}
+            onToggle={onToggle}
+            toggleTemplate={selectedTenant ?? t('Select a tenant')}
+          />
+        }
+      />
+    </div>
   );
 };
