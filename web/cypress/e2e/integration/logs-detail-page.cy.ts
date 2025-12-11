@@ -23,6 +23,8 @@ describe('Logs Detail Page', () => {
 
     cy.visit(LOGS_DETAIL_PAGE_URL);
 
+    cy.wait('@queryRangeStreams');
+
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
       .within(() => {
@@ -41,6 +43,8 @@ describe('Logs Detail Page', () => {
     ).as('queryRangeStreams');
 
     cy.visit(LOGS_DETAIL_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
@@ -70,6 +74,8 @@ describe('Logs Detail Page', () => {
     ).as('queryRangeStreams');
 
     cy.visit(LOGS_DETAIL_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
@@ -117,6 +123,8 @@ describe('Logs Detail Page', () => {
 
     cy.visit(LOGS_DETAIL_PAGE_URL);
 
+    cy.wait('@queryRangeStreams');
+
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
       .within(() => {
@@ -134,13 +142,13 @@ describe('Logs Detail Page', () => {
 
     cy.visit(LOGS_DETAIL_PAGE_URL_OPENSHIFT_NS);
 
+    cy.get('@queryRangeStreamsInfrastructure.all').should('have.length.at.least', 1);
+
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
       .within(() => {
         cy.contains(TEST_MESSAGE);
       });
-
-    cy.get('@queryRangeStreamsInfrastructure.all').should('have.length.at.least', 1);
   });
 
   it('displays log based metrics when query results are matrix type', () => {

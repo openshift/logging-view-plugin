@@ -23,7 +23,7 @@ import { RefreshIntervalDropdown } from '../components/refresh-interval-dropdown
 import { TimeRangeDropdown } from '../components/time-range-dropdown';
 import { ToggleHistogramButton } from '../components/toggle-histogram-button';
 import { downloadCSV } from '../download-csv';
-import { LogsConfigProvider } from '../hooks/LogsConfigProvider';
+import { LogsConfigProvider, useLogsConfig } from '../hooks/LogsConfigProvider';
 import { useLogs } from '../hooks/useLogs';
 import { useURLState } from '../hooks/useURLState';
 import { Direction, isMatrixResult, Schema } from '../logs.types';
@@ -54,6 +54,8 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
   const namespace = namespaceFromParams || namespaceFromProps;
   const podname = podnameFromParams || podNameFromProps;
   const [isHistogramVisible, setIsHistogramVisible] = React.useState(false);
+
+  const { configLoaded } = useLogsConfig();
 
   const {
     isLoadingLogsData,
@@ -167,8 +169,12 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
   };
 
   React.useEffect(() => {
+    if (!configLoaded) {
+      return;
+    }
+
     runQuery();
-  }, [timeRange, isHistogramVisible, direction]);
+  }, [timeRange, isHistogramVisible, direction, configLoaded]);
 
   const isQueryEmpty = query === '';
 

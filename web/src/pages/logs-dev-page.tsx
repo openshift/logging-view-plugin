@@ -44,7 +44,7 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
   const [isHistogramVisible, setIsHistogramVisible] = React.useState(false);
   let tenant = getInitialTenantFromNamespace(namespace);
 
-  const { config } = useLogsConfig();
+  const { config, configLoaded } = useLogsConfig();
 
   const {
     histogramData,
@@ -175,14 +175,22 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
   };
 
   React.useEffect(() => {
+    if (!configLoaded) {
+      return;
+    }
+
     tenant = getInitialTenantFromNamespace(namespace);
 
     const queryToUse = updateQuery(filters, tenant);
 
     runQuery({ queryToUse });
-  }, [timeRange, isHistogramVisible, direction]);
+  }, [timeRange, isHistogramVisible, direction, configLoaded]);
 
   React.useEffect(() => {
+    if (!configLoaded) {
+      return;
+    }
+
     tenant = getInitialTenantFromNamespace(namespace);
 
     const filtersWithNamespace = filters ?? {};
@@ -191,7 +199,7 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
     const queryToUse = updateQuery(filtersWithNamespace, tenant);
 
     runQuery({ queryToUse });
-  }, [namespace]);
+  }, [namespace, configLoaded]);
 
   const isQueryEmpty = query === '';
   const isNamespaceFilterEmpty =
