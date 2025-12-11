@@ -27,6 +27,7 @@ interface SearchSelectProps {
   filters: Filters;
   customBadgeTextDependsOnData?: boolean;
   isCheckbox?: boolean;
+  tenant?: string;
 }
 
 const ERROR_VALUE = '__attribute_error';
@@ -99,6 +100,7 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
   onSelect,
   filters,
   isCheckbox = false,
+  tenant,
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
@@ -122,7 +124,9 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
   };
 
   React.useEffect(() => {
-    window.addEventListener('click', handleClickOutside);
+    if (isOpen) {
+      window.addEventListener('click', handleClickOutside);
+    }
     return () => {
       window.removeEventListener('click', handleClickOutside);
     };
@@ -224,7 +228,7 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
 
   React.useEffect(() => {
     getAttributeOptions();
-  }, []);
+  }, [tenant]);
 
   const resetActiveAndFocusedItem = () => {
     setFocusedItemIndex(null);
