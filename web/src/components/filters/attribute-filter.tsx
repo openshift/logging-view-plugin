@@ -24,6 +24,7 @@ interface AttributeFilterProps {
   filters?: Filters;
   onFiltersChange?: (filters: Filters) => void;
   isDisabled?: boolean;
+  tenant?: string;
 }
 
 export const AttributeFilter: React.FC<AttributeFilterProps> = ({
@@ -31,6 +32,7 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
   filters = {},
   onFiltersChange,
   isDisabled,
+  tenant,
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
@@ -41,6 +43,7 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
   const [selectedAttributeId, setSelectedAttributeId] = React.useState<string | undefined>(
     attributeList[0]?.id,
   );
+  const selectRef = React.useRef<HTMLDivElement>(null);
 
   const handleAttributeToggle = () => {
     setIsAttributeExpanded(!isAttributeExpanded);
@@ -58,11 +61,33 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
     }
   }, [textAttribute, filters]);
 
+  React.useEffect(() => {
+    // Audit tenant has only the content attribute
+    if (tenant === 'audit') {
+      setSelectedAttributeId(attributeList[0]?.id);
+    }
+  }, [tenant]);
+
   useEffect(() => {
     if (!selectedAttributeId) {
       setSelectedAttributeId(attributeList[0]?.id);
     }
   }, [attributeList]);
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (isAttributeExpanded && !selectRef.current?.contains(event.target as Node)) {
+      setIsAttributeExpanded(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (isAttributeExpanded) {
+      window.addEventListener('click', handleClickOutside);
+    }
+    return () => {
+      window.removeEventListener('click', handleClickOutside);
+    };
+  }, [isAttributeExpanded]);
 
   const handleAttributeSelect = (
     _: React.MouseEvent<Element, MouseEvent> | undefined,
@@ -170,6 +195,7 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
             attribute={attribute}
             onSelect={handleAttributeValueChange}
             filters={filters}
+            tenant={tenant}
           />
         );
       case 'checkbox-select':
@@ -180,6 +206,7 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
             onSelect={handleAttributeValueChange}
             filters={filters}
             isCheckbox={true}
+            tenant={tenant}
           />
         );
     }
@@ -192,20 +219,22 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
         className="lv-plugin__attribute-filter"
         data-test={TestIds.AttributeFilters}
       >
-        <Select
-          isOpen={isAttributeExpanded}
-          onSelect={handleAttributeSelect}
-          placeholder={t('Attribute')}
-          toggle={toggle}
-        >
-          <SelectList>
-            {attributeList.map(({ name: label, id }) => (
-              <SelectOption key={id} value={id} isSelected={selectedAttributeId === id}>
-                {label}
-              </SelectOption>
-            ))}
-          </SelectList>
-        </Select>
+        <div ref={selectRef}>
+          <Select
+            isOpen={isAttributeExpanded}
+            onSelect={handleAttributeSelect}
+            placeholder={t('Attribute')}
+            toggle={toggle}
+          >
+            <SelectList>
+              {attributeList.map(({ name: label, id }) => (
+                <SelectOption key={id} value={id} isSelected={selectedAttributeId === id}>
+                  {label}
+                </SelectOption>
+              ))}
+            </SelectList>
+          </Select>
+        </div>
         {attributeList.map((attribute) => (
           <ToolbarFilter
             key={`toolbar-filter-${attribute.id}`}
