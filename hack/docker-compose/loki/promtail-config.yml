@@ -22,8 +22,10 @@ scrape_configs:
           job: varlogs
           log_type: infrastructure
           kubernetes_pod_name: alertmanager-main-0
+          k8s_pod_name: alertmanager-main-0
           kubernetes_container_name: test-container
           kubernetes_namespace_name: openshift-monitoring
+          k8s_namespace_name: openshift-monitoring
           __path__: /var/log/*log
   - job_name: system2
     pipeline_stages:

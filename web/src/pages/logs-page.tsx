@@ -38,7 +38,7 @@ const LogsPage: React.FC = () => {
 
   const [isHistogramVisible, setIsHistogramVisible] = React.useState(false);
 
-  const { config } = useLogsConfig();
+  const { config, configLoaded } = useLogsConfig();
 
   const {
     histogramData,
@@ -154,10 +154,14 @@ const LogsPage: React.FC = () => {
   };
 
   React.useEffect(() => {
+    if (!configLoaded) {
+      return;
+    }
+
     const queryToUse = updateQuery(filters, tenant);
 
     runQuery({ queryToUse });
-  }, [timeRange, isHistogramVisible, direction, tenant]);
+  }, [timeRange, isHistogramVisible, direction, tenant, configLoaded]);
 
   const isQueryEmpty = query === '';
 

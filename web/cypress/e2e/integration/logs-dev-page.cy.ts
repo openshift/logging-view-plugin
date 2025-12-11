@@ -151,17 +151,17 @@ describe('Logs Dev Page', () => {
 
     cy.visit(LOGS_DEV_PAGE_URL);
 
-    cy.getByTestId(TestIds.LogsTable)
-      .should('exist')
-      .within(() => {
-        cy.contains(TEST_MESSAGE);
-      });
-
     cy.wait('@queryRangeStreams').then(({ request }) => {
       const url = new URL(request.url);
       const query = url.searchParams.get('query');
       expect(query).to.equal('{ kubernetes_namespace_name="my-namespace" } | json');
     });
+
+    cy.getByTestId(TestIds.LogsTable)
+      .should('exist')
+      .within(() => {
+        cy.contains(TEST_MESSAGE);
+      });
   });
 
   it('executes a new query when the current namespace changes', () => {
@@ -175,17 +175,17 @@ describe('Logs Dev Page', () => {
 
     cy.visit(LOGS_DEV_PAGE_URL);
 
-    cy.getByTestId(TestIds.LogsTable)
-      .should('exist')
-      .within(() => {
-        cy.contains(TEST_MESSAGE);
-      });
-
     cy.wait('@queryRangeStreams').then(({ request }) => {
       const url = new URL(request.url);
       const query = url.searchParams.get('query');
       expect(query).to.equal('{ kubernetes_namespace_name="my-namespace" } | json');
     });
+
+    cy.getByTestId(TestIds.LogsTable)
+      .should('exist')
+      .within(() => {
+        cy.contains(TEST_MESSAGE);
+      });
 
     cy.getByTestId(TestIds.NamespaceToggle).click();
     cy.getByTestId(TestIds.NamespaceDropdown).contains('my-namespace-two').click();
@@ -216,17 +216,17 @@ describe('Logs Dev Page', () => {
 
     cy.visit(LOGS_DEV_PAGE_URL);
 
-    cy.getByTestId(TestIds.LogsTable)
-      .should('exist')
-      .within(() => {
-        cy.contains(TEST_MESSAGE);
-      });
-
     cy.wait('@queryRangeStreams').then(({ request }) => {
       const url = new URL(request.url);
       const query = url.searchParams.get('query');
       expect(query).to.equal('{ kubernetes_namespace_name="my-namespace" } | json');
     });
+
+    cy.getByTestId(TestIds.LogsTable)
+      .should('exist')
+      .within(() => {
+        cy.contains(TEST_MESSAGE);
+      });
 
     cy.getByTestId(TestIds.NamespaceToggle).click();
     cy.getByTestId(TestIds.NamespaceDropdown).contains('openshift-cluster-version').click();
@@ -254,6 +254,8 @@ describe('Logs Dev Page', () => {
 
     cy.visit(LOGS_DEV_PAGE_URL);
 
+    cy.wait('@queryRangeStreams');
+
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
       .within(() => {
@@ -274,8 +276,6 @@ describe('Logs Dev Page', () => {
       });
       cy.contains('my-pod').click({ force: true });
     });
-
-    // cy.getByTestId(TestIds.AttributeFilters).within(() => {});
 
     cy.wait('@resourceQuery').then(({ request }) => {
       const url = new URL(request.url);
@@ -299,6 +299,8 @@ describe('Logs Dev Page', () => {
     }).as('resourceQuery');
 
     cy.visit(LOGS_DEV_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
