@@ -19,6 +19,7 @@ interface SearchSelectProps {
   onSelect: (selections: Set<string>, expandedSelections?: Map<string, Set<string>>) => void;
   filters: Filters;
   customBadgeTextDependsOnData?: boolean;
+  tenant?: string;
 }
 
 const ERROR_VALUE = '__attribute_error';
@@ -88,6 +89,7 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
   variant,
   onSelect,
   filters,
+  tenant,
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
@@ -109,7 +111,9 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
   };
 
   React.useEffect(() => {
-    window.addEventListener('click', handleClickOutside);
+    if (isOpen) {
+      window.addEventListener('click', handleClickOutside);
+    }
     return () => {
       window.removeEventListener('click', handleClickOutside);
     };
@@ -175,7 +179,7 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
 
   React.useEffect(() => {
     getOptions();
-  }, []);
+  }, [tenant]);
 
   const handleFilter = (
     _e: React.ChangeEvent<HTMLInputElement> | null,
