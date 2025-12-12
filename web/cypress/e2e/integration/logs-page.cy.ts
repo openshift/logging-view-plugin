@@ -107,12 +107,14 @@ describe('Logs Page', () => {
   it('handles errors gracefully when a request fails', () => {
     cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, (req) => {
       req.continue((res) => res.send({ statusCode: 500, body: 'Internal Server Error' }));
-    });
+    }).as('queryRangeStreams');
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, (req) => {
       req.continue((res) => res.send({ statusCode: 500, body: 'Internal Server Error' }));
-    });
+    }).as('queryRangeMatrix');
 
     cy.visit(LOGS_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
@@ -130,10 +132,14 @@ describe('Logs Page', () => {
   });
 
   it('handles errors gracefully when a response is invalid', () => {
-    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeStreamsInvalidResponse());
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeStreamsInvalidResponse()).as(
+      'queryRangeStreams',
+    );
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixInvalidResponse());
 
     cy.visit(LOGS_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
@@ -160,6 +166,8 @@ describe('Logs Page', () => {
     );
 
     cy.visit(LOGS_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
@@ -191,6 +199,8 @@ describe('Logs Page', () => {
     );
 
     cy.visit(LOGS_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
@@ -240,6 +250,8 @@ describe('Logs Page', () => {
     );
 
     cy.visit(LOGS_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
@@ -695,7 +707,7 @@ describe('Logs Page', () => {
     cy.get('@resourceQuery.all').should('have.length.at.least', 1);
   });
 
-  it.only('container selection includes loki labels and k8s resources', () => {
+  it('container selection includes loki labels and k8s resources', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
       queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),

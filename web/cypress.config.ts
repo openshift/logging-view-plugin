@@ -9,6 +9,7 @@ export default defineConfig({
       return config;
     },
   },
+  numTestsKeptInMemory: 2,
   video: false,
   viewportWidth: 1400,
 });
