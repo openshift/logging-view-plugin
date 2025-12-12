@@ -89,6 +89,24 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
 
   const [isSeverityExpanded, setIsSeverityExpanded] = React.useState(false);
   const [isQueryShown, setIsQueryShown] = React.useState(false);
+
+  const severitySelectRef = React.useRef<HTMLDivElement>(null);
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (isSeverityExpanded && !severitySelectRef.current?.contains(event.target as Node)) {
+      setIsSeverityExpanded(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (isSeverityExpanded) {
+      window.addEventListener('click', handleClickOutside);
+    }
+    return () => {
+      window.removeEventListener('click', handleClickOutside);
+    };
+  }, [isSeverityExpanded]);
+
   const severityFilter: Set<Severity> = filters?.severity
     ? new Set(Array.from(filters?.severity).map(severityFromString).filter(notUndefined))
     : new Set();
@@ -142,6 +160,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
             attributeList={attributeList}
             filters={filters}
             onFiltersChange={onFiltersChange}
+            tenant={tenant}
           />
         )}
         <ToolbarGroup>
@@ -153,20 +172,22 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
             className="co-logs-severity-filter"
             data-test={TestIds.SeverityDropdown}
           >
-            <Select
-              variant={SelectVariant.checkbox}
-              aria-label="Severity"
-              onToggle={onSeverityToggle}
-              onSelect={onSeveritySelect}
-              selections={severityFilterArray}
-              isOpen={isSeverityExpanded}
-              placeholderText="Severity"
-              isDisabled={isDisabled}
-            >
-              {availableSeverityFilters.map((severity) => (
-                <SelectOption key={severity} value={severity} />
-              ))}
-            </Select>
+            <div ref={severitySelectRef}>
+              <Select
+                variant={SelectVariant.checkbox}
+                aria-label="Severity"
+                onToggle={onSeverityToggle}
+                onSelect={onSeveritySelect}
+                selections={severityFilterArray}
+                isOpen={isSeverityExpanded}
+                placeholderText="Severity"
+                isDisabled={isDisabled}
+              >
+                {availableSeverityFilters.map((severity) => (
+                  <SelectOption key={severity} value={severity} />
+                ))}
+              </Select>
+            </div>
           </ToolbarFilter>
         </ToolbarGroup>
 
