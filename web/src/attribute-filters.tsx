@@ -241,6 +241,8 @@ export const availableAttributes = ({
           switch (tenant) {
             case 'infrastructure':
               return namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
+            case 'application':
+              return !namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
           }
 
           return true;
@@ -343,6 +345,8 @@ export const availableDevConsoleAttributes = (
         switch (tenant) {
           case 'infrastructure':
             return namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
+          case 'application':
+            return !namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
         }
 
         return true;
