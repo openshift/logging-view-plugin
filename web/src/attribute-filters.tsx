@@ -1,7 +1,12 @@
 import { K8sResourceCommon } from '@openshift-console/dynamic-plugin-sdk';
-import { getInitialTenantFromNamespace, notEmptyString, notUndefined } from './value-utils';
+import {
+  getInitialTenantFromNamespace,
+  namespaceBelongsToInfrastructureTenant,
+  notEmptyString,
+  notUndefined,
+} from './value-utils';
 import { cancellableFetch } from './cancellable-fetch';
-import { AttributeList, Filters, Option } from './components/filters/filter.types';
+import { Attribute, AttributeList, Filters, Option } from './components/filters/filter.types';
 import { LogQLQuery, LabelMatcher, PipelineStage } from './logql-query';
 import { Severity, severityAbbreviations, severityFromString } from './severity';
 import { executeLabelValue } from './loki-client';
@@ -25,29 +30,34 @@ type K8sResourceListResponse = {
 };
 
 type ResourceOptionMapper = (resource: K8sResource) => Option | Array<Option>;
+type ResourceOptionFilter = (resource: K8sResource) => boolean;
 
 const resourceAbort: Record<string, null | (() => void)> = {};
 
-const projectsDataSource = () => async (): Promise<Array<{ option: string; value: string }>> => {
-  const { request, abort } = cancellableFetch<K8sResourceListResponse>(
-    `/api/kubernetes/apis/project.openshift.io/v1/projects`,
-  );
+const projectsDataSource =
+  (filter?: ResourceOptionFilter) =>
+  async (): Promise<Array<{ option: string; value: string }>> => {
+    const { request, abort } = cancellableFetch<K8sResourceListResponse>(
+      `/api/kubernetes/apis/project.openshift.io/v1/projects`,
+    );
 
-  if (resourceAbort.projects) {
-    resourceAbort.projects();
-  }
+    if (resourceAbort.projects) {
+      resourceAbort.projects();
+    }
 
-  resourceAbort.projects = abort;
+    resourceAbort.projects = abort;
 
-  const response = await request();
+    const response = await request();
 
-  return response.items
-    .map((project) => ({
-      option: project?.metadata?.name ?? '',
-      value: project?.metadata?.name ?? '',
-    }))
-    .filter(({ value }) => notEmptyString(value));
-};
+    const filteredItems = filter ? response.items.filter(filter) : response.items;
+
+    return filteredItems
+      .map((project) => ({
+        option: project?.metadata?.name ?? '',
+        value: project?.metadata?.name ?? '',
+      }))
+      .filter(({ value }) => notEmptyString(value));
+  };
 
 const lokiLabelValuesDataSource =
   ({
@@ -91,10 +101,12 @@ const resourceDataSource =
       option: resourceToMap?.metadata?.name ?? '',
       value: resourceToMap?.metadata?.name ?? '',
     }),
+    filter,
   }: {
     resource: 'pods' | 'namespaces' | string;
     namespace?: string;
     mapper?: ResourceOptionMapper;
+    filter?: ResourceOptionFilter;
   }) =>
   async (): Promise<Array<{ option: string; value: string }>> => {
     const endpoint = namespace
@@ -125,7 +137,9 @@ const resourceDataSource =
         break;
     }
 
-    return listItems.flatMap(mapper).filter(({ value }) => notEmptyString(value));
+    const filteredItems = filter ? listItems.filter(filter) : listItems;
+
+    return filteredItems.flatMap(mapper).filter(({ value }) => notEmptyString(value));
   };
 
 // The logs-page and the logs-dev-page both need a default set of attributes to pass
@@ -151,91 +165,112 @@ export const initialAvailableAttributes: AttributeList = [
   },
 ];
 
-export const availableAttributes = (tenant: string, config: Config): AttributeList => [
-  {
+export const availableAttributes = (tenant: string, config: Config): AttributeList => {
+  const contentAttribute: Attribute = {
     name: 'Content',
     id: 'content',
     valueType: 'text',
-  },
-  {
-    name: 'Namespaces',
-    label: 'kubernetes_namespace_name',
-    id: 'namespace',
-    options: resourceDataSource({ resource: 'namespaces' }),
-    valueType: 'checkbox-select',
-  },
-  {
-    name: 'Pods',
-    label: 'kubernetes_pod_name',
-    id: 'pod',
-    options: getPodAttributeOptions(tenant, config),
-    valueType: 'checkbox-select',
-  },
-  {
-    name: 'Containers',
-    label: 'kubernetes_container_name',
-    id: 'container',
-    options: resourceDataSource({
-      resource: 'pods',
-      mapper: (resource) =>
-        resource?.spec?.containers.map((container) => ({
-          option: `${resource?.metadata?.name} / ${container.name}`,
-          value: `${resource?.metadata?.name} / ${container.name}`,
-        })) ?? [],
-    }),
-    expandSelection: (selections) => {
-      const podSelections = new Set<string>();
-      const containerSelections = new Set<string>();
+  };
 
-      for (const container of selections.values()) {
-        if (container.includes(' / ')) {
-          const [pod, containerName] = container.split(' / ');
-          podSelections.add(pod);
-          containerSelections.add(containerName);
-        } else {
-          containerSelections.add(container);
+  // When tenant is audit, only the content attribute is available
+  if (tenant === 'audit') {
+    return [contentAttribute];
+  }
+
+  return [
+    contentAttribute,
+    {
+      name: 'Namespaces',
+      label: 'kubernetes_namespace_name',
+      id: 'namespace',
+      options: resourceDataSource({
+        resource: 'namespaces',
+        filter: (resource) => {
+          switch (tenant) {
+            case 'infrastructure':
+              return namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
+            case 'application':
+              return !namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
+          }
+
+          return true;
+        },
+      }),
+      valueType: 'checkbox-select',
+    },
+    {
+      name: 'Pods',
+      label: 'kubernetes_pod_name',
+      id: 'pod',
+      options: getPodAttributeOptions(tenant, config),
+      valueType: 'checkbox-select',
+    },
+    {
+      name: 'Containers',
+      label: 'kubernetes_container_name',
+      id: 'container',
+      options: resourceDataSource({
+        resource: 'pods',
+        mapper: (resource) =>
+          resource?.spec?.containers.map((container) => ({
+            option: `${resource?.metadata?.name} / ${container.name}`,
+            value: `${resource?.metadata?.name} / ${container.name}`,
+          })) ?? [],
+      }),
+      expandSelection: (selections) => {
+        const podSelections = new Set<string>();
+        const containerSelections = new Set<string>();
+
+        for (const container of selections.values()) {
+          if (container.includes(' / ')) {
+            const [pod, containerName] = container.split(' / ');
+            podSelections.add(pod);
+            containerSelections.add(containerName);
+          } else {
+            containerSelections.add(container);
+          }
         }
-      }
 
-      return new Map([
-        ['pod', podSelections],
-        ['container', containerSelections],
-      ]);
+        return new Map([
+          ['pod', podSelections],
+          ['container', containerSelections],
+        ]);
+      },
+      isItemSelected: (value, filters) => {
+        if (!value.includes('/')) {
+          return filters?.container?.has(value) ?? false;
+        }
+
+        const parts = value.split(' / ');
+        if (parts.length !== 2) {
+          return false;
+        }
+
+        const [pod, container] = parts;
+
+        if (
+          (!filters.pod || filters.pod.size === 0) &&
+          filters.container &&
+          filters.container.size > 0
+        ) {
+          return filters.container.has(container);
+        }
+
+        if (
+          !filters.pod ||
+          filters.pod.size === 0 ||
+          !filters.container ||
+          filters.container.size === 0
+        ) {
+          return false;
+        }
+
+        return filters.pod.has(pod) && filters.container.has(container);
+      },
+      valueType: 'checkbox-select',
     },
-    isItemSelected: (value, filters) => {
-      if (!value.includes('/')) {
-        return filters?.container?.has(value) ?? false;
-      }
-
-      const parts = value.split(' / ');
-      if (parts.length !== 2) {
-        return false;
-      }
-
-      const [pod, container] = parts;
-
-      if (
-        (!filters.pod || filters.pod.size === 0) &&
-        filters.container &&
-        filters.container.size > 0
-      ) {
-        return filters.container.has(container);
-      }
-
-      if (
-        !filters.pod ||
-        filters.pod.size === 0 ||
-        !filters.container ||
-        filters.container.size === 0
-      ) {
-        return false;
-      }
-
-      return filters.pod.has(pod) && filters.container.has(container);
-    },
-    valueType: 'checkbox-select',
-  },
-];
+  ];
+};
 
 export const availableDevConsoleAttributes = (tenant: string, config: Config): AttributeList => [
   {
