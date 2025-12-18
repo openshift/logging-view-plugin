@@ -227,7 +227,7 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
   };
 
   React.useEffect(() => {
-    getAttributeOptions();
+    getAttributeOptions(filters);
   }, [tenant]);
 
   const resetActiveAndFocusedItem = () => {

@@ -142,12 +142,14 @@ const resourceDataSource =
 
     const { request, abort } = cancellableFetch<K8sResourceListResponse>(endpoint);
 
-    const abortFunction = resourceAbort[resource];
+    const abortKey = namespace ? `${resource}-${namespace}` : resource;
+
+    const abortFunction = resourceAbort[abortKey];
     if (abortFunction) {
       abortFunction();
     }
 
-    resourceAbort[resource] = abort;
+    resourceAbort[abortKey] = abort;
 
     const response = await request();
 
@@ -254,14 +256,22 @@ export const availableAttributes = ({
       name: 'Pods',
       label: podLabel,
       id: 'pod',
-      options: getPodAttributeOptions(tenant, config, schema),
+      options: (filters) => {
+        const selectedNamespaces = filters?.namespace ? Array.from(filters.namespace) : undefined;
+
+        return getPodAttributeOptions(tenant, config, schema, selectedNamespaces)();
+      },
       valueType: 'checkbox-select',
     },
     {
       name: 'Containers',
       label: containerLabel,
       id: 'container',
-      options: getContainerAttributeOptions(tenant, config, schema),
+      options: (filters) => {
+        const selectedNamespaces = filters?.namespace ? Array.from(filters.namespace) : undefined;
+
+        return getContainerAttributeOptions(tenant, config, schema, selectedNamespaces)();
+      },
       expandSelection: (selections) => {
         const podSelections = new Set<string>();
         const containerSelections = new Set<string>();
@@ -724,8 +734,16 @@ const getPodAttributeOptions = (
   tenant: string,
   config: Config,
   schema: Schema,
+  namespaces?: Array<string>,
 ): (() => Promise<Option[]>) => {
   const { podLabel } = getAttributeLabels(schema);
+
+  const namespacedPodsResources: Array<Promise<Option[]>> = [];
+
+  // get pods in selected namespaces for users that have restricted access
+  for (const ns of namespaces || []) {
+    namespacedPodsResources.push(resourceDataSource({ resource: 'pods', namespace: ns })());
+  }
 
   return () =>
     Promise.allSettled<Promise<Option[]>>([
@@ -735,6 +753,7 @@ const getPodAttributeOptions = (
         labelName: podLabel,
       })(),
       resourceDataSource({ resource: 'pods' })(),
+      ...namespacedPodsResources,
     ]).then((results) => {
       const podOptions: Set<Option> = new Set();
       results.forEach((result) => {
@@ -752,10 +771,28 @@ const getContainerAttributeOptions = (
   tenant: string,
   config: Config,
   schema: Schema,
+  namespaces?: Array<string>,
 ): (() => Promise<Option[]>) => {
   const { containerLabel, podLabel } = getAttributeLabels(schema);
 
   const seriesQuery = `{ ${containerLabel}!="", ${podLabel}!="" }`;
+
+  const namespacedPodsResources: Array<Promise<Option[]>> = [];
+
+  // get containers in selected namespaces for users that have restricted access
+  for (const ns of namespaces || []) {
+    namespacedPodsResources.push(
+      resourceDataSource({
+        resource: 'pods',
+        namespace: ns,
+        mapper: (resource) =>
+          resource?.spec?.containers.map((container) => ({
+            option: `${resource?.metadata?.name} / ${container.name}`,
+            value: `${resource?.metadata?.name} / ${container.name}`,
+          })) ?? [],
+      })(),
+    );
+  }
 
   return () =>
     Promise.allSettled<Promise<Option[]>>([
@@ -786,6 +823,7 @@ const getContainerAttributeOptions = (
             value: `${resource?.metadata?.name} / ${container.name}`,
           })) ?? [],
       })(),
+      ...namespacedPodsResources,
     ]).then((results) => {
       const uniqueContainers = new Set<Option>();
       results.forEach((result) => {
