@@ -42,7 +42,10 @@ const getOptionComponents = (
   selections: Array<string>,
   focusedItemIndex: number | null,
   onInputKeyDown: (event: React.KeyboardEvent) => void,
+  emptyStateMessage?: string | null,
 ) => {
+  const { t } = useTranslation('plugin__logging-view-plugin');
+
   if (attributeLoading) {
     return [
       <SelectOption isLoading key="custom-loading" value="loading" hasCheckbox={false}>
@@ -79,6 +82,19 @@ const getOptionComponents = (
     }
     return String(a.value).localeCompare(String(b.value));
   });
+
+  if (sortedOptions.length === 0) {
+    return [
+      <SelectOption key="no-results" value={NO_RESULTS} isAriaDisabled>
+        <Alert
+          variant="warning"
+          isInline
+          isPlain
+          title={emptyStateMessage || t('No results found')}
+        />
+      </SelectOption>,
+    ];
+  }
 
   return sortedOptions.map((attributeOption, index) => (
     <SelectOption
@@ -226,8 +242,13 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
     textInputRef?.current?.focus();
   };
 
+  const emptyStateMessage =
+    typeof attribute.emptyStateMessage === 'function'
+      ? attribute.emptyStateMessage(filters)
+      : attribute.emptyStateMessage;
+
   React.useEffect(() => {
-    getAttributeOptions();
+    getAttributeOptions(filters);
   }, [tenant]);
 
   const resetActiveAndFocusedItem = () => {
@@ -369,6 +390,7 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
             selections,
             focusedItemIndex,
             onInputKeyDown,
+            emptyStateMessage,
           )}
         </SelectList>
       </Select>

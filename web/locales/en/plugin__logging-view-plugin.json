@@ -1,4 +1,9 @@
 {
+  "No namespaces found": "No namespaces found",
+  "No pods found in the selected namespace(s)": "No pods found in the selected namespace(s)",
+  "No pods found": "No pods found",
+  "No containers found in the selected namespace(s)": "No containers found in the selected namespace(s)",
+  "No containers found": "No containers found",
   "Label {{tenantKey}} is required to display the alert metrics": "label {{tenantKey}} is required to display the alert metrics",
   "Select a smaller time range to reduce the number of results": "Select a smaller time range to reduce the number of results",
   "Select a namespace, pod, or container filter to improve the query performance": "Select a namespace, pod, or container filter to improve the query performance",
@@ -18,6 +23,7 @@
   "Explain Log Volume": "Explain Log Volume",
   "Search by {{attributeName}}": "Search by {{attributeName}}",
   "Attribute": "Attribute",
+  "No results found": "No results found",
   "Filter by {{attributeName}}": "Filter by {{attributeName}}",
   "Search": "Search",
   "Loading...": "Loading...",
