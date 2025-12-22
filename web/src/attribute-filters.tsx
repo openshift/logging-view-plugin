@@ -803,7 +803,19 @@ const getPodAttributeOptions = (
         tenant,
         labelName: podLabel,
       })(),
-      resourceDataSource({ resource: 'pods' })(),
+      resourceDataSource({
+        resource: 'pods',
+        filter: (resource) => {
+          switch (tenant) {
+            case 'infrastructure':
+              return namespaceBelongsToInfrastructureTenant(resource.metadata?.namespace || '');
+            case 'application':
+              return !namespaceBelongsToInfrastructureTenant(resource.metadata?.namespace || '');
+          }
+
+          return true;
+        },
+      })(),
       ...namespacedPodsResources,
     ]).then((results) => {
       const podOptions: Set<string> = new Set();
@@ -868,6 +880,16 @@ const getContainerAttributeOptions = (
       })(),
       resourceDataSource({
         resource: 'pods',
+        filter: (resource) => {
+          switch (tenant) {
+            case 'infrastructure':
+              return namespaceBelongsToInfrastructureTenant(resource.metadata?.namespace || '');
+            case 'application':
+              return !namespaceBelongsToInfrastructureTenant(resource.metadata?.namespace || '');
+          }
+
+          return true;
+        },
         mapper: (resource) =>
           resource?.spec?.containers.map((container) => ({
             option: `${resource?.metadata?.name} / ${container.name}`,
