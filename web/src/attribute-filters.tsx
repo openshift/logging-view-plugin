@@ -107,7 +107,11 @@ const lokiSeriesDataSource =
     mapper: (data: SeriesResponse) => Array<{ option: string; value: string }>;
   }) =>
   async (): Promise<Array<{ option: string; value: string }>> => {
-    const { abort, request } = executeSeries({ match, tenant, config });
+    const { abort, request } = executeSeries({
+      match: match.filter(notEmptyString),
+      tenant,
+      config,
+    });
 
     if (resourceAbort.lokiSeries) {
       resourceAbort.lokiSeries();
@@ -266,10 +270,12 @@ export const availableAttributes = ({
   tenant,
   config,
   schema,
+  t,
 }: {
   tenant: string;
   config: Config;
   schema: Schema;
+  t: (key: string) => string;
 }): AttributeList => {
   const { namespaceLabel, podLabel, containerLabel } = getAttributeLabels(schema);
 
@@ -292,6 +298,7 @@ export const availableAttributes = ({
       id: 'namespace',
       options: getNamespaceAttributeOptions(tenant, config, schema),
       valueType: 'checkbox-select',
+      emptyStateMessage: t('No namespaces found'),
     },
     {
       name: 'Pods',
@@ -303,6 +310,13 @@ export const availableAttributes = ({
         return getPodAttributeOptions(tenant, config, schema, selectedNamespaces)();
       },
       valueType: 'checkbox-select',
+      emptyStateMessage: (filters) => {
+        const selectedNamespaces = filters?.namespace ? Array.from(filters.namespace) : undefined;
+        if (selectedNamespaces && selectedNamespaces.length > 0) {
+          return t('No pods found in the selected namespace(s)');
+        }
+        return t('No pods found');
+      },
     },
     {
       name: 'Containers',
@@ -364,6 +378,13 @@ export const availableAttributes = ({
         return filters.pod.has(pod) && filters.container.has(container);
       },
       valueType: 'checkbox-select',
+      emptyStateMessage: (filters) => {
+        const selectedNamespaces = filters?.namespace ? Array.from(filters.namespace) : undefined;
+        if (selectedNamespaces && selectedNamespaces.length > 0) {
+          return t('No containers found in the selected namespace(s)');
+        }
+        return t('No containers found');
+      },
     },
   ];
 };
@@ -796,27 +817,40 @@ const getPodAttributeOptions = (
     namespacedPodsResources.push(resourceDataSource({ resource: 'pods', namespace: ns })());
   }
 
+  const namespaceLabel = getStreamLabelsFromSchema(schema).Namespace;
+  const namespacesQuery =
+    namespaces && namespaces.length > 0 ? `${namespaceLabel}=~"${namespaces.join('|')}"` : '';
+
+  const podResource =
+    namespaces && namespaces.length > 0
+      ? namespacedPodsResources
+      : [
+          resourceDataSource({
+            resource: 'pods',
+            filter: (resource) => {
+              switch (tenant) {
+                case 'infrastructure':
+                  return namespaceBelongsToInfrastructureTenant(resource.metadata?.namespace || '');
+                case 'application':
+                  return !namespaceBelongsToInfrastructureTenant(
+                    resource.metadata?.namespace || '',
+                  );
+              }
+
+              return true;
+            },
+          })(),
+        ];
+
   return () =>
     Promise.allSettled<Promise<Option[]>>([
       lokiLabelValuesDataSource({
         config,
         tenant,
         labelName: podLabel,
+        query: namespacesQuery ? `{ ${namespacesQuery} }` : undefined,
       })(),
-      resourceDataSource({
-        resource: 'pods',
-        filter: (resource) => {
-          switch (tenant) {
-            case 'infrastructure':
-              return namespaceBelongsToInfrastructureTenant(resource.metadata?.namespace || '');
-            case 'application':
-              return !namespaceBelongsToInfrastructureTenant(resource.metadata?.namespace || '');
-          }
-
-          return true;
-        },
-      })(),
-      ...namespacedPodsResources,
+      ...podResource,
     ]).then((results) => {
       const podOptions: Set<string> = new Set();
       results.forEach((result) => {
@@ -857,12 +891,41 @@ const getContainerAttributeOptions = (
     );
   }
 
+  const namespaceLabel = getStreamLabelsFromSchema(schema).Namespace;
+  const namespacesQuery = namespaces ? `${namespaceLabel}=~"${namespaces.join('|')}"` : '';
+
+  const podResource =
+    namespaces && namespaces.length > 0
+      ? namespacedPodsResources
+      : [
+          resourceDataSource({
+            resource: 'pods',
+            filter: (resource) => {
+              switch (tenant) {
+                case 'infrastructure':
+                  return namespaceBelongsToInfrastructureTenant(resource.metadata?.namespace || '');
+                case 'application':
+                  return !namespaceBelongsToInfrastructureTenant(
+                    resource.metadata?.namespace || '',
+                  );
+              }
+
+              return true;
+            },
+            mapper: (resource) =>
+              resource?.spec?.containers.map((container) => ({
+                option: `${resource?.metadata?.name} / ${container.name}`,
+                value: `${resource?.metadata?.name} / ${container.name}`,
+              })) ?? [],
+          })(),
+        ];
+
   return () =>
     Promise.allSettled<Promise<Option[]>>([
       lokiSeriesDataSource({
         config,
         tenant,
-        match: [seriesQuery],
+        match: [seriesQuery, namespacesQuery ? `{ ${namespacesQuery} }` : ''],
         mapper: (response) => {
           const uniqueContainers = new Set<string>();
 
@@ -878,25 +941,7 @@ const getContainerAttributeOptions = (
           }));
         },
       })(),
-      resourceDataSource({
-        resource: 'pods',
-        filter: (resource) => {
-          switch (tenant) {
-            case 'infrastructure':
-              return namespaceBelongsToInfrastructureTenant(resource.metadata?.namespace || '');
-            case 'application':
-              return !namespaceBelongsToInfrastructureTenant(resource.metadata?.namespace || '');
-          }
-
-          return true;
-        },
-        mapper: (resource) =>
-          resource?.spec?.containers.map((container) => ({
-            option: `${resource?.metadata?.name} / ${container.name}`,
-            value: `${resource?.metadata?.name} / ${container.name}`,
-          })) ?? [],
-      })(),
-      ...namespacedPodsResources,
+      ...podResource,
     ]).then((results) => {
       const uniqueContainers = new Set<string>();
       results.forEach((result) => {
