@@ -12,6 +12,7 @@ export type Attribute = {
   expandSelection?: (value: Set<string>) => Map<string, Set<string>>;
   // determines if an option is selected based on other filters
   isItemSelected?: (value: string, filters: Filters) => boolean;
+  emptyStateMessage?: ((filters: Filters) => string) | string;
 };
 
 export type AttributeList = Array<Attribute>;
