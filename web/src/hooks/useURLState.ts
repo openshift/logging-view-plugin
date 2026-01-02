@@ -104,7 +104,17 @@ export const useURLState = ({
       : undefined,
   );
 
+  const setQueryInURL = (newQuery: string, replace?: boolean) => {
+    const trimmedQuery = newQuery.trim();
+    queryParams.set(QUERY_PARAM_KEY, trimmedQuery);
+    navigate(
+      `${location.pathname}?${queryParams.toString()}`,
+      replace ? { replace: true } : undefined,
+    );
+  };
+
   const setTenantInURL = (selectedTenant: string) => {
+    queryParams.set(QUERY_PARAM_KEY, ''); // reset query when changing tenant
     queryParams.set(TENANT_PARAM_KEY, selectedTenant);
     navigate(`${location.pathname}?${queryParams.toString()}`);
   };
@@ -139,15 +149,6 @@ export const useURLState = ({
   const setShowStatsInURL = (showStats: boolean) => {
     queryParams.set(SHOW_STATS_PARAM_KEY, showStats ? '1' : '0');
     navigate(`${location.pathname}?${queryParams.toString()}`);
-  };
-
-  const setQueryInURL = (newQuery: string, replace?: boolean) => {
-    const trimmedQuery = newQuery.trim();
-    queryParams.set(QUERY_PARAM_KEY, trimmedQuery);
-    navigate(
-      `${location.pathname}?${queryParams.toString()}`,
-      replace ? { replace: true } : undefined,
-    );
   };
 
   const setTimeRangeInURL = (selectedTimeRange: TimeRange) => {
