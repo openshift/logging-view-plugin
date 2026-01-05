@@ -8,6 +8,7 @@ import { intervalFromTimeRange } from '../time-range';
 import { getSchema } from '../value-utils';
 import { useLogsConfig } from './LogsConfigProvider';
 import { useQueryParams } from './useQueryParams';
+import { useTranslation } from 'react-i18next';
 
 interface UseURLStateHook {
   defaultTenant?: string;
@@ -16,10 +17,12 @@ interface UseURLStateHook {
     tenant,
     config,
     schema,
+    t,
   }: {
     tenant: string;
     config: Config;
     schema: Schema;
+    t: (key: string) => string;
   }) => AttributeList | undefined;
   attributesDependencies?: DependencyList;
 }
@@ -60,6 +63,7 @@ export const useURLState = ({
   getAttributes,
   attributesDependencies,
 }: UseURLStateHook) => {
+  const { t } = useTranslation('plugin__logging-view-plugin');
   const queryParams = useQueryParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -85,7 +89,7 @@ export const useURLState = ({
   const [tenant, setTenant] = React.useState(initialTenant);
   const [schema, setSchema] = React.useState(initialSchema);
   const attributes = React.useMemo<AttributeList>(
-    () => (getAttributes ? getAttributes({ tenant, config, schema }) ?? [] : []),
+    () => (getAttributes ? getAttributes({ tenant, config, schema, t }) ?? [] : []),
     [tenant, config, schema, ...(attributesDependencies || [])],
   );
   const [filters, setFilters] = React.useState<Filters | undefined>(

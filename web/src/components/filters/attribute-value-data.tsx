@@ -1,9 +1,9 @@
 import React from 'react';
-import { Attribute, Option } from './filter.types';
+import { Attribute, Filters, Option } from './filter.types';
 import { useBoolean } from '../../hooks/useBoolean';
 
 type UseAttributeValueDataHookResult = {
-  getAttributeOptions: (searchQuery?: string) => void;
+  getAttributeOptions: (filters?: Filters) => void;
   attributeOptions: Array<Option>;
   attributeError: Error | undefined;
   attributeLoading: boolean;
@@ -21,7 +21,7 @@ export const useAttributeValueData = (attribute: Attribute): UseAttributeValueDa
   const [attributeError, setAttributeError] = React.useState<Error | undefined>();
 
   const getAttributeOptions = React.useCallback(
-    (searchQuery?: string) => {
+    (filters?: Filters) => {
       setAttributeError(undefined);
       if (attribute.options) {
         if (Array.isArray(attribute.options)) {
@@ -29,7 +29,7 @@ export const useAttributeValueData = (attribute: Attribute): UseAttributeValueDa
           setAttributeOptions(uniqueOptions(attribute.options));
         } else {
           attribute
-            .options(searchQuery)
+            .options(filters)
             .then((asyncOptions) => {
               setAttributeOptions(uniqueOptions(asyncOptions ?? []));
             })
