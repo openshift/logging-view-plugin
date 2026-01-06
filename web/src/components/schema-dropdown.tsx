@@ -20,6 +20,8 @@ export const SchemaDropdown: React.FC<SchemaDropdownProps> = ({ onSchemaSelected
 
   const [isOpen, setIsOpen] = React.useState(false);
 
+  const schemaSelectRef = React.useRef<HTMLDivElement>(null);
+
   const onToggle = () => setIsOpen(!isOpen);
   const onSelect = (
     _: React.MouseEvent<Element, MouseEvent> | undefined,
@@ -30,6 +32,21 @@ export const SchemaDropdown: React.FC<SchemaDropdownProps> = ({ onSchemaSelected
     }
     setIsOpen(false);
   };
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (isOpen && !schemaSelectRef.current?.contains(event.target as Node)) {
+      setIsOpen(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (isOpen) {
+      window.addEventListener('click', handleClickOutside);
+    }
+    return () => {
+      window.removeEventListener('click', handleClickOutside);
+    };
+  }, [isOpen]);
 
   const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
     <MenuToggle
@@ -43,21 +60,23 @@ export const SchemaDropdown: React.FC<SchemaDropdownProps> = ({ onSchemaSelected
   );
 
   return (
-    <Select
-      id="logging-view-schema-dropdown"
-      isOpen={isOpen}
-      onSelect={onSelect}
-      placeholder={t('Select a Schema')}
-      toggle={toggle}
-    >
-      <SelectList>
-        <SelectOption key={'otel'} value={Schema.otel} isSelected={schema === Schema.otel}>
-          otel
-        </SelectOption>
-        <SelectOption key={'viaq'} value={Schema.viaq} isSelected={schema === Schema.viaq}>
-          viaq
-        </SelectOption>
-      </SelectList>
-    </Select>
+    <div ref={schemaSelectRef}>
+      <Select
+        id="logging-view-schema-dropdown"
+        isOpen={isOpen}
+        onSelect={onSelect}
+        placeholder={t('Select a Schema')}
+        toggle={toggle}
+      >
+        <SelectList>
+          <SelectOption key={'otel'} value={Schema.otel} isSelected={schema === Schema.otel}>
+            otel
+          </SelectOption>
+          <SelectOption key={'viaq'} value={Schema.viaq} isSelected={schema === Schema.viaq}>
+            viaq
+          </SelectOption>
+        </SelectList>
+      </Select>
+    </div>
   );
 };
