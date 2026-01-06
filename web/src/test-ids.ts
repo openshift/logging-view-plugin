@@ -24,3 +24,8 @@ export enum TestIds {
   NamespaceToggle = 'NamespaceToggle',
   SchemaToggle = 'SchemaToggle',
 }
+
+export const Classes = {
+  LogDetail: 'pf-v5-c-table__td lv-plugin__table__details',
+  LogToolbar: 'pf-v5-c-toolbar__content-section',
+};
