@@ -60,7 +60,7 @@ function admConsoleObserveTest(){
         cy.log(`container1=${pod1Name} / centos-logtest, container2=${pod2Name} / centos-logtest`);
         cy.checkLogContainers(containers)
 
-        cy.showQueryInput();
+        cy.showLogQueryInput();
         let pattern = /{ kubernetes_container_name="centos-logtest", kubernetes_pod_name=~"centos-logtest-\w+|centos-logtest-\w+" } | json/;
         if (String(Cypress.env('CLUSTERLOGGING_DATAMODE')) === "otel") {
           pattern = /{ k8s_container_name="centos-logtest", k8s_pod_name=~"centos-logtest-\w+|centos-logtest-\w+" } /;
@@ -83,7 +83,8 @@ function admConsoleObserveTest(){
 
 describe('AdminConsole:: Admin in ObserveLogs', { tags: ['@admin'] }, () => {
   before( function() {
-    cy.uiLoginAsClusterAdmin("first_user");
+    cy.uiLoginAsClusterAdminForUser("first");
+    cy.switchToAdmConsole();
   });
 
   beforeEach( function() {
@@ -93,7 +94,7 @@ describe('AdminConsole:: Admin in ObserveLogs', { tags: ['@admin'] }, () => {
   });
 
   after( function() {
-    cy.uiLogoutClusterAdmin("first_user");
+    cy.uiLogoutClusterAdminForUser("first");
   });
   admConsoleObserveTest();
   observeLogTest();
@@ -104,7 +105,7 @@ describe('AdminConsole:: Admin in ObserveLogs', { tags: ['@admin'] }, () => {
     if (String(Cypress.env('CLUSTERLOGGING_DATAMODE')) === "otel") {
       query = '{ log_type="infrastructure" }'
     }
-    cy.showQueryInput();
+    cy.showLogQueryInput();
     cy.byTestID(TestIds.LogsQueryInput)
       .find('textarea')
       .invoke('val')
@@ -152,7 +153,7 @@ describe('AdminConsole:: Admin in ObserveLogs', { tags: ['@admin'] }, () => {
     if (String(Cypress.env('CLUSTERLOGGING_DATAMODE')) === "otel") {
       query = '{ log_type="audit" }'
     }
-    cy.showQueryInput();
+    cy.showLogQueryInput();
     cy.byTestID(TestIds.LogsQueryInput)
       .find('textarea')
       .invoke('val')
@@ -163,11 +164,12 @@ describe('AdminConsole:: Admin in ObserveLogs', { tags: ['@admin'] }, () => {
 
 describe.skip('AdminConsole: Impersonate User in ObserveLogs', { tags: ['@admin'] }, () => {
   before( function() {
-    cy.cliLogin("second_user");
-    cy.grantLogViewRoles("second_user", `${APP_NAMESPACE1}`);
-    cy.grantLogViewRoles("second_user", `${APP_NAMESPACE2}`);
-    cy.uiLoginAsClusterAdmin("first_user");
-    cy.uiImpersonateUser("second_user");
+    cy.cliLoginAsUser("second");
+    cy.grantLogViewRolesToUser("second", `${APP_NAMESPACE1}`);
+    cy.grantLogViewRolesToUser("second", `${APP_NAMESPACE2}`);
+    cy.uiLoginAsClusterAdminForUser("first");
+    cy.switchToAdmConsole();
+    cy.uiImpersonateUser("second");
     cy.switchToAdmConsole();
   });
 
@@ -178,9 +180,9 @@ describe.skip('AdminConsole: Impersonate User in ObserveLogs', { tags: ['@admin'
   });
 
   after( function() {
-    cy.uiLogoutUser("second_user");
-    cy.removeLogViewRoles("second_user", `${APP_NAMESPACE1}`);
-    cy.removeLogViewRoles("second_user", `${APP_NAMESPACE2}`);
+    cy.uiLogoutUser("second");
+    cy.removeLogViewRolesFromUser("second", `${APP_NAMESPACE1}`);
+    cy.removeLogViewRolesFromUser("second", `${APP_NAMESPACE2}`);
   });
   
   admConsoleObserveTest();
@@ -191,9 +193,10 @@ describe.skip('AdminConsole: Impersonate User in ObserveLogs', { tags: ['@admin'
 
 describe.skip('AdminConsole: User in ObserveLogs', { tags: ['@user'] }, () => {
   before( function() {
-    cy.grantLogViewRoles("second_user", `${APP_NAMESPACE1}`)
-    cy.grantLogViewRoles("second_user", `${APP_NAMESPACE2}`)
-    cy.uiLoginUser("second_user");
+    cy.grantLogViewRolesToUser("second", `${APP_NAMESPACE1}`)
+    cy.grantLogViewRolesToUser("second", `${APP_NAMESPACE2}`)
+    cy.uiLoginAsUser("second");
+    cy.switchToAdmConsole();
   });
 
   beforeEach( function() {
@@ -203,9 +206,9 @@ describe.skip('AdminConsole: User in ObserveLogs', { tags: ['@user'] }, () => {
   });
 
   after( function() {
-    cy.uiLogoutUser("second_user");
-    cy.removeLogViewRoles("second_user", `${APP_NAMESPACE1}`);
-    cy.removeLogViewRoles("second_user", `${APP_NAMESPACE2}`);
+    cy.uiLogoutUser("second");
+    cy.removeLogViewRolesFromUser("second", `${APP_NAMESPACE1}`);
+    cy.removeLogViewRolesFromUser("second", `${APP_NAMESPACE2}`);
   });
 
   admConsoleObserveTest();

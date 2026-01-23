@@ -220,7 +220,7 @@ cd $script_dir/../
 
 cypress_args=""
 if [[ "$CYPRESS_SPEC" == "" ]];then
-    cypress_args=" --spec $(ls ${SCRIPT_DIR}/../cypress/e2e/logging/*.ts|paste -sd ',' -)"
+    cypress_args=" --spec $(ls cypress/e2e/logging/*.ts|paste -sd ',' -)"
 else
     cypress_args=" --spec ${CYPRESS_SPEC}"
 fi

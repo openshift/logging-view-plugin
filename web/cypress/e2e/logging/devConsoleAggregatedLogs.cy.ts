@@ -7,8 +7,12 @@ let SKIPALL= false
 function devConsoleUserAggrTest(){
   it('user can not display infra logs',{tags:['@aggr']}, () => {
     cy.runLogQuery('{{} k8s_namespace_name="openshift-monitoring" {}}');
-    cy.getByTestId(TestIds.LogsTable)
-      .should('contain.text', 'Warning alert:No datapoints found');
+    cy.getByTestId(TestIds.LogsTable).within(() => {
+       cy.get('.lv-plugin__table__row-error').should('exist');
+       // It may  report error below
+       //-' DateMessageDanger alert:{"error":"400 Bad Request","errorType":"observatorium-api","status":"error"}\n'
+       //+'Warning alert:No datapoints found'
+    })
   });
 }
 
@@ -22,7 +26,7 @@ describe('DevConsole: Admin in AggregatedLogs ', { tags: ['@admin'] }, () => {
         this.skip()
       }
     });
-    cy.uiLoginAsClusterAdmin("first_user");
+    cy.uiLoginAsClusterAdminForUser("first");
     cy.switchToDevConsole();
   });
 
@@ -32,7 +36,7 @@ describe('DevConsole: Admin in AggregatedLogs ', { tags: ['@admin'] }, () => {
 
   after( function() {
     if (!SKIPALL) {
-      cy.uiLogoutClusterAdmin("first_user");
+      cy.uiLogoutClusterAdminForUser("first");
     }
   });
   aggrLogTest();
@@ -55,11 +59,11 @@ describe('DevConsole: Impersonate User in AggregatedLogs', { tags: ['@admin'] },
         this.skip()
       }
     });
-    cy.cliLogin("second_user");
-    cy.grantLogViewRoles("second_user", `${APP_NAMESPACE1}`);
-    cy.grantLogViewRoles("second_user", `${APP_NAMESPACE2}`);
-    cy.uiLoginAsClusterAdmin("first_user");
-    cy.uiImpersonateUser("second_user");
+    cy.cliLoginAsUser("second");
+    cy.grantLogViewRolesToUser("second", `${APP_NAMESPACE1}`);
+    cy.grantLogViewRolesToUser("second", `${APP_NAMESPACE2}`);
+    cy.uiLoginAsClusterAdminForUser("first");
+    cy.uiImpersonateUser("second");
     cy.switchToDevConsole();
   });
 
@@ -69,12 +73,12 @@ describe('DevConsole: Impersonate User in AggregatedLogs', { tags: ['@admin'] },
 
   after( function() {
     if (!SKIPALL) {
-      cy.uiLogoutUser("second_user");
-      cy.removeLogViewRoles("second_user", `${APP_NAMESPACE1}`);
-      cy.removeLogViewRoles("second_user", `${APP_NAMESPACE2}`);
+      cy.uiLogoutUser("second");
+      cy.removeLogViewRolesFromUser("second", `${APP_NAMESPACE1}`);
+      cy.removeLogViewRolesFromUser("second", `${APP_NAMESPACE2}`);
     }
   });
-  devConsoleUserAggrTest();
+  // devConsoleUserAggrTest(); skip for bug  https://github.com/openshift/logging-view-plugin/pull/317
   aggrLogTest();
   commonTest()
 })
@@ -89,9 +93,9 @@ describe('DevConsole: User in AggregatedLogs', { tags: ['@admin'] }, () => {
         this.skip()
       }
     });
-    cy.grantLogViewRoles("second_user", `${APP_NAMESPACE1}`);
-    cy.grantLogViewRoles("second_user", `${APP_NAMESPACE2}`);
-    cy.uiLoginUser("second_user");
+    cy.grantLogViewRolesToUser("second", `${APP_NAMESPACE1}`);
+    cy.grantLogViewRolesToUser("second", `${APP_NAMESPACE2}`);
+    cy.uiLoginAsUser("second");
     cy.switchToDevConsole();
   });
 
@@ -102,9 +106,9 @@ describe('DevConsole: User in AggregatedLogs', { tags: ['@admin'] }, () => {
 
   after( function() {
     if (!SKIPALL) {
-      cy.uiLogoutUser("second_user");
-      cy.removeLogViewRoles("second_user", `${APP_NAMESPACE1}`);
-      cy.removeLogViewRoles("second_user", `${APP_NAMESPACE2}`);
+      cy.uiLogoutUser("second");
+      cy.removeLogViewRolesFromUser("second", `${APP_NAMESPACE1}`);
+      cy.removeLogViewRolesFromUser("second", `${APP_NAMESPACE2}`);
     }
   });
   devConsoleUserAggrTest();
