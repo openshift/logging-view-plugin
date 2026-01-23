@@ -1,9 +1,13 @@
 import '@cypress/grep';
 
+import './selectors';
 import './commands/selector-commands';
 import './commands/auth-commands';
+import './commands/operator-commands';
+import './commands/incident-commands';
 import './commands/utility-commands';
-import './commands/log-commands';
+import './incidents_prometheus_query_mocks';
+import './commands/virtualization-commands';
 
 export const checkErrors = () =>
   cy.window().then((win) => {
@@ -28,11 +32,4 @@ Cypress.on('uncaught:exception', (err) => {
     return false;
   }
   // allow other errors to fail the test
-});
-
-
-
-Cypress.on('uncaught:exception', (err) => {
-  console.error("Uncaught error:", err.message);
-  return false;
 });
