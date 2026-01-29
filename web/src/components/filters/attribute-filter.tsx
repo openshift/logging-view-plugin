@@ -170,12 +170,15 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
     </MenuToggle>
   );
 
+  const namespaces = filters['namespace'] ? Array.from(filters['namespace']) : [];
+  const namespacesKey = namespaces.sort().join('-');
+
   const renderAttributeValueComponent = (attribute: Attribute) => {
     switch (attribute.valueType) {
       case 'text': {
         return (
           <TextInput
-            key={`text-${attribute.id}`}
+            key={`text-${attribute.id}-${namespacesKey}`}
             placeholder={t('Search by {{attributeName}}', {
               attributeName: attribute.name,
             })}
@@ -191,7 +194,7 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
       case 'select':
         return (
           <SearchSelect
-            key={`select-${attribute.id}`}
+            key={`select-${attribute.id}-${namespacesKey}`}
             attribute={attribute}
             onSelect={handleAttributeValueChange}
             filters={filters}
@@ -201,7 +204,7 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
       case 'checkbox-select':
         return (
           <SearchSelect
-            key={`checkbox-select-${attribute.id}`}
+            key={`checkbox-select-${attribute.id}-${namespacesKey}`}
             attribute={attribute}
             onSelect={handleAttributeValueChange}
             filters={filters}

@@ -46,5 +46,5 @@ scrape_configs:
           k8s_namespace_name: kube-public
           log_type: application
           __path__: /var/log/*log
-          kubernetes_pod_name: alertmanager-main-0
-          kubernetes_container_name: test-container
+          kubernetes_pod_name: kube-public-0
+          kubernetes_container_name: test-container-kube
