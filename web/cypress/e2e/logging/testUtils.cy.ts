@@ -7,7 +7,6 @@ export const APP_MESSAGE = "SVTLogger";
 
 export function isDevConsoleReady(): boolean {
   //Check if DevConsole is enabled in 4.19+
-  cy.task('log','Check if devConsole is enabled');
   const rawversion = Cypress.env('OPENSHIFT_VERSION');
   if (!rawversion) {
     throw new Error('OPENSHIFT_VERSION is not defined');
@@ -100,7 +99,7 @@ export function aggrLogTest() {
         cy.log(`pod1Name=${pod1Name},pod1NewName=${pod1NewName}`);
         //cy.task('log', `pod1Name=${pod1Name} pod1NewName=${pod1NewName}`);
         cy.checkLogPods(pods);
-        cy.showQueryInput();
+        cy.showLogQueryInput();
         cy.byTestID(TestIds.LogsQueryInput)
           .find('textarea')
           .invoke('val')
@@ -125,7 +124,7 @@ export function aggrLogTest() {
     cy.log(`container=centos-logtest`);
     cy.checkLogContainers(containers);
 
-    cy.showQueryInput();
+    cy.showLogQueryInput();
     let pattern = /{ kubernetes_container_name="centos-logtest", kubernetes_pod_name=~"centos-logtest-\w+|centos-logtest-\w+" } | json/;
     if (String(Cypress.env('CLUSTERLOGGING_DATAMODE')) === "otel") {
       pattern = /{ k8s_container_name="centos-logtest", k8s_pod_name=~"centos-logtest-\w+|centos-logtest-\w+" } /;
@@ -168,7 +167,7 @@ export function observeLogTest() {
   it('selected namespaces',{tags:['@observ']}, () => {
     const namespaces=[APP_NAMESPACE1, APP_NAMESPACE2]
     cy.checkLogNamespaces(namespaces);
-    cy.showQueryInput();
+    cy.showLogQueryInput();
     cy.byTestID(TestIds.LogsQueryInput)
       .find('textarea')
       .invoke('val')
@@ -203,7 +202,7 @@ export function observeLogTest() {
           cy.log(`pod1Name=${pod1Name},pod1NewName=${pod1NewName}, pod2Name=${pod2Name}`);
           cy.checkLogPods(pods);
           //cy.task('log', `pod1Name=${pod1Name} pod1NewName=${pod1NewName}, pod2Name=${pod2Name} `);
-          cy.showQueryInput();
+          cy.showLogQueryInput();
           cy.byTestID(TestIds.LogsQueryInput)
             .find('textarea')
             .invoke('val')
@@ -240,57 +239,41 @@ export function commonTest() {
         .clear()
         .type('SVTLogger', {delay: 0})
       });
-    cy.showQueryInput();
-    cy.byTestID(TestIds.LogsQueryInput)
-      .find('textarea')
-      .invoke('val')
-      .should('include', 'SVTLogger')
+    cy.showLogQueryInput();
+    cy.byTestID(TestIds.LogsQueryInput,{timeout: 60000})
+      .find('textarea', { timeout: 60000 })
+      .should('include.value', 'SVTLogger');
     cy.byTestID(TestIds.ExecuteQueryButton).click();
     cy.assertAppLogsInLogsTable();
   })
 
   it('filter logs by last duration ',{tags:['@common']}, () => {
-    cy.byTestID(TestIds.TimeRangeDropdown)
-      .click()
-      .within(() => {
-    cy.contains('Last 5 minutes').click();
-      });
+    cy.byTestID(TestIds.TimeRangeDropdown).find('button').click();
+    cy.byTestID(TestIds.TimeRangeDropdown).contains('Last 5 minutes').click();
     cy.url().should('match', /start=now-5m&end=now/);
     cy.byTestID(TestIds.ExecuteQueryButton).click();
     cy.assertLogsInLogsTable()
 
-    cy.byTestID(TestIds.TimeRangeDropdown)
-      .click()
-      .within(() => {
-    cy.contains('Last 2 hours').click();
-      });
+    cy.byTestID(TestIds.TimeRangeDropdown).find('button').click();
+    cy.byTestID(TestIds.TimeRangeDropdown).contains('Last 2 hours').click();
     cy.url().should('match', /start=now-2h&end=now/);
     cy.byTestID(TestIds.ExecuteQueryButton).click();
     cy.assertLogsInLogsTable()
 
-    cy.byTestID(TestIds.TimeRangeDropdown)
-      .click()
-      .within(() => {
-    cy.contains('Last 1 day').click();
-      });
+    cy.byTestID(TestIds.TimeRangeDropdown).find('button').click();
+    cy.byTestID(TestIds.TimeRangeDropdown).contains('Last 1 day').click();
     cy.url().should('match', /start=now-1d&end=now/);
     cy.byTestID(TestIds.ExecuteQueryButton).click();
     cy.assertLogsInLogsTable()
 
-    cy.byTestID(TestIds.TimeRangeDropdown)
-      .click()
-      .within(() => {
-    cy.contains('Last 2 weeks').click();
-      });
+    cy.byTestID(TestIds.TimeRangeDropdown).find('button').click();
+    cy.byTestID(TestIds.TimeRangeDropdown).contains('Last 2 weeks').click();
     cy.url().should('match', /start=now-2w&end=now/);
     cy.byTestID(TestIds.ExecuteQueryButton).click();
     cy.assertLogsInLogsTable()
     // recover to 1 hour
-    cy.byTestID(TestIds.TimeRangeDropdown)
-      .click()
-      .within(() => {
-    cy.contains('Last 1 hour').click();
-      });
+    cy.byTestID(TestIds.TimeRangeDropdown).find('button').click();
+    cy.byTestID(TestIds.TimeRangeDropdown).contains('Last 1 hour').click();
     cy.byTestID(TestIds.ExecuteQueryButton).click();
     cy.assertLogsInLogsTable()
   });
@@ -309,11 +292,8 @@ export function commonTest() {
     const startTime = `${pad(startDate.getHours())}:${pad(startDate.getMinutes())}`;
     const endTime = `${pad(startDate.getHours())}:${pad(startDate.getMinutes())}`;
 
-    cy.byTestID(TestIds.TimeRangeDropdown)
-      .click()
-      .within(() => {
-    cy.contains('Custom time range').click();
-      });
+    cy.byTestID(TestIds.TimeRangeDropdown).find('button').click();
+    cy.byTestID(TestIds.TimeRangeDropdown).contains('Custom time range').click();
     cy.byTestID(TestIds.TimeRangeSelectModal).within(() => {
       cy.get('input[aria-label="Date picker"]').first().clear().type(`${startDay}`).blur();
       cy.get('input[aria-label="Precision time picker"]').first().clear().type(`${startTime}{enter}`);
@@ -324,7 +304,7 @@ export function commonTest() {
     cy.byTestID(TestIds.TimeRangeDropdownSaveButton).click();
     cy.byTestID(TestIds.TimeRangeDropdown)
       .within(() => {
-    cy.contains(`${startDay} ${startTime} - ${endDay} ${endTime}`);
+        cy.contains(`${startDay} ${startTime} - ${endDay} ${endTime}`);
       });
 
     //Remove milleseconds as we won't provide it in console
@@ -333,11 +313,8 @@ export function commonTest() {
     cy.url().should('match', new RegExp(`start=${start.getTime()}&end=${end.getTime()}`));
     // recover to 1 hour
 
-    cy.byTestID(TestIds.TimeRangeDropdown)
-      .click()
-      .within(() => {
-    cy.contains('Last 1 hour').click();
-      });
+    cy.byTestID(TestIds.TimeRangeDropdown).find('button').click();
+    cy.byTestID(TestIds.TimeRangeDropdown).contains('Last 1 hour').click();
     cy.byTestID(TestIds.ExecuteQueryButton).click();
     cy.assertLogsInLogsTable()
   });
@@ -381,7 +358,7 @@ export function commonTest() {
     ];
     const mergedFields = [...viaqUniqueFields, ...otelFields];
 
-    cy.showQueryInput();
+    cy.showLogQueryInput();
     cy.byTestID(TestIds.LogsQueryInput)
       .find('textarea')
       .invoke('val')
@@ -390,14 +367,14 @@ export function commonTest() {
     cy.byTestID(TestIds.LogsTable)
       .should('exist')
       .within(() => {
-    cy.get('td[data-label="date"]')
-      .first()
-      .invoke('text')
-      .should('match', timestampPattern);
-    cy.get('td[data-label="message"]')
-      .first()
-      .invoke('text')
-      .should('match', viaqlogFormat);
+        cy.get('td[data-label="date"]')
+          .first()
+          .invoke('text')
+          .should('match', timestampPattern);
+        cy.get('td[data-label="message"]')
+          .first()
+          .invoke('text')
+          .should('match', viaqlogFormat);
       });
     cy.assertFieldsInLogDetail(mergedFields)
   });
@@ -438,7 +415,7 @@ export function commonTest() {
     const timestampPattern = /^[A-Z][a-z]{2} \d{1,2}, \d{4}, \d{2}:\d{2}:\d{2}\.\d{3}$/;
     const otellogFormat = /^\{.*"@timestamp":".+?",.*"hostname":".+?",.*"kubernetes":\{.*\},.*"level":"\w+",.*"log_source":"container",.*"log_type":"application",.*"message":".+?",.*"openshift":\{.*\}.*\}$/
 
-    cy.showQueryInput();
+    cy.showLogQueryInput();
     cy.byTestID(TestIds.LogsQueryInput)
       .find('textarea')
       .invoke('val')
@@ -448,16 +425,15 @@ export function commonTest() {
     cy.byTestID(TestIds.LogsTable)
       .should('exist')
       .within(() => {
-    cy.get('td[data-label="date"]')
-      .first()
-      .invoke('text')
-      .should('match', timestampPattern);
+        cy.get('td[data-label="date"]')
+          .first()
+          .invoke('text')
+          .should('match', timestampPattern);
 
-    cy.get('td[data-label="message"]')
-      .first()
-      .invoke('text')
-      .should('match', otellogFormat);
-
+        cy.get('td[data-label="message"]')
+          .first()
+          .invoke('text')
+          .should('match', otellogFormat);
       });
     cy.assertFieldsInLogDetail(otelFields)
   });
@@ -473,18 +449,18 @@ export function commonTest() {
     cy.byTestID(TestIds.SchemaToggle)
       .invoke('text')
       .should('eq', 'viaq');
-    cy.showQueryInput();
+    cy.showLogQueryInput();
     cy.byTestID(TestIds.LogsQueryInput)
       .find('textarea')
       .invoke('val')
       .should('include', '| json');
     cy.byTestID(TestIds.LogsTable)
       .within(() => {
-    // Check first message matches viaqlogFormat
-    cy.get('td[data-label="message"]')
-       .first()
-       .invoke('text')
-       .should('match', viaqlogFormat);
+        // Check first message matches viaqlogFormat
+        cy.get('td[data-label="message"]')
+         .first()
+         .invoke('text')
+         .should('match', viaqlogFormat);
       });
 
     //switch to Otel
@@ -492,7 +468,7 @@ export function commonTest() {
     cy.get('li')
       .contains('button', 'otel')
       .click();
-    cy.showQueryInput();
+    cy.showLogQueryInput();
     cy.byTestID(TestIds.LogsQueryInput)
       .find('textarea')
       .invoke('val')
@@ -501,11 +477,11 @@ export function commonTest() {
     cy.byTestID(TestIds.LogsTable)
       .should('exist')
       .within(() => {
-    // Check first message matches otellogFormat
-    cy.get('td[data-label="message"]')
-       .first()
-       .invoke('text')
-       .should('match', otellogFormat);
+        // Check first message matches otellogFormat
+        cy.get('td[data-label="message"]')
+         .first()
+         .invoke('text')
+         .should('match', otellogFormat);
       });
 
     //switch back to Viaq
@@ -513,7 +489,7 @@ export function commonTest() {
     cy.get('li')
       .contains('button', 'viaq')
       .click();
-    cy.showQueryInput();
+    cy.showLogQueryInput();
     cy.byTestID(TestIds.LogsQueryInput)
       .find('textarea')
       .invoke('val')
@@ -522,10 +498,10 @@ export function commonTest() {
     cy.byTestID(TestIds.LogsTable)
       .should('exist')
       .within(() => {
-    cy.get('td[data-label="message"]')
-      .first()
-      .invoke('text')
-      .should('match', viaqlogFormat);
+        cy.get('td[data-label="message"]')
+          .first()
+          .invoke('text')
+          .should('match', viaqlogFormat);
       });
   });
 }

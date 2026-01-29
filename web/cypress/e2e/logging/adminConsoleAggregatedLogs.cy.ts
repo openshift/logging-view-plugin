@@ -4,7 +4,7 @@ import { APP_NAMESPACE1,APP_NAMESPACE2,APP_MESSAGE } from './testUtils.cy.ts';
 
 describe('AdminConsole: Admin in AggregatedLogs', { tags: ['@admin'] }, () => {
   before( function() {
-    cy.uiLoginAsClusterAdmin("first_user");
+    cy.uiLoginAsClusterAdminForUser("first");
   });
 
   beforeEach( function() {
@@ -12,7 +12,7 @@ describe('AdminConsole: Admin in AggregatedLogs', { tags: ['@admin'] }, () => {
    });
 
   after( function() {
-    cy.uiLogoutClusterAdmin("first_user");
+    cy.uiLogoutClusterAdminForUser("first");
   });
 
   aggrLogTest();
@@ -37,11 +37,11 @@ describe('AdminConsole: Admin in AggregatedLogs', { tags: ['@admin'] }, () => {
 
 describe('AdminConsole: Impersonate User in AggregatedLogs',{ tags: ['@admin'] }, () => {
   before( function() {
-    cy.grantLogViewRoles("second_user", `${APP_NAMESPACE1}`);
-    cy.grantLogViewRoles("second_user", `${APP_NAMESPACE2}`);
-    cy.cliLogin("second_user")
-    cy.uiLoginAsClusterAdmin("first_user");
-    cy.uiImpersonateUser("second_user");
+    cy.grantLogViewRolesToUser("second", `${APP_NAMESPACE1}`);
+    cy.grantLogViewRolesToUser("second", `${APP_NAMESPACE2}`);
+    cy.cliLoginAsUser("second")
+    cy.uiLoginAsClusterAdminForUser("first");
+    cy.uiImpersonateUser("second");
     cy.switchToAdmConsole();
   });
 
@@ -50,9 +50,9 @@ describe('AdminConsole: Impersonate User in AggregatedLogs',{ tags: ['@admin'] }
   });
 
   after( function() {
-    cy.uiLogoutUser("second_user");
-    cy.removeLogViewRoles("second_user", `${APP_NAMESPACE1}`);
-    cy.removeLogViewRoles("second_user", `${APP_NAMESPACE2}`);
+    cy.uiLogoutUser("second");
+    cy.removeLogViewRolesFromUser("second", `${APP_NAMESPACE1}`);
+    cy.removeLogViewRolesFromUser("second", `${APP_NAMESPACE2}`);
   });
 
   aggrLogTest();
@@ -61,9 +61,9 @@ describe('AdminConsole: Impersonate User in AggregatedLogs',{ tags: ['@admin'] }
 
 describe('AdminConsole: User in Aggregated Logs', { tags: ['@user'] }, () => {
   before( function() {
-    cy.grantLogViewRoles("second_user", `${APP_NAMESPACE1}`);
-    cy.grantLogViewRoles("second_user", `${APP_NAMESPACE2}`);
-    cy.uiLoginUser("second_user");
+    cy.grantLogViewRolesToUser("second", `${APP_NAMESPACE1}`);
+    cy.grantLogViewRolesToUser("second", `${APP_NAMESPACE2}`);
+    cy.uiLoginAsUser("second");
   });
 
   beforeEach( function() {
@@ -71,9 +71,9 @@ describe('AdminConsole: User in Aggregated Logs', { tags: ['@user'] }, () => {
   });
 
   after( function() {
-    cy.uiLogoutUser("second_user");
-    cy.removeLogViewRoles("second_user", `${APP_NAMESPACE1}`);
-    cy.removeLogViewRoles("second_user", `${APP_NAMESPACE2}`);
+    cy.uiLogoutUser("second");
+    cy.removeLogViewRolesFromUser("second", `${APP_NAMESPACE1}`);
+    cy.removeLogViewRolesFromUser("second", `${APP_NAMESPACE2}`);
   });
 
   aggrLogTest();

@@ -48,7 +48,7 @@ function devConsoleObsTest(){
 	cy.log('containers = centos-logtest')
 	cy.checkLogContainers(containers);
 
-        cy.showQueryInput();
+        cy.showLogQueryInput();
         let pattern = /{ kubernetes_container_name="centos-logtest", kubernetes_pod_name=~"centos-logtest-\w+|centos-logtest-\w+" } | json/;
         if (String(Cypress.env('CLUSTERLOGGING_DATAMODE')) === "otel") {
           pattern = /{ k8s_container_name="centos-logtest", k8s_pod_name=~"centos-logtest-\w+|centos-logtest-\w+" } /;
@@ -72,9 +72,17 @@ function devConsoleObsTest(){
 
 function devConsoleUserObsTest(){
   it('user can not display infra logs',{tags:['@smoke','@devobserv']}, () => {
-    cy.runLogQuery('{{} k8s_namespace_name="openshift-monitoring" {}}')
-    cy.getByTestId(TestIds.LogsTable)
-      .should('contain.text', 'No datapoints found');
+    let query='{{}  kubernetes_namespace_name="openshift-monitoring" {}}'
+    if (String(Cypress.env('CLUSTERLOGGING_DATAMODE')) === "otel") {
+        query='{{} k8s_namespace_name="openshift-monitoring" {}}'
+    }
+    cy.runLogQuery(query);
+    cy.getByTestId(TestIds.LogsTable).within(() => {
+       cy.get('.lv-plugin__table__row-error').should('exist');
+       // It may  report error below
+       //-' DateMessageDanger alert:{"error":"400 Bad Request","errorType":"observatorium-api","status":"error"}\n'
+       //+'Warning alert:No datapoints found'
+    });
   });
 }
 
@@ -89,7 +97,7 @@ describe('DevConsole: Admin in ObserveLogs', { tags: ['@admin'] }, () => {
 	return;      // stop execution in this callback
       }
     });
-    cy.uiLoginAsClusterAdmin("first_user");
+    cy.uiLoginAsClusterAdminForUser("first");
     cy.switchToDevConsole();
   });
 
@@ -103,7 +111,7 @@ describe('DevConsole: Admin in ObserveLogs', { tags: ['@admin'] }, () => {
 
   after( function() {
     if (!SKIPALL) {
-      cy.uiLogoutClusterAdmin("first_user");
+      cy.uiLogoutClusterAdminForUser("first");
     }
   });
 
@@ -119,7 +127,7 @@ describe('DevConsole: Admin in ObserveLogs', { tags: ['@admin'] }, () => {
     if (String(Cypress.env('CLUSTERLOGGING_DATAMODE')) === "otel") {
       query = '{ k8s_namespace_name="openshift-monitoring" }'
     }
-    cy.showQueryInput();
+    cy.showLogQueryInput();
     cy.byTestID(TestIds.LogsQueryInput)
       .find('textarea')
       .invoke('val')
@@ -129,7 +137,7 @@ describe('DevConsole: Admin in ObserveLogs', { tags: ['@admin'] }, () => {
 
   it('admin can not query without namespace',{tags:['@smoke','@devobserv']}, () => {
     let queryText = `{{}log_type="infrastructure" {}}`
-    cy.showQueryInput();
+    cy.showLogQueryInput();
     cy.byTestID(TestIds.LogsQueryInput)
       .find('textarea')
       .clear()
@@ -140,7 +148,7 @@ describe('DevConsole: Admin in ObserveLogs', { tags: ['@admin'] }, () => {
   });
 })
 
-describe('DevConsole: Impersonate User in ObserveLogs',{ tags: ['@admin'] },  () => {
+describe('DevConsole: Impersonate User in ObserveLogs',{ tags: ['@devobserv'] },  () => {
   before( function() {
     //Check if DevConsole is ready
     isDevConsoleReady().then((ready) => {
@@ -151,11 +159,11 @@ describe('DevConsole: Impersonate User in ObserveLogs',{ tags: ['@admin'] },  ()
 	return;      // stop execution in this callback
       }
     });
-    cy.cliLogin("second_user");
-    cy.grantLogViewRoles("second_user", `${APP_NAMESPACE1}`);
-    cy.grantLogViewRoles("second_user", `${APP_NAMESPACE2}`);
-    cy.uiLoginAsClusterAdmin("first_user");
-    cy.uiImpersonateUser("second_user");
+    cy.cliLoginAsUser("second");
+    cy.grantLogViewRolesToUser("second", `${APP_NAMESPACE1}`);
+    cy.grantLogViewRolesToUser("second", `${APP_NAMESPACE2}`);
+    cy.uiLoginAsClusterAdminForUser("first");
+    cy.uiImpersonateUser("second");
     cy.switchToDevConsole();
   });
 
@@ -168,9 +176,9 @@ describe('DevConsole: Impersonate User in ObserveLogs',{ tags: ['@admin'] },  ()
 
   after( function() {
     if (!SKIPALL) {
-      cy.uiLogoutUser("second_user");
-      cy.removeLogViewRoles("second_user", `${APP_NAMESPACE1}`);
-      cy.removeLogViewRoles("second_user", `${APP_NAMESPACE2}`);
+      cy.uiLogoutUser("second");
+      cy.removeLogViewRolesFromUser("second", `${APP_NAMESPACE1}`);
+      cy.removeLogViewRolesFromUser("second", `${APP_NAMESPACE2}`);
     }
   });
   devConsoleObsTest();
@@ -190,9 +198,9 @@ describe('DevConsole: User in ObserveLogs', { tags: ['@user'] }, () => {
 	return;      // stop execution in this callback
       }
     });
-    cy.grantLogViewRoles("second_user", `${APP_NAMESPACE1}`);
-    cy.grantLogViewRoles("second_user", `${APP_NAMESPACE2}`);
-    cy.uiLoginUser("second_user");
+    cy.grantLogViewRolesToUser("second", `${APP_NAMESPACE1}`);
+    cy.grantLogViewRolesToUser("second", `${APP_NAMESPACE2}`);
+    cy.uiLoginAsUser("second");
     cy.switchToDevConsole();
   });
 
@@ -204,9 +212,9 @@ describe('DevConsole: User in ObserveLogs', { tags: ['@user'] }, () => {
 
   after( function() {
     if (!SKIPALL) {
-      cy.uiLogoutUser("second_user");
-      cy.removeLogViewRoles("second_user", `${APP_NAMESPACE1}`);
-      cy.removeLogViewRoles("second_user", `${APP_NAMESPACE2}`);
+      cy.uiLogoutUser("second");
+      cy.removeLogViewRolesFromUser("second", `${APP_NAMESPACE1}`);
+      cy.removeLogViewRolesFromUser("second", `${APP_NAMESPACE2}`);
     }
   });
   devConsoleObsTest();
