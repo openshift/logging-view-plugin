@@ -18,6 +18,7 @@ export type Config = {
   timeout?: number;
   logsLimit: number;
   schema: SchemaConfig;
+  showTimezoneSelector?: boolean;
 };
 
 export type MetricValue = Array<number | string>;

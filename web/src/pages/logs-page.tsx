@@ -25,6 +25,7 @@ import { LogsTable } from '../components/logs-table';
 import { LogsToolbar } from '../components/logs-toolbar';
 import { RefreshIntervalDropdown } from '../components/refresh-interval-dropdown';
 import { TimeRangeDropdown } from '../components/time-range-dropdown';
+import { TimezoneDropdown } from '../components/timezone-dropdown';
 import { ToggleHistogramButton } from '../components/toggle-histogram-button';
 import { downloadCSV } from '../download-csv';
 import { LogsConfigProvider, useLogsConfig } from '../hooks/LogsConfigProvider';
@@ -79,6 +80,8 @@ const LogsPage: React.FC = () => {
     interval,
     direction,
     setDirectionInURL,
+    timezone,
+    setTimezoneInURL,
     attributes,
   } = useURLState({
     getAttributes: availableAttributes,
@@ -192,6 +195,13 @@ const LogsPage: React.FC = () => {
               onChange={setTimeRangeInURL}
               isDisabled={isQueryEmpty}
             />
+            {config.showTimezoneSelector && (
+              <TimezoneDropdown
+                value={timezone}
+                onChange={setTimezoneInURL}
+                isDisabled={isQueryEmpty}
+              />
+            )}
             <RefreshIntervalDropdown onRefresh={runQuery} isDisabled={isQueryEmpty} />
             <Tooltip content={<div>Refresh</div>}>
               <Button
@@ -216,6 +226,7 @@ const LogsPage: React.FC = () => {
             error={histogramError}
             onChangeTimeRange={setTimeRangeInURL}
             schema={schema}
+            timezone={timezone}
           />
         )}
         <LogsToolbar
@@ -252,6 +263,7 @@ const LogsPage: React.FC = () => {
                 isLoading={isLoadingVolumeData}
                 error={volumeError}
                 height={350}
+                timezone={timezone}
                 displayLegendTable
               />
             </CardBody>
@@ -265,6 +277,7 @@ const LogsPage: React.FC = () => {
                 isLoading={isLoadingLogsData}
                 error={logsError}
                 height={350}
+                timezone={timezone}
                 displayLegendTable
               />
             </CardBody>
@@ -282,6 +295,7 @@ const LogsPage: React.FC = () => {
             direction={direction}
             isStreaming={isStreaming}
             error={logsError}
+            timezone={timezone}
           />
         )}
       </Grid>

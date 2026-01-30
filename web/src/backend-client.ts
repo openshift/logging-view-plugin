@@ -10,6 +10,7 @@ export const defaultConfig: Config = {
   isStreamingEnabledInDefaultPage: false,
   logsLimit: 100,
   schema: SchemaConfig.viaq,
+  showTimezoneSelector: true,
 };
 
 export const getConfig = async (): Promise<Config> => {
