@@ -41,6 +41,7 @@ type PluginConfig struct {
 	Timeout                         time.Duration `json:"timeout,omitempty" yaml:"timeout,omitempty"`
 	LogsLimit                       int           `json:"logsLimit,omitempty" yaml:"logsLimit,omitempty"`
 	Schema                          string        `json:"schema,omitempty" yaml:"schema,omitempty"`
+	ShowTimezoneSelector            bool          `json:"showTimezoneSelector,omitempty" yaml:"showTimezoneSelector,omitempty"`
 }
 
 func (pluginConfig *PluginConfig) MarshalJSON() ([]byte, error) {

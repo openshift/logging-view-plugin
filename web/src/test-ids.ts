@@ -1,6 +1,7 @@
 export enum TestIds {
   TimeRangeDropdown = 'TimeRangeDropdown',
   RefreshIntervalDropdown = 'RefreshIntervalDropdown',
+  TimezoneDropdown = 'TimezoneDropdown',
   SyncButton = 'SyncButton',
   LogsHistogram = 'LogsHistogram',
   LogsTable = 'LogsTable',
