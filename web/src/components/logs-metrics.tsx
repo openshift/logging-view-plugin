@@ -36,6 +36,7 @@ interface LogsMetricsProps {
   error?: unknown;
   height?: number;
   displayLegendTable?: boolean;
+  timezone?: string;
 }
 
 const GRAPH_HEIGHT = 250;
@@ -108,6 +109,7 @@ export const LogsMetrics: React.FC<LogsMetricsProps> = ({
   timeRange,
   height = GRAPH_HEIGHT,
   displayLegendTable = false,
+  timezone,
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
@@ -184,7 +186,11 @@ export const LogsMetrics: React.FC<LogsMetricsProps> = ({
                   <ChartLegendTooltip
                     legendData={toolTipData}
                     title={(datum) =>
-                      dateToFormat(datum.x ?? 0, getTimeFormatFromTimeRange(timeRangeValue))
+                      dateToFormat(
+                        datum.x ?? 0,
+                        getTimeFormatFromTimeRange(timeRangeValue),
+                        timezone,
+                      )
                     }
                   />
                 }
@@ -214,6 +220,7 @@ export const LogsMetrics: React.FC<LogsMetricsProps> = ({
                 dateToFormat(
                   tick,
                   intervalValue < 60 * 1000 ? DateFormat.TimeMed : DateFormat.TimeShort,
+                  timezone,
                 )
               }
             />
