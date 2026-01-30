@@ -17,6 +17,7 @@ import { LogsTable } from '../components/logs-table';
 import { LogsToolbar } from '../components/logs-toolbar';
 import { RefreshIntervalDropdown } from '../components/refresh-interval-dropdown';
 import { TimeRangeDropdown } from '../components/time-range-dropdown';
+import { TimezoneDropdown } from '../components/timezone-dropdown';
 import { ToggleHistogramButton } from '../components/toggle-histogram-button';
 import { downloadCSV } from '../download-csv';
 import { LogsConfigProvider, useLogsConfig } from '../hooks/LogsConfigProvider';
@@ -83,6 +84,8 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
     interval,
     direction,
     setDirectionInURL,
+    timezone,
+    setTimezoneInURL,
     attributes,
   } = useURLState({
     defaultTenant: tenant,
@@ -229,7 +232,15 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
               value={timeRange}
               onChange={setTimeRangeInURL}
               isDisabled={isRunQueryDisabled}
+              timezone={timezone}
             />
+            {config.showTimezoneSelector && (
+              <TimezoneDropdown
+                value={timezone}
+                onChange={setTimezoneInURL}
+                isDisabled={isQueryEmpty}
+              />
+            )}
             <RefreshIntervalDropdown onRefresh={runQuery} isDisabled={isRunQueryDisabled} />
             <Tooltip content={<div>Refresh</div>}>
               <Button
@@ -253,6 +264,7 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
             isLoading={isLoadingHistogramData}
             error={histogramError}
             onChangeTimeRange={setTimeRangeInURL}
+            timezone={timezone}
           />
         )}
 
@@ -292,6 +304,7 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
                 isLoading={isLoadingVolumeData}
                 error={volumeError}
                 height={350}
+                timezone={timezone}
                 displayLegendTable
               />
             </CardBody>
@@ -305,6 +318,7 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
                 isLoading={isLoadingLogsData}
                 error={logsError}
                 height={350}
+                timezone={timezone}
                 displayLegendTable
               />
             </CardBody>
@@ -322,6 +336,7 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
             showStats={areStatsShown}
             isStreaming={isStreaming}
             error={logsError}
+            timezone={timezone}
           />
         )}
       </Grid>

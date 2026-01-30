@@ -8,7 +8,13 @@ import {
 } from '@patternfly/react-core';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { DateFormat, dateToFormat } from '../date-utils';
+import {
+  DateFormat,
+  dateToFormat,
+  getBrowserTimezone,
+  normalizeTimezone,
+  parseInTimezone,
+} from '../date-utils';
 import { TimeRange } from '../logs.types';
 import { TestIds } from '../test-ids';
 import { defaultTimeRange, numericTimeRange } from '../time-range';
@@ -16,33 +22,36 @@ import { padLeadingZero } from '../value-utils';
 import { PrecisionTimePicker } from './precision-time-picker';
 import './time-range-select-modal.css';
 
-interface TimeRangeSelectModal {
+interface TimeRangeSelectModalProps {
   onClose: () => void;
   onSelectRange?: (timeRange: TimeRange) => void;
   initialRange?: TimeRange;
+  timezone?: string;
 }
 
 export const INTERVAL_AUTO_KEY = 'AUTO';
 
-export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
+export const TimeRangeSelectModal: React.FC<TimeRangeSelectModalProps> = ({
   onClose,
   onSelectRange,
   initialRange,
+  timezone,
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
+  const effectiveTimezone = normalizeTimezone(timezone) ?? getBrowserTimezone();
   const initialRangeNumber = numericTimeRange(initialRange ?? defaultTimeRange());
   const [startDate, setStartDate] = React.useState<string>(
-    dateToFormat(initialRangeNumber.start, DateFormat.DateMed),
+    dateToFormat(initialRangeNumber.start, DateFormat.DateMed, effectiveTimezone),
   );
   const [startTime, setStartTime] = React.useState<string>(
-    dateToFormat(initialRangeNumber.start, DateFormat.TimeFull),
+    dateToFormat(initialRangeNumber.start, DateFormat.TimeFull, effectiveTimezone),
   );
   const [endDate, setEndDate] = React.useState<string>(
-    dateToFormat(initialRangeNumber.end, DateFormat.DateMed),
+    dateToFormat(initialRangeNumber.end, DateFormat.DateMed, effectiveTimezone),
   );
   const [endTime, setEndTime] = React.useState<string>(
-    dateToFormat(initialRangeNumber.end, DateFormat.TimeFull),
+    dateToFormat(initialRangeNumber.end, DateFormat.TimeFull, effectiveTimezone),
   );
   const [isRangeValid, setIsRangeValid] = React.useState(false);
 
@@ -50,21 +59,21 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModal> = ({
 
   React.useEffect(() => {
     if (isRangeSelected) {
-      const start = `${startDate}T${startTime}`;
-      const end = `${endDate}T${endTime}`;
+      const start = parseInTimezone(startDate, startTime, effectiveTimezone);
+      const end = parseInTimezone(endDate, endTime, effectiveTimezone);
 
-      setIsRangeValid(Date.parse(start) < Date.parse(end));
+      setIsRangeValid(start < end);
     } else {
       setIsRangeValid(false);
     }
-  }, [startDate, endDate, startTime, endTime, isRangeSelected]);
+  }, [startDate, endDate, startTime, endTime, isRangeSelected, effectiveTimezone]);
 
   const handleSelectRange = () => {
     if (isRangeSelected) {
-      const start = `${startDate}T${startTime}`;
-      const end = `${endDate}T${endTime}`;
+      const start = parseInTimezone(startDate, startTime, effectiveTimezone);
+      const end = parseInTimezone(endDate, endTime, effectiveTimezone);
 
-      onSelectRange?.({ start: Date.parse(start), end: Date.parse(end) });
+      onSelectRange?.({ start, end });
     }
   };
 

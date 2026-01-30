@@ -121,17 +121,19 @@ export const intervalFromTimeRange = (
   return clampedInterval > 0 ? clampedInterval : DEFAULT_INTERVAL;
 };
 
-export const formatTimeRange = (timeRange: TimeRange): string => {
+export const formatTimeRange = (timeRange: TimeRange, timezone?: string): string => {
   const numericRange = numericTimeRange(timeRange);
   const timeFormat = getTimeFormatFromTimeRange(numericRange);
 
-  const start = `${dateToFormat(numericRange.start, DateFormat.DateMed)} ${dateToFormat(
+  const start = `${dateToFormat(numericRange.start, DateFormat.DateMed, timezone)} ${dateToFormat(
     numericRange.start,
     timeFormat,
+    timezone,
   )}`;
-  const end = `${dateToFormat(numericRange.end, DateFormat.DateMed)} ${dateToFormat(
+  const end = `${dateToFormat(numericRange.end, DateFormat.DateMed, timezone)} ${dateToFormat(
     numericRange.end,
     timeFormat,
+    timezone,
   )}`;
 
   return `${start} - ${end}`;

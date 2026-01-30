@@ -168,6 +168,7 @@ spec:
 | alertingRuleTenantLabelKey    | name of the alerting rule label used to match the tenantId for log-based alerts. Allows log-based alerts to request metrics to the proper tenant endpoint | `tenantId`                  | string                                       |
 | alertingRuleNamespaceLabelKey | name of the label used to filter alerting rules by namespace                                                                                              | `kubernetes_namespace_name` | string                                       |
 | useTenantInHeader             | whether or not the tenant header `X-Scope-OrgID` should be used instead of using the tenant in the URL request                                            | `false`                     | boolean                                      |
+| showTimezoneSelector          | whether or not to show the timezone selector in the UI                                                                                                    | `false`                     | boolean                                      |
 
 ## Build a testint the image
 
