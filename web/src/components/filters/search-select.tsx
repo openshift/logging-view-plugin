@@ -146,7 +146,7 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
         newSelectOptions = [
           {
             isAriaDisabled: true,
-            children: `No results found for "${inputValue}"`,
+            children: `${t('No results found for')} "${inputValue}"`,
             value: NO_RESULTS,
             hasCheckbox: false,
           },

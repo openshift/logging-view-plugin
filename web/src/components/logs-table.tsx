@@ -32,6 +32,7 @@ interface LogsTableProps {
   showStats?: boolean;
   isStreaming?: boolean;
   error?: unknown;
+  timezone?: string;
 }
 
 type TableCellValue = string | number | Resource | Array<Resource>;
@@ -42,7 +43,7 @@ const isJSONObject = (value: string): boolean => {
   return trimmedValue.startsWith('{') && trimmedValue.endsWith('}');
 };
 
-const streamToTableData = (stream: StreamLogData): Array<LogTableData> => {
+const streamToTableData = (stream: StreamLogData, timezone?: string): Array<LogTableData> => {
   const values = stream.values;
 
   return values.map((value) => {
@@ -50,7 +51,7 @@ const streamToTableData = (stream: StreamLogData): Array<LogTableData> => {
     const message = isJSONObject(logValue) ? stream.stream['message'] || logValue : logValue;
     const timestamp = parseFloat(String(value[0]));
     const time = timestamp / 1e6;
-    const formattedTime = dateToFormat(time, DateFormat.Full);
+    const formattedTime = dateToFormat(time, DateFormat.Full, timezone);
     const severity = parseName(stream.stream, ResourceLabel.Severity);
     const namespace = parseName(stream.stream, ResourceLabel.Namespace);
     const podName = parseName(stream.stream, ResourceLabel.Pod);
@@ -71,14 +72,17 @@ const streamToTableData = (stream: StreamLogData): Array<LogTableData> => {
   });
 };
 
-const aggregateStreamLogData = (response?: QueryRangeResponse): Array<LogTableData> => {
+const aggregateStreamLogData = (
+  response?: QueryRangeResponse,
+  timezone?: string,
+): Array<LogTableData> => {
   // TODO check timestamp aggregation for streams
   // TODO check if display matrix data is required
 
   const data = response?.data;
   if (isStreamsResult(data)) {
     return data.result
-      .flatMap(streamToTableData)
+      .flatMap((stream) => streamToTableData(stream, timezone))
       .map((log, index) => ({ ...log, logIndex: index }));
   }
 
@@ -223,6 +227,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   isStreaming,
   children,
   error,
+  timezone,
 }) => {
   const [expandedItems, setExpandedItems] = React.useState<Set<number>>(new Set());
   const [prevChildrenCount, setPrevChildrenCount] = React.useState(0);
@@ -231,7 +236,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
     direction: direction === 'backward' ? 'desc' : 'asc',
   });
   const tableData: Array<LogTableData> = React.useMemo(() => {
-    const logsTableData = aggregateStreamLogData(logsData);
+    const logsTableData = aggregateStreamLogData(logsData, timezone);
 
     const logsTableDataWithExpanded = logsTableData.flatMap((row) => [
       row,
@@ -239,7 +244,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
     ]);
 
     return logsTableDataWithExpanded;
-  }, [logsData]);
+  }, [logsData, timezone]);
 
   useEffect(() => {
     setPrevChildrenCount(React.Children.count(children));

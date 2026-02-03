@@ -61,6 +61,7 @@ interface LogHistogramProps {
   isLoading?: boolean;
   error?: unknown;
   schema?: Schema;
+  timezone?: string;
 }
 
 const resultHasAbreviation = (
@@ -112,13 +113,14 @@ const metricValueToChartData = (
   group: Severity,
   value: Array<MetricValue>,
   interval: number,
+  timezone?: string,
 ): Array<ChartData> => {
   const timeEntries = new Set<number>();
   const chartData: Array<ChartData> = [];
 
   for (const metric of value) {
     const time = parseFloat(String(metric[0])) * 1000;
-    const formattedTime = dateToFormat(time, getTimeFormatFromInterval(interval));
+    const formattedTime = dateToFormat(time, getTimeFormatFromInterval(interval), timezone);
 
     // Prevent duplicate entries to avoid chart rendering issues
     if (!timeEntries.has(time)) {
@@ -136,12 +138,21 @@ const metricValueToChartData = (
   return chartData;
 };
 
-const getChartsData = (data: HistogramData, interval: number): HistogramChartData => {
+const getChartsData = (
+  data: HistogramData,
+  interval: number,
+  timezone?: string,
+): HistogramChartData => {
   const chartsData: HistogramChartData = {} as HistogramChartData;
 
   Object.keys(data).forEach((group) => {
     const severityGroup = severityFromString(group) ?? 'other';
-    const chartData = metricValueToChartData(severityGroup, data[severityGroup], interval);
+    const chartData = metricValueToChartData(
+      severityGroup,
+      data[severityGroup],
+      interval,
+      timezone,
+    );
 
     chartsData[severityGroup] = chartData;
   });
@@ -152,10 +163,9 @@ const getChartsData = (data: HistogramData, interval: number): HistogramChartDat
 const tickCountFromTimeRange = (timeRange: TimeRangeNumber, interval: number): number =>
   Math.ceil((timeRange.end - timeRange.start) / interval);
 
-const HistogramTooltip: React.FC<ChartLegendTooltipProps & { interval: number }> = ({
-  interval,
-  ...props
-}) => {
+const HistogramTooltip: React.FC<
+  ChartLegendTooltipProps & { interval: number; timezone?: string }
+> = ({ interval, timezone, ...props }) => {
   const { x: xProps, y: yProps, center, height } = props;
 
   if (!center) {
@@ -180,7 +190,7 @@ const HistogramTooltip: React.FC<ChartLegendTooltipProps & { interval: number }>
     <>
       <ChartLegendTooltip
         {...fixedProps}
-        title={(datum) => dateToFormat(datum.x ?? 0, getTimeFormatFromInterval(interval))}
+        title={(datum) => dateToFormat(datum.x ?? 0, getTimeFormatFromInterval(interval), timezone)}
         constrainToVisibleArea
       />
       <line
@@ -249,6 +259,7 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
   onChangeTimeRange,
   interval,
   schema,
+  timezone,
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
@@ -281,7 +292,7 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
     }
 
     const data = aggregateMetricsLogData(histogramData, schema);
-    const chartsData = getChartsData(data, intervalValue);
+    const chartsData = getChartsData(data, intervalValue, timezone);
 
     const tickCount = tickCountFromTimeRange(timeRangeValue, intervalValue);
 
@@ -386,7 +397,11 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
                     `${datum.y !== null ? datum.y : t('No data')}`
                   }
                   labelComponent={
-                    <HistogramTooltip interval={intervalValue} legendData={legendData} />
+                    <HistogramTooltip
+                      interval={intervalValue}
+                      timezone={timezone}
+                      legendData={legendData}
+                    />
                   }
                   voronoiDimension="x"
                   voronoiPadding={0}
@@ -406,7 +421,7 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
                 tickCount={60}
                 fixLabelOverlap
                 tickFormat={(tick: number) =>
-                  dateToFormat(tick, getTimeFormatFromTimeRange(timeRangeValue))
+                  dateToFormat(tick, getTimeFormatFromTimeRange(timeRangeValue), timezone)
                 }
               />
               <ChartAxis tickCount={2} dependentAxis tickFormat={valueWithScalePrefix} />

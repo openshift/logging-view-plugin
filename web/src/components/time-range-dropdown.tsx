@@ -27,6 +27,7 @@ interface TimeRangeDropdownProps {
   value?: TimeRange;
   onChange?: (timeRange: TimeRange) => void;
   isDisabled?: boolean;
+  timezone?: string;
 }
 
 const getSelectedOptionIndex = ({
@@ -57,6 +58,7 @@ export const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
   onChange,
   value,
   isDisabled = false,
+  timezone,
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
@@ -111,6 +113,7 @@ export const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
           onClose={handleCloseModal}
           onSelectRange={handleCustomRangeSelected}
           initialRange={timeRangeValue}
+          timezone={timezone}
         />
       )}
       <FormGroup fieldId="logs-time-range" data-test={TestIds.TimeRangeDropdown}>
@@ -126,7 +129,7 @@ export const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
               isExpanded={isOpen}
             >
               {timeRangeOptions[selectedIndex].key === CUSTOM_TIME_RANGE_KEY && timeRangeValue
-                ? formatTimeRange(timeRangeValue)
+                ? formatTimeRange(timeRangeValue, timezone)
                 : timeRangeOptions[selectedIndex].name}
             </MenuToggle>
           )}
