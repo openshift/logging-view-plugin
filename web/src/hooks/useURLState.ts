@@ -2,6 +2,7 @@ import React, { DependencyList, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
 import { filtersFromQuery, queryFromFilters } from '../attribute-filters';
 import { AttributeList, Filters } from '../components/filters/filter.types';
+import { getBrowserTimezone } from '../date-utils';
 import { Config, Direction, Schema, SchemaConfig, TimeRange } from '../logs.types';
 import { ResourceLabel, ResourceToStreamLabels } from '../parse-resources';
 import { intervalFromTimeRange } from '../time-range';
@@ -32,6 +33,8 @@ const TENANT_PARAM_KEY = 'tenant';
 const SCHEMA_PARAM_KEY = 'schema';
 const SHOW_RESOURCES_PARAM_KEY = 'showResources';
 const SHOW_STATS_PARAM_KEY = 'showStats';
+const TIMEZONE_PARAM_KEY = 'tz';
+const STORED_TIMEZONE_KEY = 'logging-view-plugin/timezone';
 
 export const DEFAULT_TENANT = 'application';
 const DEFAULT_SHOW_RESOURCES = '0';
@@ -81,6 +84,19 @@ export const useURLState = ({
 
   const intitalStatsShown = (queryParams.get(SHOW_STATS_PARAM_KEY) ?? DEFAULT_SHOW_STATS) === '1';
 
+  // Timezone: URL param takes precedence over localStorage,
+  // which takes precedence over browser default
+  const getStoredTimezone = (): string | null => {
+    try {
+      const stored = window.localStorage.getItem(STORED_TIMEZONE_KEY);
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  };
+  const initialTimezone =
+    queryParams.get(TIMEZONE_PARAM_KEY) ?? getStoredTimezone() ?? getBrowserTimezone();
+
   const [query, setQuery] = React.useState(initialQuery);
   const [tenant, setTenant] = React.useState(initialTenant);
   const [schema, setSchema] = React.useState(initialSchema);
@@ -95,6 +111,7 @@ export const useURLState = ({
   const [areResourcesShown, setAreResourcesShown] = React.useState<boolean>(initialResorcesShown);
   const [areStatsShown, setAreStatsShown] = React.useState<boolean>(intitalStatsShown);
   const [direction, setDirection] = React.useState<Direction>(getDirectionValue(initialDirection));
+  const [timezone, setTimezone] = React.useState<string>(initialTimezone);
   const [timeRange, setTimeRange] = React.useState<TimeRange | undefined>(
     initialTimeRangeStart && initialTimeRangeEnd
       ? {
@@ -166,6 +183,17 @@ export const useURLState = ({
     navigate(`${location.pathname}?${queryParams.toString()}`);
   };
 
+  const setTimezoneInURL = (selectedTimezone: string) => {
+    queryParams.set(TIMEZONE_PARAM_KEY, selectedTimezone);
+    navigate(`${location.pathname}?${queryParams.toString()}`);
+    // Also persist to localStorage
+    try {
+      window.localStorage.setItem(STORED_TIMEZONE_KEY, JSON.stringify(selectedTimezone));
+    } catch {
+      // Ignore localStorage errors
+    }
+  };
+
   useEffect(() => {
     if (config?.schema != SchemaConfig.select) {
       const queryFromParams = queryParams.get(QUERY_PARAM_KEY);
@@ -202,11 +230,14 @@ export const useURLState = ({
     const timeRangeStartValue = queryParams.get(TIME_RANGE_START);
     const timeRangeEndValue = queryParams.get(TIME_RANGE_END);
     const directionValue = queryParams.get(DIRECTION);
+    const timezoneValue =
+      queryParams.get(TIMEZONE_PARAM_KEY) ?? getStoredTimezone() ?? getBrowserTimezone();
 
     setQuery(queryValue.trim());
     setTenant(tenantValue);
     setSchema(schemaValue);
     setDirection(getDirectionValue(directionValue));
+    setTimezone(timezoneValue);
     setAreResourcesShown(showResourcesValue === '1');
     setAreStatsShown(showStatsValue === '1');
     setFilters(
@@ -248,6 +279,8 @@ export const useURLState = ({
     timeRange,
     setTimeRangeInURL,
     setDirectionInURL,
+    timezone,
+    setTimezoneInURL,
     attributes,
     direction,
     interval: timeRange ? intervalFromTimeRange(timeRange) : undefined,
