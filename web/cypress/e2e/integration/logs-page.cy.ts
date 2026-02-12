@@ -338,8 +338,6 @@ describe('Logs Page', () => {
     cy.getByTestId(TestIds.SeverityDropdown).within(() => {
       cy.get('button').should('be.disabled');
     });
-
-    cy.getByTestId(TestIds.TenantToggle).should('be.disabled');
   });
 
   it('updates the query when selecting filters', () => {

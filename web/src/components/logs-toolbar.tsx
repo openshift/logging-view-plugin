@@ -238,11 +238,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
 
         {enableTenantDropdown && (
           <ToolbarGroup>
-            <TenantDropdown
-              onTenantSelected={onTenantSelect}
-              selectedTenant={tenant}
-              isDisabled={isDisabled}
-            />
+            <TenantDropdown onTenantSelected={onTenantSelect} selectedTenant={tenant} />
           </ToolbarGroup>
         )}
 
@@ -322,6 +318,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
           onChange={onQueryChange}
           invalidQueryErrorMessage={invalidQueryErrorMessage}
           isDisabled={isDisabled}
+          tenant={tenant}
         />
       )}
     </Toolbar>
