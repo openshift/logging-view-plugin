@@ -266,6 +266,10 @@ describe('Attribute filters', () => {
         expectedFilters: { pod: new Set(['a-pod', 'b-pod']) },
       },
       {
+        query: '{ kubernetes_pod_name=~`a-pod|b-pod` }',
+        expectedFilters: { pod: new Set(['a-pod', 'b-pod']) },
+      },
+      {
         query:
           '{ kubernetes_pod_name=~"a-pod|b-pod", kubernetes_namespace_name=~"ns-1|ns-2", label="test" } |=`some line content` | other="filter" | level="inf"',
         expectedFilters: {
@@ -423,6 +427,13 @@ describe('Attribute filters', () => {
         filters: undefined,
         expectedQuery:
           '{ kubernetes_pod_name=~"a-pod|b-pod", kubernetes_namespace_name=~"ns-1|ns-2", label="test", kubernetes_container_name="container-1" } |= "some line content" | other="filter" | level="err|eror" or level="unknown" or level=""',
+      },
+      {
+        initialQuery:
+          '{ kubernetes_pod_name=~`a-pod|b-pod`, kubernetes_namespace_name=~`ns-1|ns-2`, label=`test`, kubernetes_container_name=`container-1` } |=`some line content` | other=`filter` | level=`err|eror` or level=`unknown` or level=``',
+        filters: undefined,
+        expectedQuery:
+          '{ kubernetes_pod_name=~`a-pod|b-pod`, kubernetes_namespace_name=~`ns-1|ns-2`, label=`test`, kubernetes_container_name=`container-1` } |= `some line content` | other=`filter` | level=`err|eror` or level=`unknown` or level=``',
       },
       {
         initialQuery:
