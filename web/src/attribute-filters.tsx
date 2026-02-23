@@ -392,8 +392,18 @@ export const queryFromFilters = ({
   return query.toString();
 };
 
-const removeQuotes = (value?: string) => (value ? value.replace(/"/g, '') : '');
-const removeBacktick = (value?: string) => (value ? value.replace(/`/g, '') : '');
+const quotationMarks = ['"', '`', "'"];
+
+const removeQuoteWrapper = (value?: string) => {
+  if (!value) return '';
+  if (value.length < 2) return value;
+  const startValue = value[0];
+  const endValue = value[value.length - 1];
+  if (startValue === endValue && quotationMarks.includes(startValue)) {
+    return value.slice(1, value.length - 1);
+  }
+  return value;
+};
 
 export const filtersFromQuery = ({
   query,
@@ -409,7 +419,7 @@ export const filtersFromQuery = ({
     if (label && label.length > 0) {
       for (const selector of logQLQuery.streamSelector) {
         if (selector.label === label && selector.value) {
-          filters[id] = new Set(selector.value.split('|').map(removeQuotes));
+          filters[id] = new Set(removeQuoteWrapper(selector.value).split('|'));
         }
       }
     }
@@ -422,13 +432,13 @@ export const filtersFromQuery = ({
       !filters.severity
     ) {
       const severityValues: Array<Severity> = pipelineStage.labelsInFilter
-        .flatMap(({ value }) => (value ? value.split('|') : []))
-        .map(removeQuotes)
+        .map(({ value }) => (value ? removeQuoteWrapper(value) : ''))
+        .flatMap((value) => value.split('|'))
         .map(severityFromString)
         .filter(notUndefined);
       filters.severity = new Set(severityValues);
     } else if (pipelineStage.operator === '|=' && !filters.content) {
-      filters.content = new Set([removeBacktick(pipelineStage.value)]);
+      filters.content = new Set([removeQuoteWrapper(pipelineStage.value)]);
     }
   }
 
