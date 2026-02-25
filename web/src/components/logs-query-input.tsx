@@ -12,6 +12,7 @@ interface LogsQueryInputProps {
   onRun?: () => void;
   isDisabled?: boolean;
   invalidQueryErrorMessage?: string | null;
+  tenant?: string;
 }
 
 export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
@@ -20,6 +21,7 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
   onRun,
   isDisabled,
   invalidQueryErrorMessage,
+  tenant,
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
@@ -39,8 +41,10 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
     setInternalValue(value);
     const parsedQuery = new LogQLQuery(value);
 
-    setIsValid(parsedQuery.streamSelector.length > 0);
-  }, [value]);
+    // show invalid message only when query is empty for application tenant,
+    // audit and infrastructure don't necessarily need a stream selector
+    setIsValid(tenant === 'application' ? parsedQuery.streamSelector.length > 0 : true);
+  }, [value, tenant]);
 
   const handleOnChange = (text: string) => {
     setInternalValue(text);
