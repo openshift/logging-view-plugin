@@ -308,6 +308,8 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
             direction={direction}
             error={logsError}
             timezone={timezone}
+            hasNamespaceFilter={true}
+            schema={schema}
           />
         )}
       </Grid>

@@ -11,7 +11,7 @@ import {
 } from '../../fixtures/query-range-fixtures';
 import {
   containersLabelValuesResponse,
-  namespaceListResponse,
+  projectListResponse,
   podsListResponse,
 } from '../../fixtures/resource-api-fixtures';
 import { formatTimeRange } from '../../../src/time-range';
@@ -32,6 +32,7 @@ const SERIES_POD_VALUES_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/series?*';
 const CONFIG_URL_MATCH = '/api/plugins/logging-view-plugin/config';
 const RESOURCE_URL_MATCH = '/api/kubernetes/api/v1/*';
+const PROJECT_URL_MATCH = '/api/kubernetes/apis/project.openshift.io/v1/projects';
 const TEST_MESSAGE = "loki_1 | level=info msg='test log'";
 
 describe('Logs Page', () => {
@@ -107,12 +108,14 @@ describe('Logs Page', () => {
   it('handles errors gracefully when a request fails', () => {
     cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, (req) => {
       req.continue((res) => res.send({ statusCode: 500, body: 'Internal Server Error' }));
-    });
+    }).as('queryRangeStreams');
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, (req) => {
       req.continue((res) => res.send({ statusCode: 500, body: 'Internal Server Error' }));
-    });
+    }).as('queryRangeMatrix');
 
     cy.visit(LOGS_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
@@ -130,10 +133,14 @@ describe('Logs Page', () => {
   });
 
   it('handles errors gracefully when a response is invalid', () => {
-    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeStreamsInvalidResponse());
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeStreamsInvalidResponse()).as(
+      'queryRangeStreams',
+    );
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixInvalidResponse());
 
     cy.visit(LOGS_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
@@ -160,6 +167,8 @@ describe('Logs Page', () => {
     );
 
     cy.visit(LOGS_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
@@ -191,6 +200,8 @@ describe('Logs Page', () => {
     );
 
     cy.visit(LOGS_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
@@ -240,6 +251,8 @@ describe('Logs Page', () => {
     );
 
     cy.visit(LOGS_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.getByTestId(TestIds.LogsTable)
       .should('exist')
@@ -349,7 +362,7 @@ describe('Logs Page', () => {
       'queryRangeMatrix',
     );
 
-    cy.intercept(RESOURCE_URL_MATCH, namespaceListResponse).as('resourceQuery');
+    cy.intercept(PROJECT_URL_MATCH, projectListResponse).as('projectQuery');
 
     cy.visit(LOGS_PAGE_URL);
 
@@ -418,7 +431,7 @@ describe('Logs Page', () => {
         );
     });
 
-    cy.get('@resourceQuery.all').should('have.length.at.least', 1);
+    cy.get('@projectQuery.all').should('have.length.at.least', 1);
   });
 
   it('updates the url with the proper parameters when selecting a custom range', () => {
@@ -693,7 +706,7 @@ describe('Logs Page', () => {
     cy.get('@resourceQuery.all').should('have.length.at.least', 1);
   });
 
-  it.only('container selection includes loki labels and k8s resources', () => {
+  it('container selection includes loki labels and k8s resources', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
       queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),

@@ -10,15 +10,16 @@ import {
   LogTableData,
   QueryRangeResponse,
   Resource,
+  Schema,
   StreamLogData,
 } from '../logs.types';
+import { parseName, parseResources, ResourceLabel } from '../parse-resources';
 import { severityFromString } from '../severity';
 import { TestIds } from '../test-ids';
 import { LogDetail } from './log-detail';
 import './logs-table.css';
 import { StatsTable } from './stats-table';
 import { TableData, VirtualizedLogsTable } from './virtualized-logs-table';
-import { ResourceLabel, parseResources, parseName } from '../parse-resources';
 
 interface LogsTableProps {
   logsData?: QueryRangeResponse;
@@ -33,6 +34,8 @@ interface LogsTableProps {
   isStreaming?: boolean;
   error?: unknown;
   timezone?: string;
+  hasNamespaceFilter?: boolean;
+  schema: Schema;
 }
 
 type TableCellValue = string | number | Resource | Array<Resource>;
@@ -228,6 +231,8 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   children,
   error,
   timezone,
+  hasNamespaceFilter,
+  schema,
 }) => {
   const [expandedItems, setExpandedItems] = React.useState<Set<number>>(new Set());
   const [prevChildrenCount, setPrevChildrenCount] = React.useState(0);
@@ -342,6 +347,8 @@ export const LogsTable: React.FC<LogsTableProps> = ({
         onLoadMore={handleLoadMore}
         isLoadingMore={isLoadingMore}
         shouldResize={showStats || React.Children.count(children) != prevChildrenCount}
+        hasNamespaceFilter={hasNamespaceFilter}
+        schema={schema}
       />
     </div>
   );
