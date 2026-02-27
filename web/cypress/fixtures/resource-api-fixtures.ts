@@ -1,3 +1,31 @@
+export const projectListResponse = {
+  kind: 'ProjectList',
+  apiVersion: 'project.openshift.io/v1',
+  metadata: {
+    resourceVersion: '359980',
+  },
+  items: [
+    {
+      metadata: {
+        name: 'default',
+        resourceVersion: '30941',
+      },
+    },
+    {
+      metadata: {
+        name: 'gitops',
+        resourceVersion: '216367',
+      },
+    },
+    {
+      metadata: {
+        name: 'gitops-service-argocd',
+        resourceVersion: '230472',
+      },
+    },
+  ],
+};
+
 export const namespaceListResponse = {
   kind: 'NamespaceList',
   apiVersion: 'v1',

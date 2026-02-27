@@ -156,6 +156,17 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
       if (!isOpen) {
         setIsOpen(true);
       }
+    } else {
+      if (newSelectOptions.length === 0 && isOpen) {
+        newSelectOptions = [
+          {
+            isAriaDisabled: true,
+            children: t('No options available'),
+            value: NO_RESULTS,
+            hasCheckbox: false,
+          },
+        ];
+      }
     }
     setViewableOptions(newSelectOptions);
   }, [inputValue, attributeOptions]);

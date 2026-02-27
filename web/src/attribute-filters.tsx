@@ -31,7 +31,7 @@ type K8sResourceListResponse = {
 };
 
 type ResourceOptionMapper = (resource: K8sResource) => Option | Array<Option>;
-type ResourceOptionFilter = (resource: K8sResource) => boolean;
+type ResourceOptionFilter = (resource: K8sResourceCommon) => boolean;
 
 const resourceAbort: Record<string, null | (() => void)> = {};
 
@@ -177,6 +177,58 @@ const getAttributeLabels = (schema: Schema) => {
   return { namespaceLabel, podLabel, containerLabel };
 };
 
+const getNamespaceAttributeOptions = (
+  tenant: string,
+  config: Config,
+  schema: Schema,
+): (() => Promise<Option[]>) => {
+  const { namespaceLabel } = getAttributeLabels(schema);
+
+  const tenantFilter = (resource: K8sResourceCommon) => {
+    switch (tenant) {
+      case 'infrastructure':
+        return namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
+      case 'application':
+        return !namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
+    }
+    return true;
+  };
+
+  const lokiTenantFilter = (namespace: string) => {
+    switch (tenant) {
+      case 'infrastructure':
+        return namespaceBelongsToInfrastructureTenant(namespace);
+      case 'application':
+        return !namespaceBelongsToInfrastructureTenant(namespace);
+    }
+    return true;
+  };
+
+  const filteredProjectList = projectsDataSource(tenantFilter)();
+  const filteredLokiNamespaceList = lokiLabelValuesDataSource({
+    config,
+    tenant,
+    labelName: namespaceLabel,
+  })().then((options) => options.filter((opt) => lokiTenantFilter(opt.value)));
+
+  return () =>
+    Promise.allSettled<Option[]>([filteredProjectList, filteredLokiNamespaceList]).then(
+      (results) => {
+        const namespaceOptions: Set<string> = new Set();
+        results.forEach((result) => {
+          if (result.status === 'fulfilled') {
+            result.value.forEach((option) => {
+              namespaceOptions.add(option.value);
+            });
+          }
+        });
+        return Array.from(namespaceOptions)
+          .sort()
+          .map((ns) => ({ option: ns, value: ns }));
+      },
+    );
+};
+
 // The logs-page and the logs-dev-page both need a default set of attributes to pass
 // to queryFromFilters and filtersFromQuery which only need id and label
 export const initialAvailableAttributes = (schema: Schema): AttributeList => {
@@ -235,19 +287,7 @@ export const availableAttributes = ({
       name: 'Namespaces',
       label: namespaceLabel,
       id: 'namespace',
-      options: resourceDataSource({
-        resource: 'namespaces',
-        filter: (resource) => {
-          switch (tenant) {
-            case 'infrastructure':
-              return namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
-            case 'application':
-              return !namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
-          }
-
-          return true;
-        },
-      }),
+      options: getNamespaceAttributeOptions(tenant, config, schema),
       valueType: 'checkbox-select',
     },
     {
@@ -746,15 +786,15 @@ const getPodAttributeOptions = (
       })(),
       resourceDataSource({ resource: 'pods' })(),
     ]).then((results) => {
-      const podOptions: Set<Option> = new Set();
+      const podOptions: Set<string> = new Set();
       results.forEach((result) => {
         if (result.status === 'fulfilled') {
           result.value.forEach((option) => {
-            podOptions.add(option);
+            podOptions.add(option.value);
           });
         }
       });
-      return Array.from(podOptions);
+      return Array.from(podOptions).map((pod) => ({ option: pod, value: pod }));
     });
 };
 
@@ -797,14 +837,17 @@ const getContainerAttributeOptions = (
           })) ?? [],
       })(),
     ]).then((results) => {
-      const uniqueContainers = new Set<Option>();
+      const uniqueContainers = new Set<string>();
       results.forEach((result) => {
         if (result.status === 'fulfilled') {
           result.value.forEach((option) => {
-            uniqueContainers.add(option);
+            uniqueContainers.add(option.value);
           });
         }
       });
-      return Array.from(uniqueContainers);
+      return Array.from(uniqueContainers).map((container) => ({
+        option: container,
+        value: container,
+      }));
     });
 };

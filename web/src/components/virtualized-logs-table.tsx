@@ -8,7 +8,7 @@ import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AutoSizer, CellMeasurer, CellMeasurerCache, WindowScroller } from 'react-virtualized';
 import { MeasuredCellParent } from 'react-virtualized/dist/es/CellMeasurer';
-import { LogTableData } from '../logs.types';
+import { LogTableData, Schema } from '../logs.types';
 import { CenteredContainer } from './centered-container';
 import { ErrorMessage } from './error-message';
 
@@ -27,6 +27,8 @@ interface VirtualizedLogsTableProps<D> {
   onLoadMore?: () => void;
   shouldResize?: boolean;
   csvData?: string;
+  hasNamespaceFilter?: boolean;
+  schema: Schema;
 }
 
 export type TableRowProps = {
@@ -252,6 +254,8 @@ export const VirtualizedLogsTable = ({
   hasMoreLogsData,
   onLoadMore,
   shouldResize,
+  hasNamespaceFilter,
+  schema,
 }: VirtualizedLogsTableProps<LogTableData>) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
   const colSpan = columns.length + 3;
@@ -287,7 +291,11 @@ export const VirtualizedLogsTable = ({
             <Tr className="lv-plugin__table__row-info">
               <Td colSpan={colSpan} key="error-row">
                 <div className="lv-plugin__table__row-error">
-                  <ErrorMessage error={error} />
+                  <ErrorMessage
+                    error={error}
+                    hasNamespaceFilter={hasNamespaceFilter}
+                    schema={schema}
+                  />
                 </div>
               </Td>
             </Tr>

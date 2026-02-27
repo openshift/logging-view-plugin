@@ -12,6 +12,7 @@ import {
 import {
   containersLabelValuesResponse,
   namespaceListResponse,
+  projectListResponse,
   podsListResponse,
 } from '../../fixtures/resource-api-fixtures';
 import { formatTimeRange } from '../../../src/time-range';
@@ -32,6 +33,7 @@ const SERIES_POD_VALUES_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/series?*';
 const CONFIG_URL_MATCH = '/api/plugins/logging-view-plugin/config';
 const RESOURCE_URL_MATCH = '/api/kubernetes/api/v1/*';
+const PROJECT_URL_MATCH = '/api/kubernetes/apis/project.openshift.io/v1/projects';
 const TEST_MESSAGE = "loki_1 | level=info msg='test log'";
 
 describe('Logs Page', () => {
@@ -361,7 +363,7 @@ describe('Logs Page', () => {
       'queryRangeMatrix',
     );
 
-    cy.intercept(RESOURCE_URL_MATCH, namespaceListResponse).as('resourceQuery');
+    cy.intercept(PROJECT_URL_MATCH, projectListResponse).as('projectQuery');
 
     cy.visit(LOGS_PAGE_URL);
 
@@ -430,7 +432,7 @@ describe('Logs Page', () => {
         );
     });
 
-    cy.get('@resourceQuery.all').should('have.length.at.least', 1);
+    cy.get('@projectQuery.all').should('have.length.at.least', 1);
   });
 
   it('updates the url with the proper parameters when selecting a custom range', () => {
