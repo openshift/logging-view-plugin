@@ -297,6 +297,8 @@ const LogsPage: React.FC = () => {
             isStreaming={isStreaming}
             error={logsError}
             timezone={timezone}
+            hasNamespaceFilter={Boolean(filters?.namespace?.size)}
+            schema={schema}
           />
         )}
       </Grid>
