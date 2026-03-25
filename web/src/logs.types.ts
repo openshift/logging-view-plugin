@@ -119,4 +119,6 @@ export type LogTableData = {
   data: Record<string, string>;
   type: 'log' | 'expand';
   logIndex: number;
+  observedTimestamp?: bigint;
+  openshiftSequence?: bigint;
 };
