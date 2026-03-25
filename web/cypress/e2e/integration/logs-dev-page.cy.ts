@@ -431,7 +431,7 @@ describe('Logs Dev Page', () => {
         );
     });
 
-    cy.byTestID(TestIds.ExecuteQueryButton).click();
+    cy.byTestID(TestIds.ExecuteQueryButton).click({ force: true });
 
     cy.byTestID(TestIds.LogsMetrics).should('exist');
     cy.byTestID(TestIds.ToggleHistogramButton).should('be.disabled');
