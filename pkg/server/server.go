@@ -31,6 +31,18 @@ type Config struct {
 	StaticPath       string
 	ConfigPath       string
 	PluginConfigPath string
+	TLSMinVersion    uint16
+	TLSMaxVersion    uint16
+	TLSCipherSuites  []uint16
+}
+
+func (c *Config) IsTLSEnabled() bool {
+	return c.CertFile != "" && c.PrivateKeyFile != ""
+}
+
+type PluginServer struct {
+	*http.Server
+	Config *Config
 }
 
 type PluginConfig struct {
@@ -55,21 +67,60 @@ func (pluginConfig *PluginConfig) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func Start(cfg *Config) {
+func CreateServer(ctx context.Context, cfg *Config) (*PluginServer, error) {
+	httpServer, err := createHTTPServer(ctx, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &PluginServer{
+		Config: cfg,
+		Server: httpServer,
+	}, nil
+}
+
+func (s *PluginServer) StartHTTPServer() error {
+	if s.Config.IsTLSEnabled() {
+		slog.Infof("listening for https on %s", s.Server.Addr)
+		return s.Server.ListenAndServeTLS(s.Config.CertFile, s.Config.PrivateKeyFile)
+	}
+	slog.Infof("listening for http on %s", s.Server.Addr)
+	return s.Server.ListenAndServe()
+}
+
+func (s *PluginServer) Shutdown(ctx context.Context) error {
+	if s.Server != nil {
+		return s.Server.Shutdown(ctx)
+	}
+	return nil
+}
+
+func createHTTPServer(ctx context.Context, cfg *Config) (*http.Server, error) {
 	router := setupRoutes(cfg)
 	router.Use(corsHeaderMiddleware(cfg))
 
 	// clients must use TLS 1.2 or higher
-	tlsConfig := &tls.Config{
-		MinVersion: tls.VersionTLS12,
-	}
+	tlsConfig := &tls.Config{}
 
-	tlsEnabled := cfg.CertFile != "" && cfg.PrivateKeyFile != ""
+	tlsEnabled := cfg.IsTLSEnabled()
 	if tlsEnabled {
+		// Set MinVersion - default to TLS 1.2 if not specified
+		if cfg.TLSMinVersion != 0 {
+			tlsConfig.MinVersion = cfg.TLSMinVersion
+		} else {
+			tlsConfig.MinVersion = tls.VersionTLS12
+		}
+
+		if cfg.TLSMaxVersion != 0 {
+			tlsConfig.MaxVersion = cfg.TLSMaxVersion
+		}
+
+		if len(cfg.TLSCipherSuites) > 0 {
+			tlsConfig.CipherSuites = cfg.TLSCipherSuites
+		}
+
 		// Build and run the controller which reloads the certificate and key
 		// files whenever they change.
-		ctx := context.Background()
-
 		certKeyPair, err := dynamiccertificates.NewDynamicServingContentFromFiles("serving-cert", cfg.CertFile, cfg.PrivateKeyFile)
 		if err != nil {
 			slog.WithError(err).Fatal("unable to create TLS controller")
@@ -100,6 +151,7 @@ func Start(cfg *Config) {
 		// Notify cert/key file changes to the controller.
 		certKeyPair.AddListener(ctrl)
 
+		// Start certificate controllers in background
 		go ctrl.Run(1, ctx.Done())
 		go certKeyPair.Run(ctx, 1)
 	}
@@ -117,13 +169,7 @@ func Start(cfg *Config) {
 		httpServer.Handler = loggedRouter
 	}
 
-	if tlsEnabled {
-		slog.Infof("listening for https on %s", httpServer.Addr)
-		panic(httpServer.ListenAndServeTLS(cfg.CertFile, cfg.PrivateKeyFile))
-	} else {
-		slog.Infof("listening for http on %s", httpServer.Addr)
-		panic(httpServer.ListenAndServe())
-	}
+	return httpServer, nil
 }
 
 func setupRoutes(cfg *Config) *mux.Router {
@@ -146,17 +192,32 @@ func setupRoutes(cfg *Config) *mux.Router {
 	return r
 }
 
+type headerPreservingWriter struct {
+	http.ResponseWriter
+	wroteHeader bool
+}
+
+func (w *headerPreservingWriter) WriteHeader(statusCode int) {
+	if !w.wroteHeader {
+		if w.Header().Get("Cache-Control") == "" {
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		}
+		if w.Header().Get("Expires") == "" {
+			w.Header().Set("Expires", "0")
+		}
+		w.wroteHeader = true
+	}
+	w.ResponseWriter.WriteHeader(statusCode)
+}
+
 func filesHandler(root http.FileSystem) http.Handler {
 	fileServer := http.FileServer(root)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		filePath := r.URL.Path
-
 		// disable caching for plugin entry point
-		if strings.HasPrefix(filePath, "/plugin-entry.js") {
-			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-			w.Header().Set("Expires", "0")
+		if strings.HasPrefix(r.URL.Path, "/plugin-entry.js") {
+			fileServer.ServeHTTP(&headerPreservingWriter{ResponseWriter: w}, r)
+			return
 		}
-
 		fileServer.ServeHTTP(w, r)
 	})
 }
