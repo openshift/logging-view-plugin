@@ -60,8 +60,7 @@ func main() {
 	// Parse TLS configuration using k8sapiflag
 	tlsMinVer, err := k8sapiflag.TLSVersion(tlsMinVersion)
 	if err != nil {
-		log.Warnf("Invalid TLS version %q: %v, using default VersionTLS12", tlsMinVersion, err)
-		tlsMinVer = k8sapiflag.DefaultTLSVersion()
+		log.Fatalf("Invalid TLS version %q: %v", tlsMinVersion, err)
 	}
 
 	tlsMaxVer := uint16(0) // Use Go default for max version
@@ -71,8 +70,7 @@ func main() {
 		cipherNames := strings.Split(strings.ReplaceAll(tlsCipherSuites, " ", ""), ",")
 		tlsCiphers, err = k8sapiflag.TLSCipherSuites(cipherNames)
 		if err != nil {
-			log.Warnf("Invalid cipher suites %q: %v, using Go defaults", tlsCipherSuites, err)
-			tlsCiphers = nil
+			log.Fatalf("Invalid cipher suites %q: %v", tlsCipherSuites, err)
 		}
 	}
 
