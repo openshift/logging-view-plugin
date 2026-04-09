@@ -63,8 +63,6 @@ func main() {
 		log.Fatalf("Invalid TLS version %q: %v", tlsMinVersion, err)
 	}
 
-	tlsMaxVer := uint16(0) // Use Go default for max version
-
 	var tlsCiphers []uint16
 	if tlsCipherSuites != "" {
 		cipherNames := strings.Split(strings.ReplaceAll(tlsCipherSuites, " ", ""), ",")
@@ -83,7 +81,6 @@ func main() {
 		ConfigPath:       configPath,
 		PluginConfigPath: pluginConfigPath,
 		TLSMinVersion:    tlsMinVer,
-		TLSMaxVersion:    tlsMaxVer,
 		TLSCipherSuites:  tlsCiphers,
 	})
 	if err != nil {

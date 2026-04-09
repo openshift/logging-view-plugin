@@ -406,7 +406,6 @@ func TestTLSConfigWithCustomSettings(t *testing.T) {
 		PrivateKeyFile:  testServerKeyFile,
 		Port:            testPort,
 		TLSMinVersion:   tls.VersionTLS12,
-		TLSMaxVersion:   tls.VersionTLS13,
 		TLSCipherSuites: []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384},
 	}
 

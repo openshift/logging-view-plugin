@@ -32,7 +32,6 @@ type Config struct {
 	ConfigPath       string
 	PluginConfigPath string
 	TLSMinVersion    uint16
-	TLSMaxVersion    uint16
 	TLSCipherSuites  []uint16
 }
 
@@ -127,10 +126,6 @@ func createHTTPServer(ctx context.Context, cfg *Config) (*http.Server, error) {
 			tlsConfig.MinVersion = cfg.TLSMinVersion
 		} else {
 			tlsConfig.MinVersion = tls.VersionTLS12
-		}
-
-		if cfg.TLSMaxVersion != 0 {
-			tlsConfig.MaxVersion = cfg.TLSMaxVersion
 		}
 
 		if len(cfg.TLSCipherSuites) > 0 {
