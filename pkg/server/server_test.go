@@ -226,6 +226,10 @@ func getFreePort(host string) (int, error) {
 }
 
 func prepareServerAssets(t *testing.T) string {
+	t.Helper()
+	cwd, err := os.Getwd()
+	require.NoError(t, err)
+
 	tmpDir, err := os.MkdirTemp("", "server-test")
 	require.NoError(t, err)
 	distpath := filepath.Join(tmpDir, "web/dist")
@@ -236,6 +240,9 @@ func prepareServerAssets(t *testing.T) string {
 	require.NoError(t, err)
 	err = os.Chdir(tmpDir)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = os.Chdir(cwd)
+	})
 	return tmpDir
 }
 

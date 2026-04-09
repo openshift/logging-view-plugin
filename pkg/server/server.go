@@ -40,9 +40,17 @@ func (c *Config) IsTLSEnabled() bool {
 	return c.CertFile != "" && c.PrivateKeyFile != ""
 }
 
+func (c *Config) ValidateTLSConfig() error {
+	if (c.CertFile == "") != (c.PrivateKeyFile == "") {
+		return fmt.Errorf("both cert file and private key file must be set together")
+	}
+	return nil
+}
+
 type PluginServer struct {
 	*http.Server
 	Config *Config
+	cancel context.CancelFunc
 }
 
 type PluginConfig struct {
@@ -68,14 +76,21 @@ func (pluginConfig *PluginConfig) MarshalJSON() ([]byte, error) {
 }
 
 func CreateServer(ctx context.Context, cfg *Config) (*PluginServer, error) {
-	httpServer, err := createHTTPServer(ctx, cfg)
+	if err := cfg.ValidateTLSConfig(); err != nil {
+		return nil, err
+	}
+
+	serverCtx, cancel := context.WithCancel(ctx)
+	httpServer, err := createHTTPServer(serverCtx, cfg)
 	if err != nil {
+		cancel()
 		return nil, err
 	}
 
 	return &PluginServer{
 		Config: cfg,
 		Server: httpServer,
+		cancel: cancel,
 	}, nil
 }
 
@@ -89,6 +104,9 @@ func (s *PluginServer) StartHTTPServer() error {
 }
 
 func (s *PluginServer) Shutdown(ctx context.Context) error {
+	if s.cancel != nil {
+		s.cancel()
+	}
 	if s.Server != nil {
 		return s.Server.Shutdown(ctx)
 	}
