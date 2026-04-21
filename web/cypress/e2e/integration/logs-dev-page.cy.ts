@@ -291,6 +291,10 @@ describe('Logs Dev Page', () => {
       statusCode: 403,
       body: 'You are not authorized to list pods in this namespace',
     }).as('resourceQuery');
+    cy.intercept('/api/kubernetes/api/v1/namespaces/my-namespace/pods', {
+      statusCode: 403,
+      body: 'You are not authorized to list pods in this namespace',
+    }).as('k8sPodsQuery');
 
     cy.visit(LOGS_DEV_PAGE_URL);
 

@@ -183,6 +183,35 @@ const getAttributeLabels = (schema: Schema) => {
   return { namespaceLabel, podLabel, containerLabel };
 };
 
+const getTenantNamespaceQuery = (tenant: string, namespaceLabel: string): string | undefined => {
+  const infraPattern = 'openshift-.*|openshift|default|kube-.*';
+  switch (tenant) {
+    case 'infrastructure':
+      return `${namespaceLabel}=~"${infraPattern}"`;
+    case 'application':
+      return `${namespaceLabel}!~"${infraPattern}"`;
+    default:
+      return undefined;
+  }
+};
+
+const mergeSettledResults = (results: Array<PromiseSettledResult<Option[]>>): Option[] => {
+  const allRejected = results.every((r) => r.status === 'rejected');
+  if (allRejected && results.length > 0) {
+    throw (results[0] as PromiseRejectedResult).reason;
+  }
+
+  const uniqueValues = new Set<string>();
+  results.forEach((result) => {
+    if (result.status === 'fulfilled') {
+      result.value.forEach((option) => uniqueValues.add(option.value));
+    }
+  });
+  return Array.from(uniqueValues)
+    .sort()
+    .map((v) => ({ option: v, value: v }));
+};
+
 const getNamespaceAttributeOptions = (
   tenant: string,
   config: Config,
@@ -219,19 +248,7 @@ const getNamespaceAttributeOptions = (
     })().then((options) => options.filter((opt) => lokiTenantFilter(opt.value)));
 
     return Promise.allSettled<Option[]>([filteredProjectList, filteredLokiNamespaceList]).then(
-      (results) => {
-        const namespaceOptions: Set<string> = new Set();
-        results.forEach((result) => {
-          if (result.status === 'fulfilled') {
-            result.value.forEach((option) => {
-              namespaceOptions.add(option.value);
-            });
-          }
-        });
-        return Array.from(namespaceOptions)
-          .sort()
-          .map((ns) => ({ option: ns, value: ns }));
-      },
+      mergeSettledResults,
     );
   };
 };
@@ -393,6 +410,7 @@ export const availableDevConsoleAttributes = (
   tenant: string,
   config: Config,
   schema: Schema,
+  namespace?: string,
 ): AttributeList => {
   const { namespaceLabel, podLabel, containerLabel } = getAttributeLabels(schema);
 
@@ -406,6 +424,8 @@ export const availableDevConsoleAttributes = (
   if (tenant === 'audit') {
     return [contentAttribute];
   }
+
+  const lokiNamespaceQuery = namespace ? `{ ${namespaceLabel}="${namespace}" }` : undefined;
 
   return [
     contentAttribute,
@@ -429,22 +449,50 @@ export const availableDevConsoleAttributes = (
       name: 'Pods',
       label: podLabel,
       id: 'pod',
-      options: lokiLabelValuesDataSource({
-        config,
-        tenant,
-        labelName: podLabel,
-      }),
+      options: () => {
+        const sources: Array<Promise<Option[]>> = [
+          lokiLabelValuesDataSource({
+            config,
+            tenant,
+            labelName: podLabel,
+            query: lokiNamespaceQuery,
+          })(),
+        ];
+        if (namespace) {
+          sources.push(resourceDataSource({ resource: 'pods', namespace })());
+        }
+        return Promise.allSettled(sources).then(mergeSettledResults);
+      },
       valueType: 'checkbox-select',
     },
     {
       name: 'Containers',
       label: containerLabel,
       id: 'container',
-      options: lokiLabelValuesDataSource({
-        config,
-        tenant,
-        labelName: containerLabel,
-      }),
+      options: () => {
+        const sources: Array<Promise<Option[]>> = [
+          lokiLabelValuesDataSource({
+            config,
+            tenant,
+            labelName: containerLabel,
+            query: lokiNamespaceQuery,
+          })(),
+        ];
+        if (namespace) {
+          sources.push(
+            resourceDataSource({
+              resource: 'pods',
+              namespace,
+              mapper: (resource) =>
+                resource?.spec?.containers.map((c) => ({
+                  option: c.name,
+                  value: c.name,
+                })) ?? [],
+            })(),
+          );
+        }
+        return Promise.allSettled(sources).then(mergeSettledResults);
+      },
       valueType: 'checkbox-select',
     },
   ];
@@ -819,7 +867,9 @@ const getPodAttributeOptions = (
 
   const namespaceLabel = getStreamLabelsFromSchema(schema).Namespace;
   const namespacesQuery =
-    namespaces && namespaces.length > 0 ? `${namespaceLabel}=~"${namespaces.join('|')}"` : '';
+    namespaces && namespaces.length > 0
+      ? `${namespaceLabel}=~"${namespaces.join('|')}"`
+      : getTenantNamespaceQuery(tenant, namespaceLabel) ?? '';
 
   const podResource =
     namespaces && namespaces.length > 0
@@ -851,17 +901,7 @@ const getPodAttributeOptions = (
         query: namespacesQuery ? `{ ${namespacesQuery} }` : undefined,
       })(),
       ...podResource,
-    ]).then((results) => {
-      const podOptions: Set<string> = new Set();
-      results.forEach((result) => {
-        if (result.status === 'fulfilled') {
-          result.value.forEach((option) => {
-            podOptions.add(option.value);
-          });
-        }
-      });
-      return Array.from(podOptions).map((pod) => ({ option: pod, value: pod }));
-    });
+    ]).then(mergeSettledResults);
 };
 
 const getContainerAttributeOptions = (
@@ -871,8 +911,6 @@ const getContainerAttributeOptions = (
   namespaces?: Array<string>,
 ): (() => Promise<Option[]>) => {
   const { containerLabel, podLabel } = getAttributeLabels(schema);
-
-  const seriesQuery = `{ ${containerLabel}!="", ${podLabel}!="" }`;
 
   const namespacedPodsResources: Array<Promise<Option[]>> = [];
 
@@ -892,7 +930,14 @@ const getContainerAttributeOptions = (
   }
 
   const namespaceLabel = getStreamLabelsFromSchema(schema).Namespace;
-  const namespacesQuery = namespaces ? `${namespaceLabel}=~"${namespaces.join('|')}"` : '';
+  const namespacesQuery =
+    namespaces && namespaces.length > 0
+      ? `${namespaceLabel}=~"${namespaces.join('|')}"`
+      : getTenantNamespaceQuery(tenant, namespaceLabel) ?? '';
+
+  const seriesQuery = namespacesQuery
+    ? `{ ${containerLabel}!="", ${podLabel}!="", ${namespacesQuery} }`
+    : `{ ${containerLabel}!="", ${podLabel}!="" }`;
 
   const podResource =
     namespaces && namespaces.length > 0
@@ -925,7 +970,7 @@ const getContainerAttributeOptions = (
       lokiSeriesDataSource({
         config,
         tenant,
-        match: [seriesQuery, namespacesQuery ? `{ ${namespacesQuery} }` : ''],
+        match: [seriesQuery],
         mapper: (response) => {
           const uniqueContainers = new Set<string>();
 
@@ -942,18 +987,5 @@ const getContainerAttributeOptions = (
         },
       })(),
       ...podResource,
-    ]).then((results) => {
-      const uniqueContainers = new Set<string>();
-      results.forEach((result) => {
-        if (result.status === 'fulfilled') {
-          result.value.forEach((option) => {
-            uniqueContainers.add(option.value);
-          });
-        }
-      });
-      return Array.from(uniqueContainers).map((container) => ({
-        option: container,
-        value: container,
-      }));
-    });
+    ]).then(mergeSettledResults);
 };
