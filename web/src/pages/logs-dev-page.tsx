@@ -90,7 +90,7 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
   } = useURLState({
     defaultTenant: tenant,
     getAttributes: ({ config: c, schema: s }) =>
-      availableDevConsoleAttributes(getInitialTenantFromNamespace(namespace), c, s),
+      availableDevConsoleAttributes(getInitialTenantFromNamespace(namespace), c, s, namespace),
     attributesDependencies: [namespace],
   });
 
