@@ -11,8 +11,12 @@ clients:
 scrape_configs:
   - job_name: system
     pipeline_stages:
-      - regex:
-          expression: '.*"lvl":"(?P<level>[a-zA-Z]+)"'
+      - json:
+          expressions:
+            status: status
+      - template:
+          source: level
+          template: '{{ if ge .status "500" }}critical{{ else if ge .status "400" }}error{{ else if ge .status "300" }}warning{{ else if ge .status "200" }}info{{ else }}debug{{ end }}'
       - labels:
           level:
     static_configs:
@@ -29,13 +33,17 @@ scrape_configs:
           __path__: /var/log/*log
   - job_name: system2
     pipeline_stages:
-      - regex:
-          expression: '.*"lvl":"(?P<level>[a-zA-Z]+)"'
+      - json:
+          expressions:
+            status: status
+      - template:
+          source: level
+          template: '{{ if ge .status "500" }}critical{{ else if ge .status "400" }}error{{ else if ge .status "300" }}warning{{ else if ge .status "200" }}info{{ else }}debug{{ end }}'
+      - template:
+          source: severity_text
+          template: '{{ .level }}'
       - labels:
           level:
-      - regex:
-          expression: '.*"lvl":"(?P<severity_text>[a-zA-Z]+)"'
-      - labels:
           severity_text:
     static_configs:
       - targets:

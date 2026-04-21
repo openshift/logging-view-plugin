@@ -46,8 +46,10 @@ export const RefreshIntervalDropdown: React.FC<RefreshIntervalDropdownProps> = (
       ? parseInt(storedRefreshInterval.interval, 10)
       : 0,
   );
-  const [delay, setDelay] = React.useState<number>(0);
+  const [delay, setDelay] = React.useState<number>(refreshIntervalOptions[selectedIndex].delay);
   const timer = React.useRef<NodeJS.Timer | null>(null);
+  const onRefreshRef = React.useRef(onRefresh);
+  onRefreshRef.current = onRefresh;
 
   const clearTimer = () => {
     if (timer.current) {
@@ -63,23 +65,16 @@ export const RefreshIntervalDropdown: React.FC<RefreshIntervalDropdownProps> = (
     setStoredRefreshInterval({ interval: index.toString(10) });
   };
 
-  const restartTimer = (callRefreshImmediately = true) => {
+  React.useEffect(() => {
     clearTimer();
 
     if (delay !== 0) {
-      if (callRefreshImmediately) {
-        onRefresh?.();
-      }
-      timer.current = setInterval(() => onRefresh?.(), delay);
+      onRefreshRef.current?.();
+      timer.current = setInterval(() => onRefreshRef.current?.(), delay);
     }
 
     return () => clearTimer();
-  };
-
-  React.useEffect(() => restartTimer(), [delay]);
-
-  // Avoid calling refresh immediately when onRefresh callback has changed
-  React.useEffect(() => restartTimer(false), [onRefresh]);
+  }, [delay]);
 
   const toggleIsOpen = () => {
     setIsOpen(!isOpen);
