@@ -29,6 +29,8 @@ interface VirtualizedLogsTableProps<D> {
   csvData?: string;
   hasNamespaceFilter?: boolean;
   schema: Schema;
+  expandedItems?: Set<number>;
+  showResources?: boolean;
 }
 
 export type TableRowProps = {
@@ -95,6 +97,8 @@ type VirtualizedTableBodyProps<D, R = unknown> = {
   getRowTitle?: (obj: D) => string;
   getRowClassName?: (obj: D) => string;
   scrollToIndex?: number;
+  expandedItems?: Set<number>;
+  showResources?: boolean;
 };
 
 const TableRow: React.FC<TableRowProps> = ({ id, index, trKey, style, className, ...props }) => {
@@ -127,13 +131,31 @@ const VirtualizedTableBody = ({
   getRowTitle,
   getRowClassName,
   scrollToIndex,
+  expandedItems,
+  showResources,
 }: // eslint-disable-next-line @typescript-eslint/no-explicit-any
 VirtualizedTableBodyProps<LogTableData, any>) => {
-  const cellMeasurementCache = new CellMeasurerCache({
-    fixedWidth: true,
-    minHeight: 1,
-    keyMapper: (rowIndex) => rowIndex,
-  });
+  const cellMeasurementCache = React.useMemo(
+    () =>
+      new CellMeasurerCache({
+        fixedWidth: true,
+        minHeight: 1,
+        keyMapper: (rowIndex) => rowIndex,
+      }),
+    [],
+  );
+
+  const tableBodyRef = React.useRef<VirtualTableBody>(null);
+  const isFirstRender = React.useRef(true);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    cellMeasurementCache.clearAll();
+    tableBodyRef.current?.forceUpdateVirtualGrid();
+  }, [expandedItems, showResources]);
 
   const activeColumnIDs = React.useMemo(() => new Set(columns.map((c) => c.id)), [columns]);
 
@@ -186,6 +208,7 @@ VirtualizedTableBodyProps<LogTableData, any>) => {
 
   return (
     <VirtualTableBody
+      ref={tableBodyRef}
       autoHeight
       className="pf-v6-c-table pf-m-compact pf-m-border-rows pf-v6-c-virtualized pf-v6-c-window-scroller"
       deferredMeasurementCache={cellMeasurementCache}
@@ -256,6 +279,8 @@ export const VirtualizedLogsTable = ({
   shouldResize,
   hasNamespaceFilter,
   schema,
+  expandedItems,
+  showResources,
 }: VirtualizedLogsTableProps<LogTableData>) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
   const colSpan = columns.length + 3;
@@ -350,6 +375,8 @@ export const VirtualizedLogsTable = ({
                         width={width}
                         getRowClassName={getRowClassName}
                         scrollToIndex={scrollToIndex}
+                        expandedItems={expandedItems}
+                        showResources={showResources}
                       />
                     </div>
                   )}

@@ -1,10 +1,9 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { defaultConfig, getConfig } from '../backend-client';
 import { Config } from '../logs.types';
 
 interface LogsContextType {
   config: Config;
-  fetchConfig: () => Promise<Config>;
   configLoaded: boolean;
 }
 
@@ -16,31 +15,27 @@ export const LogsConfigProvider: React.FC<{ children?: React.ReactNode | undefin
   const [config, setConfig] = useState<Config>(defaultConfig);
   const [configLoaded, setConfigLoaded] = useState(false);
 
-  const fetchConfig = useCallback(async () => {
-    try {
-      if (!configLoaded) {
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
         const configData = await getConfig();
         const mergedConfig = { ...defaultConfig, ...configData };
         setConfig(mergedConfig);
         setConfigLoaded(true);
-
-        return mergedConfig;
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Error fetching logging plugin configuration', error);
+        setConfig(defaultConfig);
+        setConfigLoaded(true);
       }
+    };
 
-      return config;
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error fetching logging plugin configuration', error);
-      setConfig(defaultConfig);
-      return defaultConfig;
-    }
-  }, [config]);
+    loadConfig();
+  }, []);
 
-  return (
-    <LogsContext.Provider value={{ config, fetchConfig, configLoaded }}>
-      {children}
-    </LogsContext.Provider>
-  );
+  const contextValue = useMemo(() => ({ config, configLoaded }), [config, configLoaded]);
+
+  return <LogsContext.Provider value={contextValue}>{children}</LogsContext.Provider>;
 };
 
 export const useLogsConfig = (): LogsContextType => {
@@ -49,10 +44,6 @@ export const useLogsConfig = (): LogsContextType => {
   if (context === undefined) {
     throw new Error('useLogsConfig must be used within a LogsConfigProvider');
   }
-
-  useEffect(() => {
-    context.fetchConfig();
-  }, []);
 
   return context;
 };

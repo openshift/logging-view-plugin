@@ -102,6 +102,8 @@ const LogsPage: React.FC = () => {
   };
 
   const runQuery = ({ queryToUse }: { queryToUse?: string } = {}) => {
+    if (!configLoaded) return;
+
     getLogs({ query: queryToUse ?? query, tenant, timeRange, direction, schema });
 
     if (isHistogramVisible) {
@@ -305,12 +307,13 @@ const LogsPage: React.FC = () => {
   );
 };
 
-const LogsPageWrapper: React.FC = () => {
+const LogsPageWrapper: React.FC = React.memo(() => {
   return (
     <LogsConfigProvider>
       <LogsPage />
     </LogsConfigProvider>
   );
-};
+});
+LogsPageWrapper.displayName = 'LogsPageWrapper';
 
 export default LogsPageWrapper;

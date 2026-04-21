@@ -132,6 +132,8 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
   };
 
   const runQuery = () => {
+    if (!configLoaded) return;
+
     getLogs({ query, tenant: tenant.current, namespace, timeRange, direction, schema });
 
     if (isHistogramVisible) {
@@ -316,12 +318,13 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
   );
 };
 
-const LogsDetailPageWrapper: React.FC<LogsDetailPageProps> = (props) => {
+const LogsDetailPageWrapper: React.FC<LogsDetailPageProps> = React.memo((props) => {
   return (
     <LogsConfigProvider>
       <LogsDetailPage {...props} />
     </LogsConfigProvider>
   );
-};
+});
+LogsDetailPageWrapper.displayName = 'LogsDetailPageWrapper';
 
 export default LogsDetailPageWrapper;
