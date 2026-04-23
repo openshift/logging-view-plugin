@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 	"strconv"
@@ -8,18 +9,21 @@ import (
 
 	"github.com/openshift/logging-view-plugin/pkg/server"
 	"github.com/sirupsen/logrus"
+	k8sapiflag "k8s.io/component-base/cli/flag"
 )
 
 var (
-	portArg         = flag.Int("port", 0, "server port to listen on (default: 9002)")
-	certArg         = flag.String("cert", "", "cert file path to enable TLS (disabled by default)")
-	keyArg          = flag.String("key", "", "private key file path to enable TLS (disabled by default)")
-	featuresArg     = flag.String("features", "", "enabled features, comma separated")
-	staticPathArg   = flag.String("static-path", "", "static files path to serve frontend (default: './web/dist')")
-	configPathArg   = flag.String("config-path", "", "config files path (default: './config')")
-	pluginConfigArg = flag.String("plugin-config-path", "", "plugin yaml configuration")
-	logLevelArg     = flag.String("log-level", logrus.InfoLevel.String(), "verbosity of logs\noptions: ['panic', 'fatal', 'error', 'warn', 'info', 'debug', 'trace']\n'trace' level will log all incoming requests\n(default 'error')")
-	log             = logrus.WithField("module", "main")
+	portArg            = flag.Int("port", 0, "server port to listen on (default: 9002)")
+	certArg            = flag.String("cert", "", "cert file path to enable TLS (disabled by default)")
+	keyArg             = flag.String("key", "", "private key file path to enable TLS (disabled by default)")
+	featuresArg        = flag.String("features", "", "enabled features, comma separated")
+	staticPathArg      = flag.String("static-path", "", "static files path to serve frontend (default: './web/dist')")
+	configPathArg      = flag.String("config-path", "", "config files path (default: './config')")
+	pluginConfigArg    = flag.String("plugin-config-path", "", "plugin yaml configuration")
+	logLevelArg        = flag.String("log-level", logrus.InfoLevel.String(), "verbosity of logs\noptions: ['panic', 'fatal', 'error', 'warn', 'info', 'debug', 'trace']\n'trace' level will log all incoming requests\n(default 'error')")
+	tlsMinVersionArg   = flag.String("tls-min-version", "VersionTLS12", "minimum TLS version supported. Values are from tls package constants (https://golang.org/pkg/crypto/tls/#pkg-constants)")
+	tlsCipherSuitesArg = flag.String("tls-cipher-suites", "", "comma-separated list of cipher suites for the server.\nValues are from tls package constants (https://golang.org/pkg/crypto/tls/#pkg-constants).\nIf omitted, the default Go cipher suite will be used")
+	log                = logrus.WithField("module", "main")
 )
 
 func main() {
@@ -33,6 +37,8 @@ func main() {
 	configPath := mergeEnvValue("LOGGING_VIEW_PLUGIN_MANIFEST_CONFIG_PATH", *configPathArg, "./config")
 	pluginConfigPath := mergeEnvValue("LOGGING_VIEW_PLUGIN_CONFIG_PATH", *pluginConfigArg, "/etc/plugin/config.yaml")
 	logLevel := mergeEnvValue("LOGGING_VIEW_PLUGIN_LOG_LEVEL", *logLevelArg, logrus.InfoLevel.String())
+	tlsMinVersion := mergeEnvValue("TLS_MIN_VERSION", *tlsMinVersionArg, "VersionTLS12")
+	tlsCipherSuites := mergeEnvValue("TLS_CIPHER_SUITES", *tlsCipherSuitesArg, "")
 
 	featuresList := strings.Fields(strings.Join(strings.Split(strings.ToLower(features), ","), " "))
 
@@ -51,7 +57,22 @@ func main() {
 
 	log.Infof("enabled features: %+q\n", featuresList)
 
-	server.Start(&server.Config{
+	// Parse TLS configuration using k8sapiflag
+	tlsMinVer, err := k8sapiflag.TLSVersion(tlsMinVersion)
+	if err != nil {
+		log.Fatalf("Invalid TLS version %q: %v", tlsMinVersion, err)
+	}
+
+	var tlsCiphers []uint16
+	if tlsCipherSuites != "" {
+		cipherNames := strings.Split(strings.ReplaceAll(tlsCipherSuites, " ", ""), ",")
+		tlsCiphers, err = k8sapiflag.TLSCipherSuites(cipherNames)
+		if err != nil {
+			log.Fatalf("Invalid cipher suites %q: %v", tlsCipherSuites, err)
+		}
+	}
+
+	srv, err := server.CreateServer(context.Background(), &server.Config{
 		Port:             port,
 		CertFile:         cert,
 		PrivateKeyFile:   key,
@@ -59,7 +80,16 @@ func main() {
 		StaticPath:       staticPath,
 		ConfigPath:       configPath,
 		PluginConfigPath: pluginConfigPath,
+		TLSMinVersion:    tlsMinVer,
+		TLSCipherSuites:  tlsCiphers,
 	})
+	if err != nil {
+		panic(err)
+	}
+
+	if err = srv.StartHTTPServer(); err != nil {
+		panic(err)
+	}
 }
 
 func mergeEnvValue(key string, arg string, defaultValue string) string {
@@ -90,3 +120,4 @@ func mergeEnvValueInt(key string, arg int, defaultValue int) int {
 
 	return defaultValue
 }
+
