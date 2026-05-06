@@ -40,8 +40,12 @@ test-frontend: test-unit-frontend build-frontend-standalone
 test-backend:
 	go test ./pkg/... -v
 
+.PHONY: test-backend
+test-backend:
+	go test ./pkg/... -v
+
 .PHONY: open-cypress
-open-cypress: test-unit-frontend  
+open-cypress: test-unit-frontend
 	cd web && npm run cypress:open
 
 .PHONY: build-frontend
@@ -77,7 +81,7 @@ start-backend: build-backend
 
 .PHONY: start-devspace-backend
 start-devspace-backend:
-	/opt/app-root/plugin-backend -port=9443 -cert=/var/serving-cert/tls.crt -key=/var/serving-cert/tls.key -plugin-config-path=/etc/plugin/config.yaml -static-path=/opt/app-root/web/dist -config-path=/opt/app-root/config
+	/opt/app-root/plugin-backend -port=9443 -cert=/var/serving-cert/tls.crt -key=/var/serving-cert/tls.key -plugin-config-path=/etc/plugin/config/config.yaml -static-path=/opt/app-root/web/dist -config-path=/opt/app-root/config
 
 .PHONY: build-image
 build-image:
@@ -95,4 +99,3 @@ deploy:
 	helm uninstall logging-view-plugin -n logging-view-plugin || true
 	PUSH=1 scripts/build-image.sh
 	helm install logging-view-plugin charts/openshift-console-plugin -n logging-view-plugin --create-namespace --set plugin.image=${IMAGE}
-

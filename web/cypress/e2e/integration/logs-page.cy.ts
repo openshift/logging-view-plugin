@@ -11,12 +11,15 @@ import {
 } from '../../fixtures/query-range-fixtures';
 import {
   containersLabelValuesResponse,
-  namespaceListResponse,
   projectListResponse,
   podsListResponse,
 } from '../../fixtures/resource-api-fixtures';
 import { formatTimeRange } from '../../../src/time-range';
 import { configResponse } from '../../fixtures/backend-fixtures';
+
+Cypress.Keyboard.defaults({
+  keystrokeDelay: 15,
+});
 
 const LOGS_PAGE_URL = '/monitoring/logs';
 const QUERY_RANGE_STREAMS_URL_MATCH =
@@ -97,7 +100,7 @@ describe('Logs Page', () => {
       queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
 
-    cy.visit(LOGS_PAGE_URL);
+    cy.visit(LOGS_PAGE_URL).wait(500);
 
     cy.byTestID(TestIds.ShowStatsToggle).click();
     cy.byTestID(TestIds.LogsStats).should('exist');

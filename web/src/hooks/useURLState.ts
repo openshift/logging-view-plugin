@@ -1,5 +1,5 @@
-import React, { DependencyList, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
+import { DependencyList, useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router';
 import { filtersFromQuery, queryFromFilters } from '../attribute-filters';
 import { AttributeList, Filters } from '../components/filters/filter.types';
 import { getBrowserTimezone } from '../date-utils';
@@ -8,7 +8,7 @@ import { ResourceLabel, ResourceToStreamLabels } from '../parse-resources';
 import { intervalFromTimeRange } from '../time-range';
 import { getSchema } from '../value-utils';
 import { useLogsConfig } from './LogsConfigProvider';
-import { useQueryParams } from './useQueryParams';
+import { useTranslation } from 'react-i18next';
 
 interface UseURLStateHook {
   defaultTenant?: string;
@@ -17,10 +17,12 @@ interface UseURLStateHook {
     tenant,
     config,
     schema,
+    t,
   }: {
     tenant: string;
     config: Config;
     schema: Schema;
+    t: (key: string) => string;
   }) => AttributeList | undefined;
   attributesDependencies?: DependencyList;
 }
@@ -63,7 +65,8 @@ export const useURLState = ({
   getAttributes,
   attributesDependencies,
 }: UseURLStateHook) => {
-  const queryParams = useQueryParams();
+  const { t } = useTranslation('plugin__logging-view-plugin');
+  const [queryParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { config, configLoaded } = useLogsConfig();
@@ -97,22 +100,22 @@ export const useURLState = ({
   const initialTimezone =
     queryParams.get(TIMEZONE_PARAM_KEY) ?? getStoredTimezone() ?? getBrowserTimezone();
 
-  const [query, setQuery] = React.useState(initialQuery);
-  const [tenant, setTenant] = React.useState(initialTenant);
-  const [schema, setSchema] = React.useState(initialSchema);
-  const attributes = React.useMemo<AttributeList>(
-    () => (getAttributes ? getAttributes({ tenant, config, schema }) ?? [] : []),
-    [tenant, config, schema, ...(attributesDependencies || [])],
+  const [query, setQuery] = useState(initialQuery);
+  const [tenant, setTenant] = useState(initialTenant);
+  const [schema, setSchema] = useState(initialSchema);
+  const attributes = useMemo<AttributeList>(
+    () => (getAttributes ? (getAttributes({ tenant, config, schema, t }) ?? []) : []),
+    [tenant, config, schema, ...(attributesDependencies || [])], // eslint-disable-line
   );
-  const [filters, setFilters] = React.useState<Filters | undefined>(
+  const [filters, setFilters] = useState<Filters | undefined>(
     filtersFromQuery({ query: initialQuery, attributes, schema }),
   );
 
-  const [areResourcesShown, setAreResourcesShown] = React.useState<boolean>(initialResorcesShown);
-  const [areStatsShown, setAreStatsShown] = React.useState<boolean>(intitalStatsShown);
-  const [direction, setDirection] = React.useState<Direction>(getDirectionValue(initialDirection));
-  const [timezone, setTimezone] = React.useState<string>(initialTimezone);
-  const [timeRange, setTimeRange] = React.useState<TimeRange | undefined>(
+  const [areResourcesShown, setAreResourcesShown] = useState<boolean>(initialResorcesShown);
+  const [areStatsShown, setAreStatsShown] = useState<boolean>(intitalStatsShown);
+  const [direction, setDirection] = useState<Direction>(getDirectionValue(initialDirection));
+  const [timezone, setTimezone] = useState<string>(initialTimezone);
+  const [timeRange, setTimeRange] = useState<TimeRange | undefined>(
     initialTimeRangeStart && initialTimeRangeEnd
       ? {
           start: initialTimeRangeStart,
@@ -123,22 +126,25 @@ export const useURLState = ({
 
   const setQueryInURL = (newQuery: string, replace?: boolean) => {
     const trimmedQuery = newQuery.trim();
-    queryParams.set(QUERY_PARAM_KEY, trimmedQuery);
+    const newQueryParams = new URLSearchParams(queryParams);
+    newQueryParams.set(QUERY_PARAM_KEY, trimmedQuery);
     navigate(
-      `${location.pathname}?${queryParams.toString()}`,
+      `${location.pathname}?${newQueryParams.toString()}`,
       replace ? { replace: true } : undefined,
     );
   };
 
   const setTenantInURL = (selectedTenant: string) => {
-    queryParams.set(QUERY_PARAM_KEY, ''); // reset query when changing tenant
-    queryParams.set(TENANT_PARAM_KEY, selectedTenant);
-    navigate(`${location.pathname}?${queryParams.toString()}`);
+    const newQueryParams = new URLSearchParams(queryParams);
+    newQueryParams.set(QUERY_PARAM_KEY, ''); // reset query when changing tenant
+    newQueryParams.set(TENANT_PARAM_KEY, selectedTenant);
+    navigate(`${location.pathname}?${newQueryParams.toString()}`);
   };
 
   const setSchemaInURL = (selectedSchema: Schema) => {
+    const newQueryParams = new URLSearchParams(queryParams);
     if (selectedSchema) {
-      queryParams.set(SCHEMA_PARAM_KEY, selectedSchema as string);
+      newQueryParams.set(SCHEMA_PARAM_KEY, selectedSchema as string);
 
       // re create query based on current filters and new schema
       const newQuery = queryFromFilters({
@@ -149,43 +155,48 @@ export const useURLState = ({
         schema: selectedSchema,
         addJSONParser: true,
       });
-      queryParams.set(QUERY_PARAM_KEY, newQuery);
+      newQueryParams.set(QUERY_PARAM_KEY, newQuery);
 
-      navigate(`${location.pathname}?${queryParams.toString()}`);
+      navigate(`${location.pathname}?${newQueryParams.toString()}`);
     } else {
-      queryParams.delete(SCHEMA_PARAM_KEY);
-      navigate(`${location.pathname}?${queryParams.toString()}`);
+      newQueryParams.delete(SCHEMA_PARAM_KEY);
+      navigate(`${location.pathname}?${newQueryParams.toString()}`);
     }
   };
 
   const setShowResourcesInURL = (showResources: boolean) => {
-    queryParams.set(SHOW_RESOURCES_PARAM_KEY, showResources ? '1' : '0');
-    navigate(`${location.pathname}?${queryParams.toString()}`);
+    const newQueryParams = new URLSearchParams(queryParams);
+    newQueryParams.set(SHOW_RESOURCES_PARAM_KEY, showResources ? '1' : '0');
+    navigate(`${location.pathname}?${newQueryParams.toString()}`);
   };
 
   const setShowStatsInURL = (showStats: boolean) => {
-    queryParams.set(SHOW_STATS_PARAM_KEY, showStats ? '1' : '0');
-    navigate(`${location.pathname}?${queryParams.toString()}`);
+    const newQueryParams = new URLSearchParams(queryParams);
+    newQueryParams.set(SHOW_STATS_PARAM_KEY, showStats ? '1' : '0');
+    navigate(`${location.pathname}?${newQueryParams.toString()}`);
   };
 
   const setTimeRangeInURL = (selectedTimeRange: TimeRange) => {
-    queryParams.set(TIME_RANGE_START, String(selectedTimeRange.start));
-    queryParams.set(TIME_RANGE_END, String(selectedTimeRange.end));
-    navigate(`${location.pathname}?${queryParams.toString()}`);
+    const newQueryParams = new URLSearchParams(queryParams);
+    newQueryParams.set(TIME_RANGE_START, String(selectedTimeRange.start));
+    newQueryParams.set(TIME_RANGE_END, String(selectedTimeRange.end));
+    navigate(`${location.pathname}?${newQueryParams.toString()}`);
   };
 
   const setDirectionInURL = (selectedDirection?: 'forward' | 'backward') => {
+    const newQueryParams = new URLSearchParams(queryParams);
     if (selectedDirection) {
-      queryParams.set(DIRECTION, selectedDirection);
+      newQueryParams.set(DIRECTION, selectedDirection);
     } else {
-      queryParams.delete(DIRECTION);
+      newQueryParams.delete(DIRECTION);
     }
-    navigate(`${location.pathname}?${queryParams.toString()}`);
+    navigate(`${location.pathname}?${newQueryParams.toString()}`);
   };
 
   const setTimezoneInURL = (selectedTimezone: string) => {
-    queryParams.set(TIMEZONE_PARAM_KEY, selectedTimezone);
-    navigate(`${location.pathname}?${queryParams.toString()}`);
+    const newQueryParams = new URLSearchParams(queryParams);
+    newQueryParams.set(TIMEZONE_PARAM_KEY, selectedTimezone);
+    navigate(`${location.pathname}?${newQueryParams.toString()}`);
     // Also persist to localStorage
     try {
       window.localStorage.setItem(STORED_TIMEZONE_KEY, JSON.stringify(selectedTimezone));
@@ -219,6 +230,7 @@ export const useURLState = ({
         }
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSchema, schema, configLoaded]);
 
   useEffect(() => {
@@ -260,7 +272,7 @@ export const useURLState = ({
         end: timeRangeEndValue,
       };
     });
-  }, [queryParams, attributes, config?.schema]);
+  }, [queryParams, attributes, config?.schema, initialQuery]);
 
   return {
     initialQuery,

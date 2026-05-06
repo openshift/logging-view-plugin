@@ -1,19 +1,19 @@
-import React from 'react';
+import { Dispatch, SetStateAction, useCallback, useState } from 'react';
 
 interface UseBooleanOutput {
   value: boolean;
-  setValue: React.Dispatch<React.SetStateAction<boolean>>;
+  setValue: Dispatch<SetStateAction<boolean>>;
   setTrue: () => void;
   setFalse: () => void;
   toggle: () => void;
 }
 
 export const useBoolean = (defaultValue?: boolean): UseBooleanOutput => {
-  const [value, setValue] = React.useState(!!defaultValue);
+  const [value, setValue] = useState(!!defaultValue);
 
-  const setTrue = React.useCallback(() => setValue(true), []);
-  const setFalse = React.useCallback(() => setValue(false), []);
-  const toggle = React.useCallback(() => setValue((x) => !x), []);
+  const setTrue = useCallback(() => setValue(true), []);
+  const setFalse = useCallback(() => setValue(false), []);
+  const toggle = useCallback(() => setValue((x) => !x), []);
 
   return { value, setValue, setTrue, setFalse, toggle };
 };

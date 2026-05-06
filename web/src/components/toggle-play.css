@@ -1,6 +1,7 @@
 .lv-plugin__toggle-play {
   background-color: var(--pf-t--global--background--color--secondary--default);
-  border: var(--pf-t--global--border--width--extra-strong) solid var(--pf-t--global--border--color--default);
+  border: var(--pf-t--global--border--width--extra-strong) solid
+    var(--pf-t--global--border--color--default);
   border-radius: 50%;
   height: 32px;
   padding: 0;

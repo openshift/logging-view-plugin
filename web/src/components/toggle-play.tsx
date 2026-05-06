@@ -1,17 +1,17 @@
 import { Button, Icon } from '@patternfly/react-core';
 import { PauseIcon, PlayIcon } from '@patternfly/react-icons';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TestIds } from '../test-ids';
 import './toggle-play.css';
+import { FC, MouseEvent } from 'react';
 
 interface TogglePlayProps {
-  onClick?: (e: React.MouseEvent) => void;
+  onClick?: (e: MouseEvent) => void;
   active?: boolean;
   isDisabled?: boolean;
 }
 
-export const TogglePlay: React.FC<TogglePlayProps> = ({ onClick, active, isDisabled = false }) => {
+export const TogglePlay: FC<TogglePlayProps> = ({ onClick, active, isDisabled = false }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
   return (

@@ -1,5 +1,6 @@
 .lv-plugin__alert-metrics__container {
-  border: var(--pf-t--global--border--width--regular) solid var(--pf-t--global--border--color--on-secondary);
+  border: var(--pf-t--global--border--width--regular) solid
+    var(--pf-t--global--border--color--on-secondary);
   margin: 0 0 var(--pf-t--global--spacer--md) 0;
   padding: var(--pf-t--global--spacer--sm);
 }

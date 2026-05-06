@@ -1,14 +1,6 @@
 import '@patternfly/patternfly/patternfly.css';
-import React from 'react';
-import ReactDOM from 'react-dom';
-import {
-  BrowserRouter,
-  Link,
-  Route,
-  Routes,
-  useNavigate,
-  useParams,
-} from 'react-router-dom-v5-compat';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Link, Route, Routes, useNavigate, useParams } from 'react-router';
 import LogsAlertMetrics from './components/alerts/logs-alerts-metrics';
 import i18n from './i18n';
 import './index.css';
@@ -31,11 +23,12 @@ import {
   MastheadMain,
 } from '@patternfly/react-core';
 import { TestIds } from './test-ids';
+import { Ref, useState } from 'react';
 
 const DevConsole = () => {
   const { ns: namespace } = useParams<{ ns: string }>();
   const navigate = useNavigate();
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const onToggle = () => {
     setIsOpen(!isOpen);
@@ -52,7 +45,7 @@ const DevConsole = () => {
         isOpen={isOpen}
         onSelect={() => setIsOpen(false)}
         onOpenChange={(isOpenVal: boolean) => setIsOpen(isOpenVal)}
-        toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+        toggle={(toggleRef: Ref<MenuToggleElement>) => (
           <MenuToggle
             ref={toggleRef}
             onClick={onToggle}
@@ -151,5 +144,6 @@ const EndToEndTestsApp = () => {
 };
 
 i18n.on('initialized', () => {
-  ReactDOM.render(<EndToEndTestsApp />, document.getElementById('app'));
+  const root = createRoot(document.getElementById('app'));
+  root.render(<EndToEndTestsApp />);
 });

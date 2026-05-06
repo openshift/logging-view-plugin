@@ -7,17 +7,25 @@ export const nav = {
     },
     switcher: {
       changePerspectiveTo: (perspective: string) => {
-      cy.log('Switch perspective - ' + `${perspective}`);
-      cy.byLegacyTestID('perspective-switcher-toggle').scrollIntoView().should('be.visible');
-      cy.byLegacyTestID('perspective-switcher-toggle').scrollIntoView().should('be.visible').click({force: true});
-      cy.byLegacyTestID('perspective-switcher-menu-option').contains(perspective).should('be.visible');
-      cy.byLegacyTestID('perspective-switcher-menu-option').contains(perspective).should('be.visible').click({force: true});
+        cy.log('Switch perspective - ' + `${perspective}`);
+        cy.byLegacyTestID('perspective-switcher-toggle').scrollIntoView().should('be.visible');
+        cy.byLegacyTestID('perspective-switcher-toggle')
+          .scrollIntoView()
+          .should('be.visible')
+          .click({ force: true });
+        cy.byLegacyTestID('perspective-switcher-menu-option')
+          .contains(perspective)
+          .should('be.visible');
+        cy.byLegacyTestID('perspective-switcher-menu-option')
+          .contains(perspective)
+          .should('be.visible')
+          .click({ force: true });
       },
       shouldHaveText: (perspective: string) => {
         cy.log('Should have text - ' + `${perspective}`);
         cy.byLegacyTestID('perspective-switcher-toggle').contains(perspective).should('be.visible');
-      }
-    }
+      },
+    },
   },
   tabs: {
     /**
@@ -26,6 +34,6 @@ export const nav = {
      */
     switchTab: (tabname: string) => {
       cy.get(Classes.HorizontalNav).contains(tabname).should('be.visible').click();
-  }
-}
+    },
+  },
 };

@@ -1,10 +1,10 @@
 import { Card, CardBody, CardTitle, Split, SplitItem, Tooltip } from '@patternfly/react-core';
 import { Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { QueryRangeResponse } from '../logs.types';
 import { TestIds } from '../test-ids';
 import './stats-table.css';
+import { FC } from 'react';
 
 interface StatsTableProps {
   logsData?: QueryRangeResponse;
@@ -93,7 +93,7 @@ interface TableComponentProps {
   title: string;
 }
 
-const SummaryStatsTable: React.FC<TableComponentProps> = ({ logsData, title }) => {
+const SummaryStatsTable: FC<TableComponentProps> = ({ logsData, title }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
   return (
@@ -267,7 +267,7 @@ const SummaryStatsTable: React.FC<TableComponentProps> = ({ logsData, title }) =
   );
 };
 
-const IngesterStatsTable: React.FC<TableComponentProps> = ({ logsData, title }) => {
+const IngesterStatsTable: FC<TableComponentProps> = ({ logsData, title }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
   return (
@@ -446,7 +446,7 @@ const IngesterStatsTable: React.FC<TableComponentProps> = ({ logsData, title }) 
   );
 };
 
-const QuerierStatsTable: React.FC<TableComponentProps> = ({ logsData, title }) => {
+const QuerierStatsTable: FC<TableComponentProps> = ({ logsData, title }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
   return (
@@ -581,7 +581,7 @@ const QuerierStatsTable: React.FC<TableComponentProps> = ({ logsData, title }) =
   );
 };
 
-export const StatsTable: React.FC<StatsTableProps> = ({ logsData }) => {
+export const StatsTable: FC<StatsTableProps> = ({ logsData }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
   return (

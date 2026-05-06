@@ -9,9 +9,8 @@ import {
   Tooltip,
 } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router';
 import { availablePodAttributes, filtersFromQuery, queryFromFilters } from '../attribute-filters';
 import { CenteredContainer } from '../components/centered-container';
 import { Filters } from '../components/filters/filter.types';
@@ -31,6 +30,7 @@ import { getStreamLabelsFromSchema, ResourceLabel } from '../parse-resources';
 import { TestIds } from '../test-ids';
 import { getInitialTenantFromNamespace } from '../value-utils';
 import { TimezoneDropdown } from '../components/timezone-dropdown';
+import { FC, memo, useEffect, useRef, useState } from 'react';
 
 /*
 This comment creates an entry in the translations catalogue for console extensions
@@ -44,17 +44,19 @@ interface LogsDetailPageProps {
   name?: string;
 }
 
-const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
+const LogsDetailPage: FC<LogsDetailPageProps> = ({
   ns: namespaceFromProps,
   name: podNameFromProps,
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
-  const { name: podnameFromParams, ns: namespaceFromParams } =
-    useParams<{ name: string; ns: string }>();
+  const { name: podnameFromParams, ns: namespaceFromParams } = useParams<{
+    name: string;
+    ns: string;
+  }>();
   const namespace = namespaceFromParams || namespaceFromProps;
   const podname = podnameFromParams || podNameFromProps;
-  const [isHistogramVisible, setIsHistogramVisible] = React.useState(false);
+  const [isHistogramVisible, setIsHistogramVisible] = useState(false);
 
   const { config, configLoaded } = useLogsConfig();
 
@@ -115,7 +117,7 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
   });
 
   const initialTenant = getInitialTenantFromNamespace(namespace);
-  const tenant = React.useRef(initialTenant);
+  const tenant = useRef(initialTenant);
 
   const handleToggleStreaming = () => {
     toggleStreaming({ query, schema });
@@ -132,6 +134,8 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
   };
 
   const runQuery = () => {
+    if (!configLoaded) return;
+
     getLogs({ query, tenant: tenant.current, namespace, timeRange, direction, schema });
 
     if (isHistogramVisible) {
@@ -171,19 +175,20 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
     setFilters(updatedFilters);
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!configLoaded) {
       return;
     }
 
     runQuery();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRange, isHistogramVisible, direction, configLoaded]);
 
   const isQueryEmpty = query === '';
 
   const resultIsMetric = isMatrixResult(logsData?.data);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (resultIsMetric) {
       setIsHistogramVisible(false);
     }
@@ -316,12 +321,13 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
   );
 };
 
-const LogsDetailPageWrapper: React.FC<LogsDetailPageProps> = (props) => {
+const LogsDetailPageWrapper: FC<LogsDetailPageProps> = memo((props) => {
   return (
     <LogsConfigProvider>
       <LogsDetailPage {...props} />
     </LogsConfigProvider>
   );
-};
+});
+LogsDetailPageWrapper.displayName = 'LogsDetailPageWrapper';
 
 export default LogsDetailPageWrapper;

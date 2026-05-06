@@ -4,6 +4,10 @@ import {
   queryRangeStreamsValidResponse,
 } from '../../fixtures/query-range-fixtures';
 
+Cypress.Keyboard.defaults({
+  keystrokeDelay: 15,
+});
+
 const LOGS_DETAIL_PAGE_URL = '/k8s/ns/my-namespace/pods/test-pod-name';
 const LOGS_DETAIL_PAGE_URL_OPENSHIFT_NS = '/k8s/ns/openshift-api/pods/test-pod-name';
 const QUERY_RANGE_MATRIX_URL_MATCH =

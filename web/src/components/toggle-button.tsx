@@ -1,19 +1,19 @@
 import { Button } from '@patternfly/react-core';
-import React from 'react';
 import './toggle-button.css';
+import { FC, ReactElement } from 'react';
 
 export interface ToggleButtonProps {
   isToggled: boolean;
   isDisabled?: boolean;
   onToggle?: (isToggled: boolean) => void;
-  toggledIcon?: React.ReactElement;
-  untoggledIcon?: React.ReactElement;
+  toggledIcon?: ReactElement;
+  untoggledIcon?: ReactElement;
   toggledText: string;
   untoggledText: string;
   'data-test'?: string;
 }
 
-export const ToggleButton: React.FC<ToggleButtonProps> = ({
+export const ToggleButton: FC<ToggleButtonProps> = ({
   isToggled,
   toggledIcon,
   untoggledIcon,

@@ -5,6 +5,10 @@ import {
 } from '../../fixtures/query-range-fixtures';
 import { podsLabelValuesResponse } from '../../fixtures/resource-api-fixtures';
 
+Cypress.Keyboard.defaults({
+  keystrokeDelay: 15,
+});
+
 const LOGS_DEV_PAGE_URL = '/dev-monitoring/ns/my-namespace/logs';
 const QUERY_RANGE_STREAMS_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/query_range?query=%7B*';
@@ -291,6 +295,10 @@ describe('Logs Dev Page', () => {
       statusCode: 403,
       body: 'You are not authorized to list pods in this namespace',
     }).as('resourceQuery');
+    cy.intercept('/api/kubernetes/api/v1/namespaces/my-namespace/pods', {
+      statusCode: 403,
+      body: 'You are not authorized to list pods in this namespace',
+    }).as('k8sPodsQuery');
 
     cy.visit(LOGS_DEV_PAGE_URL);
 

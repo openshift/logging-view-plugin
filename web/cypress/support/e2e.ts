@@ -10,7 +10,7 @@ export const checkErrors = () =>
     assert.isTrue(!win.windowError, win.windowError);
   });
 
-  // Ignore benign ResizeObserver errors globally so they don't fail tests
+// Ignore benign ResizeObserver errors globally so they don't fail tests
 // See: https://docs.cypress.io/api/cypress-api/catalog-of-events#Uncaught-Exceptions
 Cypress.on('uncaught:exception', (err) => {
   const message = err?.message || String(err || '');
@@ -30,9 +30,7 @@ Cypress.on('uncaught:exception', (err) => {
   // allow other errors to fail the test
 });
 
-
-
 Cypress.on('uncaught:exception', (err) => {
-  console.error("Uncaught error:", err.message);
+  console.error('Uncaught error:', err.message);
   return false;
 });

@@ -1,9 +1,9 @@
-import React from 'react';
-import { Attribute, Option } from './filter.types';
+import { Attribute, Filters, Option } from './filter.types';
 import { useBoolean } from '../../hooks/useBoolean';
+import { useCallback, useState } from 'react';
 
 type UseAttributeValueDataHookResult = {
-  getAttributeOptions: (searchQuery?: string) => void;
+  getAttributeOptions: (filters?: Filters) => void;
   attributeOptions: Array<Option>;
   attributeError: Error | undefined;
   attributeLoading: boolean;
@@ -16,12 +16,12 @@ const uniqueOptions = (options: Array<Option>): Array<Option> =>
   });
 
 export const useAttributeValueData = (attribute: Attribute): UseAttributeValueDataHookResult => {
-  const [attributeOptions, setAttributeOptions] = React.useState<Array<Option>>([]);
+  const [attributeOptions, setAttributeOptions] = useState<Array<Option>>([]);
   const { value: attributeLoading, setValue: setAttributeLoading } = useBoolean(true);
-  const [attributeError, setAttributeError] = React.useState<Error | undefined>();
+  const [attributeError, setAttributeError] = useState<Error | undefined>();
 
-  const getAttributeOptions = React.useCallback(
-    (searchQuery?: string) => {
+  const getAttributeOptions = useCallback(
+    (filters?: Filters) => {
       setAttributeError(undefined);
       if (attribute.options) {
         if (Array.isArray(attribute.options)) {
@@ -29,7 +29,7 @@ export const useAttributeValueData = (attribute: Attribute): UseAttributeValueDa
           setAttributeOptions(uniqueOptions(attribute.options));
         } else {
           attribute
-            .options(searchQuery)
+            .options(filters)
             .then((asyncOptions) => {
               setAttributeOptions(uniqueOptions(asyncOptions ?? []));
             })
@@ -45,7 +45,7 @@ export const useAttributeValueData = (attribute: Attribute): UseAttributeValueDa
         }
       }
     },
-    [attribute],
+    [attribute, setAttributeLoading],
   );
 
   return { getAttributeOptions, attributeOptions, attributeError, attributeLoading };

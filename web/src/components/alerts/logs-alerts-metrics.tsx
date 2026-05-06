@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LogsConfigProvider, useLogsConfig } from '../../hooks/LogsConfigProvider';
 import { useLogs } from '../../hooks/useLogs';
@@ -13,19 +13,24 @@ interface LogsAlertMetricsProps {
 
 const LOKI_TENANT_LABEL_KEY = 'tenantId';
 
-const LogsAlertMetrics: React.FC<LogsAlertMetricsProps> = ({ rule }) => {
+const LogsAlertMetrics: FC<LogsAlertMetricsProps> = ({ rule }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
   const { getLogs, logsData, logsError, isLoadingLogsData } = useLogs();
-  const { config } = useLogsConfig();
+  const { config, configLoaded } = useLogsConfig();
 
   const tenant = rule?.labels?.[config.alertingRuleTenantLabelKey ?? LOKI_TENANT_LABEL_KEY];
-  const [timeRange, setTimeRange] = React.useState<TimeRange | undefined>();
+  const [timeRange, setTimeRange] = useState<TimeRange | undefined>();
 
   useEffect(() => {
+    if (!configLoaded) {
+      return;
+    }
+
     if (rule?.query && tenant) {
       getLogs({ query: rule.query, timeRange, tenant, schema: getSchema(config.schema) });
     }
-  }, [rule?.query, timeRange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rule?.query, timeRange, configLoaded, tenant, config.schema]);
 
   const tenantError = !tenant
     ? new Error(
@@ -50,7 +55,7 @@ const LogsAlertMetrics: React.FC<LogsAlertMetricsProps> = ({ rule }) => {
   );
 };
 
-const LogsAlertMetricsWrapper: React.FC<LogsAlertMetricsProps> = (props) => {
+const LogsAlertMetricsWrapper: FC<LogsAlertMetricsProps> = (props) => {
   return (
     <LogsConfigProvider>
       <LogsAlertMetrics {...props} />

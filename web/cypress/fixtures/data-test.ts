@@ -229,4 +229,3 @@ export const persesDataTestIDs = {
   panelGroupHeader: 'panel-group-header',
   panelHeader: 'panel',
 };
-

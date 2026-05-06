@@ -9,11 +9,11 @@ import {
   TextInput,
   ValidatedOptions,
 } from '@patternfly/react-core';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useBoolean } from '../hooks/useBoolean';
 import { padLeadingZero } from '../value-utils';
 import './precision-time-picker.css';
+import { FC, useRef, useState, MouseEvent as ReactMouseEvent } from 'react';
 
 interface PrecisionTimePickerProps {
   time: string;
@@ -62,14 +62,14 @@ const timeMenuItemsBuilder: () => Array<string> = () => {
 
 const timeMenuItems = timeMenuItemsBuilder();
 
-export const PrecisionTimePicker: React.FC<PrecisionTimePickerProps> = ({ onChange, time }) => {
+export const PrecisionTimePicker: FC<PrecisionTimePickerProps> = ({ onChange, time }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
-  const [value, setValue] = React.useState(time);
-  const [isValid, setIsvalid] = React.useState(true);
+  const [value, setValue] = useState(time);
+  const [isValid, setIsvalid] = useState(true);
   const { value: isMenuOpen, setTrue: openMenu, setFalse: closeMenu } = useBoolean(false);
-  const inputRef = React.useRef<HTMLInputElement | null>(null);
-  const menuRef = React.useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   const handleValueChange = (changedValue: string) => {
     setValue(changedValue);
@@ -95,7 +95,7 @@ export const PrecisionTimePicker: React.FC<PrecisionTimePickerProps> = ({ onChan
     }
   };
 
-  const handleMenuSelect = (_?: React.MouseEvent, itemId?: string | number) => {
+  const handleMenuSelect = (_?: ReactMouseEvent, itemId?: string | number) => {
     if (itemId && typeof itemId === 'string') {
       handleValueChange(itemId);
     }

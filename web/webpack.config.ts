@@ -61,6 +61,8 @@ const config: Configuration = {
     port: 9001,
     // Allow bridge running in a container to connect to the plugin dev server.
     allowedHosts: 'all',
+    hot: false,
+    liveReload: true,
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
@@ -69,6 +71,9 @@ const config: Configuration = {
     devMiddleware: {
       writeToDisk: true,
     },
+  },
+  stats: {
+    errorDetails: true,
   },
   plugins: [
     new ConsoleRemotePlugin(),

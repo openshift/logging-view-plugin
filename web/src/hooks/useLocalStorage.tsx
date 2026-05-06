@@ -1,4 +1,4 @@
-import React from 'react';
+import { Dispatch, useCallback, useEffect, useRef } from 'react';
 
 const parseValue = <T,>(value: string | null): T | null => {
   if (value) {
@@ -12,10 +12,10 @@ const parseValue = <T,>(value: string | null): T | null => {
   return null;
 };
 
-export const useLocalStorage = <T,>(key: string): [T | null, React.Dispatch<T>] => {
-  const value = React.useRef<T | null>(parseValue(window.localStorage.getItem(key)));
+export const useLocalStorage = <T,>(key: string): [T | null, Dispatch<T>] => {
+  const value = useRef<T | null>(parseValue(window.localStorage.getItem(key)));
 
-  const callback = React.useCallback(
+  const callback = useCallback(
     (event: StorageEvent) => {
       if (event.key === key) {
         value.current = parseValue(event.newValue);
@@ -24,17 +24,17 @@ export const useLocalStorage = <T,>(key: string): [T | null, React.Dispatch<T>] 
     [key],
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     window.addEventListener('storage', callback);
     return () => {
       window.removeEventListener('storage', callback);
     };
   }, [callback]);
 
-  const updateValue = React.useCallback(
+  const updateValue = useCallback(
     (val: T) => window.localStorage.setItem(key, JSON.stringify(val)),
     [key],
   );
-
+  // eslint-disable-next-line react-hooks/refs
   return [value.current, updateValue];
 };
