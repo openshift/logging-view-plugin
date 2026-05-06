@@ -11,7 +11,16 @@ import {
   ToolbarGroup,
 } from '@patternfly/react-core';
 import { FilterIcon } from '@patternfly/react-icons';
-import React, { useEffect } from 'react';
+import {
+  CSSProperties,
+  FC,
+  MouseEvent as ReactMouseEvent,
+  Ref,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDebounce } from '../../hooks/useDebounce';
 import { TestIds } from '../../test-ids';
@@ -27,7 +36,7 @@ interface AttributeFilterProps {
   tenant?: string;
 }
 
-export const AttributeFilter: React.FC<AttributeFilterProps> = ({
+export const AttributeFilter: FC<AttributeFilterProps> = ({
   attributeList,
   filters = {},
   onFiltersChange,
@@ -36,14 +45,14 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
-  const [isAttributeExpanded, setIsAttributeExpanded] = React.useState(false);
-  const changeFromInput = React.useRef(false);
-  const [textInputValue, setTextInputValue] = React.useState('');
+  const [isAttributeExpanded, setIsAttributeExpanded] = useState(false);
+  const changeFromInput = useRef(false);
+  const [textInputValue, setTextInputValue] = useState('');
   const debouncedInputValue = useDebounce(textInputValue);
-  const [selectedAttributeId, setSelectedAttributeId] = React.useState<string | undefined>(
+  const [selectedAttributeId, setSelectedAttributeId] = useState<string | undefined>(
     attributeList[0]?.id,
   );
-  const selectRef = React.useRef<HTMLDivElement>(null);
+  const selectRef = useRef<HTMLDivElement>(null);
 
   const handleAttributeToggle = () => {
     setIsAttributeExpanded(!isAttributeExpanded);
@@ -53,7 +62,7 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
     (attr) => attr.id === selectedAttributeId && attr.valueType === 'text',
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (textAttribute) {
       const [initialText] = filters[textAttribute.id] ?? [];
       changeFromInput.current = false;
@@ -61,36 +70,39 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
     }
   }, [textAttribute, filters]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Audit tenant has only the content attribute
     if (tenant === 'audit') {
       setSelectedAttributeId(attributeList[0]?.id);
     }
-  }, [tenant]);
+  }, [tenant, attributeList]);
 
   useEffect(() => {
     if (!selectedAttributeId) {
       setSelectedAttributeId(attributeList[0]?.id);
     }
-  }, [attributeList]);
+  }, [attributeList, selectedAttributeId]);
 
-  const handleClickOutside = (event: MouseEvent) => {
-    if (isAttributeExpanded && !selectRef.current?.contains(event.target as Node)) {
-      setIsAttributeExpanded(false);
-    }
-  };
+  const handleClickOutside = useCallback(
+    (event: MouseEvent) => {
+      if (isAttributeExpanded && !selectRef.current?.contains(event.target as Node)) {
+        setIsAttributeExpanded(false);
+      }
+    },
+    [isAttributeExpanded, setIsAttributeExpanded],
+  );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isAttributeExpanded) {
       window.addEventListener('click', handleClickOutside);
     }
     return () => {
       window.removeEventListener('click', handleClickOutside);
     };
-  }, [isAttributeExpanded]);
+  }, [isAttributeExpanded, handleClickOutside]);
 
   const handleAttributeSelect = (
-    _: React.MouseEvent<Element, MouseEvent> | undefined,
+    _: ReactMouseEvent<Element, MouseEvent> | undefined,
     value: string | number | undefined,
   ) => {
     if (typeof value === 'string') {
@@ -99,32 +111,33 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
     setIsAttributeExpanded(false);
   };
 
-  const handleAttributeValueChange = (
-    value: Set<string>,
-    expandedSelections?: Map<string, Set<string>>,
-  ) => {
-    if (selectedAttributeId) {
-      if (!filters[selectedAttributeId]) {
-        filters[selectedAttributeId] = new Set();
-      }
-
-      if (expandedSelections) {
-        for (const [key, val] of expandedSelections) {
-          filters[key] = val;
+  const handleAttributeValueChange = useCallback(
+    (value: Set<string>, expandedSelections?: Map<string, Set<string>>) => {
+      const newFilters = { ...filters };
+      if (selectedAttributeId) {
+        if (!newFilters[selectedAttributeId]) {
+          newFilters[selectedAttributeId] = new Set();
         }
 
-        onFiltersChange?.(filters);
-      } else {
-        onFiltersChange?.({
-          ...filters,
-          [selectedAttributeId]: value,
-        });
-      }
-    }
-  };
+        if (expandedSelections) {
+          for (const [key, val] of expandedSelections) {
+            newFilters[key] = val;
+          }
 
-  React.useEffect(() => {
-    const [initialText] = textAttribute ? filters[textAttribute.id] ?? [] : [];
+          onFiltersChange?.(newFilters);
+        } else {
+          onFiltersChange?.({
+            ...newFilters,
+            [selectedAttributeId]: value,
+          });
+        }
+      }
+    },
+    [filters, selectedAttributeId, onFiltersChange],
+  );
+
+  useEffect(() => {
+    const [initialText] = textAttribute ? (filters[textAttribute.id] ?? []) : [];
     const filterReset = initialText === undefined && debouncedInputValue === '';
 
     if (!filterReset && changeFromInput.current) {
@@ -132,7 +145,7 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
         debouncedInputValue === '' ? new Set() : new Set([debouncedInputValue]),
       );
     }
-  }, [debouncedInputValue]);
+  }, [debouncedInputValue, filters, handleAttributeValueChange, textAttribute]);
 
   const handleDeleteAttributeGroup = (attribute: string) => () => {
     onFiltersChange?.({ ...filters, [attribute]: new Set() });
@@ -152,7 +165,7 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
     setTextInputValue(value);
   };
 
-  const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
+  const toggle = (toggleRef: Ref<MenuToggleElement>) => (
     <MenuToggle
       ref={toggleRef}
       onClick={handleAttributeToggle}
@@ -163,19 +176,23 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
       style={
         {
           width: '240px',
-        } as React.CSSProperties
+        } as CSSProperties
       }
     >
-      {attributeList.find((attribute) => attribute.id === selectedAttributeId)?.name}
+      {attributeList.find((attribute) => attribute.id === selectedAttributeId)?.name ??
+        t('Attribute')}
     </MenuToggle>
   );
+
+  const namespaces = filters['namespace'] ? Array.from(filters['namespace']) : [];
+  const namespacesKey = namespaces.sort().join('-');
 
   const renderAttributeValueComponent = (attribute: Attribute) => {
     switch (attribute.valueType) {
       case 'text': {
         return (
           <TextInput
-            key={`text-${attribute.id}`}
+            key={`text-${attribute.id}-${namespacesKey}`}
             placeholder={t('Search by {{attributeName}}', {
               attributeName: attribute.name,
             })}
@@ -191,7 +208,7 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
       case 'select':
         return (
           <SearchSelect
-            key={`select-${attribute.id}`}
+            key={`select-${attribute.id}-${namespacesKey}`}
             attribute={attribute}
             onSelect={handleAttributeValueChange}
             filters={filters}
@@ -201,7 +218,7 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
       case 'checkbox-select':
         return (
           <SearchSelect
-            key={`checkbox-select-${attribute.id}`}
+            key={`checkbox-select-${attribute.id}-${namespacesKey}`}
             attribute={attribute}
             onSelect={handleAttributeValueChange}
             filters={filters}
@@ -221,17 +238,20 @@ export const AttributeFilter: React.FC<AttributeFilterProps> = ({
       >
         <div ref={selectRef}>
           <Select
-            isOpen={isAttributeExpanded}
+            selected={selectedAttributeId}
             onSelect={handleAttributeSelect}
-            placeholder={t('Attribute')}
+            isOpen={isAttributeExpanded}
+            onOpenChange={setIsAttributeExpanded}
             toggle={toggle}
           >
             <SelectList>
-              {attributeList.map(({ name: label, id }) => (
-                <SelectOption key={id} value={id} isSelected={selectedAttributeId === id}>
-                  {label}
-                </SelectOption>
-              ))}
+              {attributeList.map((attribute) => {
+                return (
+                  <SelectOption key={attribute.id} value={attribute.id}>
+                    {attribute.name}
+                  </SelectOption>
+                );
+              })}
             </SelectList>
           </Select>
         </div>

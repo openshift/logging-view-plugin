@@ -1,7 +1,7 @@
 import { ChartBarIcon, CompressIcon } from '@patternfly/react-icons';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ToggleButton } from './toggle-button';
+import { FC } from 'react';
 
 interface ToggleHistogramButtonProps {
   isToggled: boolean;
@@ -9,7 +9,7 @@ interface ToggleHistogramButtonProps {
   onToggle?: (isToggled: boolean) => void;
 }
 
-export const ToggleHistogramButton: React.FC<ToggleHistogramButtonProps> = (props) => {
+export const ToggleHistogramButton: FC<ToggleHistogramButtonProps> = (props) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
   return (

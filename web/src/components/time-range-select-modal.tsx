@@ -1,7 +1,5 @@
 import { Alert, Button, DatePicker, ModalFooter, ModalHeader } from '@patternfly/react-core';
 import { Modal, ModalBody, ModalVariant } from '@patternfly/react-core';
-// import { Modal, ModalBoxBody, ModalVariant } from '@patternfly/react-core/deprecated';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   DateFormat,
@@ -16,6 +14,7 @@ import { defaultTimeRange, numericTimeRange } from '../time-range';
 import { padLeadingZero } from '../value-utils';
 import { PrecisionTimePicker } from './precision-time-picker';
 import './time-range-select-modal.css';
+import { FC, useEffect, useState } from 'react';
 
 interface TimeRangeSelectModalProps {
   onClose: () => void;
@@ -26,7 +25,7 @@ interface TimeRangeSelectModalProps {
 
 export const INTERVAL_AUTO_KEY = 'AUTO';
 
-export const TimeRangeSelectModal: React.FC<TimeRangeSelectModalProps> = ({
+export const TimeRangeSelectModal: FC<TimeRangeSelectModalProps> = ({
   onClose,
   onSelectRange,
   initialRange,
@@ -36,23 +35,23 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModalProps> = ({
 
   const effectiveTimezone = normalizeTimezone(timezone) ?? getBrowserTimezone();
   const initialRangeNumber = numericTimeRange(initialRange ?? defaultTimeRange());
-  const [startDate, setStartDate] = React.useState<string>(
+  const [startDate, setStartDate] = useState<string>(
     dateToFormat(initialRangeNumber.start, DateFormat.DateMed, effectiveTimezone),
   );
-  const [startTime, setStartTime] = React.useState<string>(
+  const [startTime, setStartTime] = useState<string>(
     dateToFormat(initialRangeNumber.start, DateFormat.TimeFull, effectiveTimezone),
   );
-  const [endDate, setEndDate] = React.useState<string>(
+  const [endDate, setEndDate] = useState<string>(
     dateToFormat(initialRangeNumber.end, DateFormat.DateMed, effectiveTimezone),
   );
-  const [endTime, setEndTime] = React.useState<string>(
+  const [endTime, setEndTime] = useState<string>(
     dateToFormat(initialRangeNumber.end, DateFormat.TimeFull, effectiveTimezone),
   );
-  const [isRangeValid, setIsRangeValid] = React.useState(false);
+  const [isRangeValid, setIsRangeValid] = useState(false);
 
   const isRangeSelected = startDate && startTime && endDate && endTime;
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isRangeSelected) {
       const start = parseInTimezone(startDate, startTime, effectiveTimezone);
       const end = parseInTimezone(endDate, endTime, effectiveTimezone);
@@ -117,7 +116,7 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModalProps> = ({
   /* As the patternfly version used in OCP 4.12-4.14 varies,
    * we need to handle both cases until we can build different images per OCP version
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const handleStartDateChange = (event: any, value: any) => {
     if (typeof event === 'string') {
       setStartDate(event);
@@ -129,7 +128,7 @@ export const TimeRangeSelectModal: React.FC<TimeRangeSelectModalProps> = ({
   /* As the patternfly version used in OCP 4.12-4.14 varies,
    * we need to handle both cases until we can build different images per OCP version
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const handleEndDateChange = (event: any, value: any) => {
     if (typeof event === 'string') {
       setEndDate(event);

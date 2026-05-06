@@ -1,3 +1,3 @@
-import React from 'react';
+import { FC } from 'react';
 
-export const Spacer: React.FC = () => <div style={{ flex: '1 0.5 0%' }} />;
+export const Spacer: FC = () => <div style={{ flex: '1 0.5 0%' }} />;

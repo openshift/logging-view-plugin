@@ -9,7 +9,6 @@ import {
   Tooltip,
 } from '@patternfly/react-core';
 import { SyncAltIcon } from '@patternfly/react-icons';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   availableAttributes,
@@ -33,11 +32,12 @@ import { useLogs } from '../hooks/useLogs';
 import { defaultQueryFromTenant, useURLState } from '../hooks/useURLState';
 import { Direction, isMatrixResult } from '../logs.types';
 import { TestIds } from '../test-ids';
+import { FC, memo, useEffect, useState } from 'react';
 
-const LogsPage: React.FC = () => {
+const LogsPage: FC = () => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
-  const [isHistogramVisible, setIsHistogramVisible] = React.useState(false);
+  const [isHistogramVisible, setIsHistogramVisible] = useState(false);
 
   const { config, configLoaded } = useLogsConfig();
 
@@ -102,6 +102,8 @@ const LogsPage: React.FC = () => {
   };
 
   const runQuery = ({ queryToUse }: { queryToUse?: string } = {}) => {
+    if (!configLoaded) return;
+
     getLogs({ query: queryToUse ?? query, tenant, timeRange, direction, schema });
 
     if (isHistogramVisible) {
@@ -156,7 +158,7 @@ const LogsPage: React.FC = () => {
     runQuery();
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!configLoaded) {
       return;
     }
@@ -164,13 +166,14 @@ const LogsPage: React.FC = () => {
     const queryToUse = updateQuery(filters, tenant);
 
     runQuery({ queryToUse });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRange, isHistogramVisible, direction, tenant, configLoaded]);
 
   const isQueryEmpty = query === '';
 
   const resultIsMetric = isMatrixResult(logsData?.data);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (resultIsMetric) {
       setIsHistogramVisible(false);
     }
@@ -305,12 +308,13 @@ const LogsPage: React.FC = () => {
   );
 };
 
-const LogsPageWrapper: React.FC = () => {
+const LogsPageWrapper: FC = memo(() => {
   return (
     <LogsConfigProvider>
       <LogsPage />
     </LogsConfigProvider>
   );
-};
+});
+LogsPageWrapper.displayName = 'LogsPageWrapper';
 
 export default LogsPageWrapper;

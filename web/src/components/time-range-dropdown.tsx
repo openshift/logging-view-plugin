@@ -6,7 +6,6 @@ import {
   MenuToggle,
   MenuToggleElement,
 } from '@patternfly/react-core';
-import React from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { TimeRange } from '../logs.types';
 import { TestIds } from '../test-ids';
@@ -19,6 +18,7 @@ import {
 } from '../time-range';
 import { TimeRangeSelectModal } from './time-range-select-modal';
 import { useTranslation } from 'react-i18next';
+import { FC, Ref, useEffect, useState } from 'react';
 
 const DEFAULT_DURATION_KEY = '1h';
 const STORED_TIME_RANGE_KEY = 'logging-view-plugin.time-range';
@@ -54,7 +54,7 @@ const getSelectedOptionIndex = ({
   return timeRangeOptions.findIndex((option) => option.key === durationKey) ?? 1;
 };
 
-export const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
+export const TimeRangeDropdown: FC<TimeRangeDropdownProps> = ({
   onChange,
   value,
   isDisabled = false,
@@ -62,15 +62,15 @@ export const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
-  const [isTimeRangeModalOpen, setIsTimeRangeModalOpen] = React.useState(false);
+  const [isTimeRangeModalOpen, setIsTimeRangeModalOpen] = useState(false);
   const [storedTimeRange, setStoredTimeRange] = useLocalStorage<TimeRange>(STORED_TIME_RANGE_KEY);
 
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [selectedIndex, setSelectedIndex] = React.useState<number>(
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState<number>(
     getSelectedOptionIndex({ storedTimeRange, timeRangeValue: value }),
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     setSelectedIndex(getSelectedOptionIndex({ timeRangeValue: value }));
   }, [value]);
 
@@ -121,7 +121,7 @@ export const TimeRangeDropdown: React.FC<TimeRangeDropdownProps> = ({
           isOpen={isOpen}
           onSelect={() => setIsOpen(false)}
           onOpenChange={(isOpenVal: boolean) => setIsOpen(isOpenVal)}
-          toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+          toggle={(toggleRef: Ref<MenuToggleElement>) => (
             <MenuToggle
               isDisabled={isDisabled}
               ref={toggleRef}

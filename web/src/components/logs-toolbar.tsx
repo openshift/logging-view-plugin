@@ -14,7 +14,6 @@ import {
   ToolbarFilter,
   ToolbarGroup,
 } from '@patternfly/react-core';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLogsConfig } from '../hooks/LogsConfigProvider';
 import { Schema, SchemaConfig } from '../logs.types';
@@ -33,6 +32,16 @@ import { Spacer } from './spacer';
 import { TenantDropdown } from './tenant-dropdown';
 import { ToggleButton } from './toggle-button';
 import { TogglePlay } from './toggle-play';
+import {
+  CSSProperties,
+  FC,
+  MouseEvent as ReactMouseEvent,
+  Ref,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 interface LogsToolbarProps {
   query: string;
@@ -46,7 +55,7 @@ interface LogsToolbarProps {
   enableStreaming?: boolean;
   isStreaming?: boolean;
   severityFilter?: Set<Severity>;
-  onStreamingToggle?: (e: React.MouseEvent) => void;
+  onStreamingToggle?: (e: ReactMouseEvent) => void;
   onSeverityChange?: (severityFilter: Set<Severity>) => void;
   onShowResourcesToggle?: (showResources: boolean) => void;
   onShowStatsToggle?: (showStats: boolean) => void;
@@ -71,7 +80,7 @@ const availableSeverityFilters: Array<Severity> = [
   'unknown',
 ];
 
-export const LogsToolbar: React.FC<LogsToolbarProps> = ({
+export const LogsToolbar: FC<LogsToolbarProps> = ({
   query,
   onQueryChange,
   onQueryRun,
@@ -97,30 +106,33 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
-  const [isSeverityExpanded, setIsSeverityExpanded] = React.useState(false);
-  const [isQueryShown, setIsQueryShown] = React.useState(false);
-  const [isSchemaShown, setIsSchemaShown] = React.useState(false);
+  const [isSeverityExpanded, setIsSeverityExpanded] = useState(false);
+  const [isQueryShown, setIsQueryShown] = useState(false);
+  const [isSchemaShown, setIsSchemaShown] = useState(false);
 
   const { config } = useLogsConfig();
 
-  const severitySelectRef = React.useRef<HTMLDivElement>(null);
+  const severitySelectRef = useRef<HTMLDivElement>(null);
 
-  const handleClickOutside = (event: MouseEvent) => {
-    if (isSeverityExpanded && !severitySelectRef.current?.contains(event.target as Node)) {
-      setIsSeverityExpanded(false);
-    }
-  };
+  const handleClickOutside = useCallback(
+    (event: MouseEvent) => {
+      if (isSeverityExpanded && !severitySelectRef.current?.contains(event.target as Node)) {
+        setIsSeverityExpanded(false);
+      }
+    },
+    [isSeverityExpanded, setIsSeverityExpanded],
+  );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isSeverityExpanded) {
       window.addEventListener('click', handleClickOutside);
     }
     return () => {
       window.removeEventListener('click', handleClickOutside);
     };
-  }, [isSeverityExpanded]);
+  }, [isSeverityExpanded, handleClickOutside]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (config?.schema === SchemaConfig.select) {
       setIsSchemaShown(true);
     }
@@ -134,8 +146,9 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
     _category: string | ToolbarLabelGroup,
     chip: string | ToolbarLabel,
   ) => {
-    severityFilter.delete(chip.toString() as Severity);
-    const newFilters = { ...(filters ?? {}), severity: severityFilter };
+    const newSeverityFilters = new Set(severityFilter);
+    newSeverityFilters.delete(chip.toString() as Severity);
+    const newFilters = { ...(filters ?? {}), severity: newSeverityFilters };
     onFiltersChange?.(newFilters);
   };
 
@@ -152,26 +165,27 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
   };
 
   const onSeveritySelect = (
-    _: React.MouseEvent<Element, MouseEvent> | undefined,
+    _: ReactMouseEvent<Element, MouseEvent> | undefined,
     value: string | number | undefined,
   ) => {
     const severityValue = (isOption(value) ? value.value : String(value)) as Severity;
+    const newSeverityFilters = new Set(severityFilter);
 
-    if (severityFilter.has(severityValue)) {
-      severityFilter.delete(severityValue);
+    if (newSeverityFilters.has(severityValue)) {
+      newSeverityFilters.delete(severityValue);
     } else {
-      severityFilter.add(severityValue);
+      newSeverityFilters.add(severityValue);
     }
 
     onFiltersChange?.({
       ...(filters ?? {}),
-      severity: new Set(severityFilter),
+      severity: newSeverityFilters,
     });
   };
 
   const severityFilterArray = Array.from(severityFilter);
 
-  const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
+  const toggle = (toggleRef: Ref<MenuToggleElement>) => (
     <MenuToggle
       isDisabled={isDisabled}
       ref={toggleRef}
@@ -180,7 +194,7 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
       style={
         {
           width: '200px',
-        } as React.CSSProperties
+        } as CSSProperties
       }
     >
       {t('Severity')}
@@ -211,21 +225,20 @@ export const LogsToolbar: React.FC<LogsToolbarProps> = ({
           >
             <div ref={severitySelectRef}>
               <Select
-                aria-label="Severity"
-                toggle={toggle}
+                selected={severityFilterArray}
                 onSelect={onSeveritySelect}
-                placeholder={t('Severity')}
                 isOpen={isSeverityExpanded}
+                onOpenChange={setIsSeverityExpanded}
+                toggle={toggle}
+                aria-label="Severity"
               >
                 <SelectList>
                   {availableSeverityFilters.map((severity) => (
                     <SelectOption
                       key={severity}
                       value={severity}
-                      isSelected={severityFilterArray.some(
-                        (selectedSeverity) => selectedSeverity === severity,
-                      )}
                       hasCheckbox={true}
+                      isSelected={severityFilterArray.includes(severity)}
                     >
                       {severity}
                     </SelectOption>

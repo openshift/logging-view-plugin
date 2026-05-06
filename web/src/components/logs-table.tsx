@@ -1,8 +1,20 @@
+/* eslint-disable react-hooks/refs */
 import { ResourceLink, RowProps, TableColumn } from '@openshift-console/dynamic-plugin-sdk';
 import { Split, SplitItem } from '@patternfly/react-core';
 import { ISortBy, SortByDirection, Td, ThProps } from '@patternfly/react-table';
-import React, { useCallback, useEffect } from 'react';
-import { Link } from 'react-router-dom-v5-compat';
+import {
+  Children,
+  FC,
+  MouseEvent,
+  MutableRefObject,
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { Link } from 'react-router';
 import { DateFormat, dateToFormat } from '../date-utils';
 import {
   Direction,
@@ -138,7 +150,7 @@ const columns: Array<TableColumn<LogTableData>> = [
   },
 ];
 
-const ResourceLinkList: React.FC<{
+const ResourceLinkList: FC<{
   resource: Resource;
   data: LogTableData;
 }> = ({ resource, data }) => {
@@ -169,15 +181,15 @@ const ResourceLinkList: React.FC<{
 };
 
 type TableRowProps = {
-  expandedItems: Set<number>;
-  handleRowToggle: (e: React.MouseEvent, rowIndex: number) => void;
+  expandedItemsRef: MutableRefObject<Set<number>>;
+  handleRowToggle: (e: MouseEvent, rowIndex: number) => void;
   showResources: boolean;
   colSpan?: number;
 };
 
-const TableRow = ({ expandedItems, handleRowToggle, showResources, colSpan }: TableRowProps) => {
+const TableRow = ({ expandedItemsRef, handleRowToggle, showResources, colSpan }: TableRowProps) => {
   return function TableRowComponent({ obj, activeColumnIDs }: RowProps<LogTableData>) {
-    const isExpanded = expandedItems.has(obj.logIndex);
+    const isExpanded = expandedItemsRef.current.has(obj.logIndex);
 
     return obj.type === 'log' ? (
       <>
@@ -217,7 +229,7 @@ const TableRow = ({ expandedItems, handleRowToggle, showResources, colSpan }: Ta
   };
 };
 
-export const LogsTable: React.FC<LogsTableProps> = ({
+export const LogsTable: FC<PropsWithChildren<LogsTableProps>> = ({
   logsData,
   isLoading,
   isLoadingMore,
@@ -234,13 +246,15 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   hasNamespaceFilter,
   schema,
 }) => {
-  const [expandedItems, setExpandedItems] = React.useState<Set<number>>(new Set());
-  const [prevChildrenCount, setPrevChildrenCount] = React.useState(0);
-  const [sortBy, setSortBy] = React.useState<ISortBy>({
+  const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
+  const expandedItemsRef = useRef(expandedItems);
+  expandedItemsRef.current = expandedItems;
+  const [prevChildrenCount, setPrevChildrenCount] = useState(0);
+  const [sortBy, setSortBy] = useState<ISortBy>({
     index: 1,
     direction: direction === 'backward' ? 'desc' : 'asc',
   });
-  const tableData: Array<LogTableData> = React.useMemo(() => {
+  const tableData: Array<LogTableData> = useMemo(() => {
     const logsTableData = aggregateStreamLogData(logsData, timezone);
 
     const logsTableDataWithExpanded = logsTableData.flatMap((row) => [
@@ -252,17 +266,20 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   }, [logsData, timezone]);
 
   useEffect(() => {
-    setPrevChildrenCount(React.Children.count(children));
+    setPrevChildrenCount(Children.count(children));
   }, [children]);
 
-  const handleRowToggle = (_event: React.MouseEvent, rowIndex: number) => {
-    if (expandedItems.has(rowIndex)) {
-      expandedItems.delete(rowIndex);
-      setExpandedItems(new Set(expandedItems));
-    } else {
-      setExpandedItems(new Set(expandedItems.add(rowIndex)));
-    }
-  };
+  const handleRowToggle = useCallback((_event: MouseEvent, rowIndex: number) => {
+    setExpandedItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(rowIndex)) {
+        next.delete(rowIndex);
+      } else {
+        next.add(rowIndex);
+      }
+      return next;
+    });
+  }, []);
 
   const getSortParams = useCallback(
     (columnIndex: number): ThProps['sort'] => {
@@ -282,8 +299,8 @@ export const LogsTable: React.FC<LogsTableProps> = ({
               tableSortDirection === undefined
                 ? undefined
                 : tableSortDirection === 'desc'
-                ? 'backward'
-                : 'forward',
+                  ? 'backward'
+                  : 'forward',
             );
           }
         },
@@ -293,27 +310,65 @@ export const LogsTable: React.FC<LogsTableProps> = ({
     [sortBy, onSortByDate],
   );
 
-  const sortedData = React.useMemo(() => {
-    setExpandedItems(new Set());
+  const prevLogsDataRef = useRef(logsData);
+  if (logsData !== prevLogsDataRef.current) {
+    const prevData = prevLogsDataRef.current;
+    prevLogsDataRef.current = logsData;
 
+    const dataChanged =
+      !prevData ||
+      !logsData ||
+      isStreaming ||
+      prevData.data?.result?.length !== logsData.data?.result?.length;
+
+    if (expandedItems.size > 0 && dataChanged) {
+      setExpandedItems(new Set());
+    }
+  }
+
+  const sortedData = useMemo(() => {
+    const dataCopy = [...tableData];
     if (sortBy.index !== undefined && columns[sortBy.index]) {
       const { sort } = columns[sortBy.index];
       if (sort && typeof sort === 'function') {
         return sort(
-          tableData,
+          dataCopy,
           sortBy.direction === 'asc' ? SortByDirection.asc : SortByDirection.desc,
         );
       }
     }
 
-    return tableData.sort((a, b) => numericComparator(a.timestamp, b.timestamp, -1));
-  }, [tableData, columns, sortBy]);
+    return dataCopy.sort((a, b) => numericComparator(a.timestamp, b.timestamp, -1));
+  }, [tableData, sortBy]);
 
   const dataIsEmpty = sortedData.length === 0;
 
   const handleLoadMore = () => {
     onLoadMore?.(tableData[tableData.length - 1].timestamp / 1e6);
   };
+
+  const RowComponent = useMemo(
+    () =>
+      TableRow({
+        expandedItemsRef,
+        handleRowToggle,
+        showResources,
+        colSpan: columns.length,
+      }),
+    [handleRowToggle, showResources],
+  );
+
+  const getRowClassName = useCallback((row: LogTableData) => {
+    const expanded = expandedItemsRef.current.has(row.logIndex);
+    let expandedClass = '';
+    if (expanded) {
+      expandedClass =
+        row.type === 'log'
+          ? 'lv-plugin__table__row--expanded'
+          : 'lv-plugin__table__row--expanded-details';
+    }
+    return `lv-plugin__table__row ${getSeverityClass(row.severity)} ${expandedClass}`;
+  }, []);
 
   return (
     <div data-test={TestIds.LogsTable} className="lv-plugin__table">
@@ -322,23 +377,10 @@ export const LogsTable: React.FC<LogsTableProps> = ({
 
       <VirtualizedLogsTable
         data={sortedData}
-        Row={TableRow({
-          expandedItems,
-          handleRowToggle,
-          showResources,
-          colSpan: columns.length,
-        })}
+        Row={RowComponent}
         columns={columns}
         getSortParams={getSortParams}
-        getRowClassName={(row) =>
-          `lv-plugin__table__row ${getSeverityClass(row.severity)} ${
-            expandedItems.has(row.logIndex)
-              ? row.type === 'log'
-                ? 'lv-plugin__table__row--expanded'
-                : 'lv-plugin__table__row--expanded-details'
-              : ''
-          }`
-        }
+        getRowClassName={getRowClassName}
         error={error}
         isLoading={isLoading}
         isStreaming={isStreaming}
@@ -346,9 +388,11 @@ export const LogsTable: React.FC<LogsTableProps> = ({
         hasMoreLogsData={hasMoreLogsData}
         onLoadMore={handleLoadMore}
         isLoadingMore={isLoadingMore}
-        shouldResize={showStats || React.Children.count(children) != prevChildrenCount}
+        shouldResize={showStats || Children.count(children) != prevChildrenCount}
         hasNamespaceFilter={hasNamespaceFilter}
         schema={schema}
+        expandedItems={expandedItems}
+        showResources={showResources}
       />
     </div>
   );

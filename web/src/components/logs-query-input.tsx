@@ -1,10 +1,10 @@
 import { Alert, Form, FormAlert, FormGroup, TextArea } from '@patternfly/react-core';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { LogQLQuery } from '../logql-query';
 import { TestIds } from '../test-ids';
 import { ExecuteQueryButton } from './execute-query-button';
 import './logs-query-input.css';
+import { FC, KeyboardEvent, useEffect, useState } from 'react';
 
 interface LogsQueryInputProps {
   value: string;
@@ -15,7 +15,7 @@ interface LogsQueryInputProps {
   tenant?: string;
 }
 
-export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
+export const LogsQueryInput: FC<LogsQueryInputProps> = ({
   value = '',
   onChange,
   onRun,
@@ -25,9 +25,9 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
-  const [internalValue, setInternalValue] = React.useState(value);
-  const [isValid, setIsValid] = React.useState(true);
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const [internalValue, setInternalValue] = useState(value);
+  const [isValid, setIsValid] = useState(true);
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (
       (e.ctrlKey || e.shiftKey || e.metaKey) &&
       e.key === 'Enter' &&
@@ -37,7 +37,7 @@ export const LogsQueryInput: React.FC<LogsQueryInputProps> = ({
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     setInternalValue(value);
     const parsedQuery = new LogQLQuery(value);
 

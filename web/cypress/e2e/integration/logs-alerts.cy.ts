@@ -5,6 +5,10 @@ import {
   queryRangeMatrixValidResponse,
 } from '../../fixtures/query-range-fixtures';
 
+Cypress.Keyboard.defaults({
+  keystrokeDelay: 15,
+});
+
 const LOGS_ALERTS_PAGE_URL = '/monitoring/alerts/test-alert';
 const QUERY_RANGE_MATRIX_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/query_range?query=sum*';

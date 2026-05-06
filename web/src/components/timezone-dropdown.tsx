@@ -12,10 +12,20 @@ import {
   TextInputGroupUtilities,
 } from '@patternfly/react-core';
 import { TimesIcon } from '@patternfly/react-icons';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { getBrowserTimezone, getTimezoneOffset } from '../date-utils';
 import { TestIds } from '../test-ids';
+import {
+  FC,
+  FormEvent,
+  KeyboardEvent,
+  MouseEvent as ReactMouseEvent,
+  Ref,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 // Extend Intl type to include supportedValuesOf (available in modern browsers)
 declare global {
@@ -64,47 +74,46 @@ interface TimezoneDropdownProps {
   isDisabled?: boolean;
 }
 
-export const TimezoneDropdown: React.FC<TimezoneDropdownProps> = ({
+export const TimezoneDropdown: FC<TimezoneDropdownProps> = ({
   onChange,
   value = '',
   isDisabled,
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
-  const [isOpen, setIsOpen] = React.useState(false);
-  const localTimezone = React.useMemo(() => getBrowserTimezone(), []);
-  const [selected, setSelected] = React.useState<string>(value || localTimezone);
-  const [inputValue, setInputValue] = React.useState<string>(value || localTimezone);
-  const [filterValue, setFilterValue] = React.useState<string>('');
-  const [focusedItemIndex, setFocusedItemIndex] = React.useState<number | null>(null);
-  const [activeItemId, setActiveItemId] = React.useState<string | null>(null);
-  const textInputRef = React.useRef<HTMLInputElement>();
+  const [isOpen, setIsOpen] = useState(false);
+  const localTimezone = useMemo(() => getBrowserTimezone(), []);
+  const [selected, setSelected] = useState<string>(value || localTimezone);
+  const [inputValue, setInputValue] = useState<string>(value || localTimezone);
+  const [filterValue, setFilterValue] = useState<string>('');
+  const [focusedItemIndex, setFocusedItemIndex] = useState<number | null>(null);
+  const [activeItemId, setActiveItemId] = useState<string | null>(null);
+  const textInputRef = useRef<HTMLInputElement>();
 
-  const initialSelectOptions: SelectOptionProps[] = React.useMemo(() => {
+  const initialSelectOptions: SelectOptionProps[] = useMemo(() => {
     return getAllTimezones().map((tz) => ({
       value: tz,
       children: formatTimezoneLabel(tz),
     }));
   }, []);
 
-  const commonTimezoneOptions: SelectOptionProps[] = React.useMemo(() => {
+  const commonTimezoneOptions: SelectOptionProps[] = useMemo(() => {
     return DEFAULT_TIMEZONES.map((tz) => ({
       value: tz,
       children: formatTimezoneLabel(tz),
     }));
   }, []);
 
-  const [selectOptions, setSelectOptions] =
-    React.useState<SelectOptionProps[]>(initialSelectOptions);
+  const [selectOptions, setSelectOptions] = useState<SelectOptionProps[]>(initialSelectOptions);
 
   const NO_RESULTS = 'no results';
 
-  React.useEffect(() => {
+  useEffect(() => {
     const timezone = value || localTimezone;
     setSelected(timezone);
     setInputValue(formatTimezoneLabel(timezone));
-  }, [value]);
+  }, [value, localTimezone]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     let newSelectOptions: SelectOptionProps[] = initialSelectOptions;
 
     // Filter menu items based on the text input value when one exists
@@ -131,7 +140,7 @@ export const TimezoneDropdown: React.FC<TimezoneDropdownProps> = ({
     }
 
     setSelectOptions(newSelectOptions);
-  }, [filterValue]);
+  }, [filterValue, initialSelectOptions, isOpen, t]);
 
   const setActiveAndFocusedItem = (itemIndex: number) => {
     setFocusedItemIndex(itemIndex);
@@ -166,7 +175,7 @@ export const TimezoneDropdown: React.FC<TimezoneDropdownProps> = ({
   };
 
   const onSelect = (
-    _event: React.MouseEvent<Element, MouseEvent> | undefined,
+    _event: ReactMouseEvent<Element, MouseEvent> | undefined,
     selectedValue: string | number | undefined,
   ) => {
     if (
@@ -180,7 +189,7 @@ export const TimezoneDropdown: React.FC<TimezoneDropdownProps> = ({
     }
   };
 
-  const onTextInputChange = (_event: React.FormEvent<HTMLInputElement>, typedValue: string) => {
+  const onTextInputChange = (_event: FormEvent<HTMLInputElement>, typedValue: string) => {
     setInputValue(typedValue);
     setFilterValue(typedValue);
 
@@ -219,7 +228,7 @@ export const TimezoneDropdown: React.FC<TimezoneDropdownProps> = ({
     setActiveAndFocusedItem(indexToFocus);
   };
 
-  const onInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const onInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     const focusedItem = focusedItemIndex !== null ? selectOptions[focusedItemIndex] : null;
 
     switch (event.key) {
@@ -260,7 +269,7 @@ export const TimezoneDropdown: React.FC<TimezoneDropdownProps> = ({
     onChange?.('');
   };
 
-  const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
+  const toggle = (toggleRef: Ref<MenuToggleElement>) => (
     <MenuToggle
       ref={toggleRef}
       variant="typeahead"

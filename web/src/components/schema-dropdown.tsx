@@ -5,26 +5,34 @@ import {
   SelectList,
   SelectOption,
 } from '@patternfly/react-core';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Schema } from '../logs.types';
 import { TestIds } from '../test-ids';
+import {
+  FC,
+  MouseEvent as ReactMouseEvent,
+  Ref,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 type SchemaDropdownProps = {
   onSchemaSelected: ((schema: Schema) => void) | undefined;
   schema: Schema;
 };
 
-export const SchemaDropdown: React.FC<SchemaDropdownProps> = ({ onSchemaSelected, schema }) => {
+export const SchemaDropdown: FC<SchemaDropdownProps> = ({ onSchemaSelected, schema }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
-  const schemaSelectRef = React.useRef<HTMLDivElement>(null);
+  const schemaSelectRef = useRef<HTMLDivElement>(null);
 
-  const onToggle = () => setIsOpen(!isOpen);
+  const onToggle = () => setIsOpen((prevOpenState) => !prevOpenState);
   const onSelect = (
-    _: React.MouseEvent<Element, MouseEvent> | undefined,
+    _: ReactMouseEvent<Element, MouseEvent> | undefined,
     value: string | number | undefined,
   ) => {
     if (value != schema) {
@@ -33,29 +41,32 @@ export const SchemaDropdown: React.FC<SchemaDropdownProps> = ({ onSchemaSelected
     setIsOpen(false);
   };
 
-  const handleClickOutside = (event: MouseEvent) => {
-    if (isOpen && !schemaSelectRef.current?.contains(event.target as Node)) {
-      setIsOpen(false);
-    }
-  };
+  const handleClickOutside = useCallback(
+    (event: MouseEvent) => {
+      if (isOpen && !schemaSelectRef.current?.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    },
+    [isOpen, setIsOpen],
+  );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       window.addEventListener('click', handleClickOutside);
     }
     return () => {
       window.removeEventListener('click', handleClickOutside);
     };
-  }, [isOpen]);
+  }, [isOpen, handleClickOutside]);
 
-  const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
+  const toggle = (toggleRef: Ref<MenuToggleElement>) => (
     <MenuToggle
       ref={toggleRef}
       onClick={onToggle}
       isExpanded={isOpen}
       data-test={TestIds.SchemaToggle}
     >
-      {schema}
+      {schema ? schema : t('Select a Schema')}
     </MenuToggle>
   );
 
@@ -63,16 +74,17 @@ export const SchemaDropdown: React.FC<SchemaDropdownProps> = ({ onSchemaSelected
     <div ref={schemaSelectRef}>
       <Select
         id="logging-view-schema-dropdown"
-        isOpen={isOpen}
+        selected={schema}
         onSelect={onSelect}
-        placeholder={t('Select a Schema')}
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
         toggle={toggle}
       >
         <SelectList>
-          <SelectOption key={'otel'} value={Schema.otel} isSelected={schema === Schema.otel}>
+          <SelectOption key={'otel'} value={Schema.otel}>
             otel
           </SelectOption>
-          <SelectOption key={'viaq'} value={Schema.viaq} isSelected={schema === Schema.viaq}>
+          <SelectOption key={'viaq'} value={Schema.viaq}>
             viaq
           </SelectOption>
         </SelectList>

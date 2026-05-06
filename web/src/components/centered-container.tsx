@@ -1,7 +1,7 @@
 import { Flex, FlexItem } from '@patternfly/react-core';
-import React from 'react';
+import { FC, PropsWithChildren } from 'react';
 
-export const CenteredContainer: React.FC = ({ children }) => {
+export const CenteredContainer: FC<PropsWithChildren> = ({ children }) => {
   return (
     <Flex
       justifyContent={{ default: 'justifyContentCenter' }}

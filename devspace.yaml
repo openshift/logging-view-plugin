@@ -40,7 +40,7 @@ dev:
       # Use the instance selector that COO & helm add
       app.kubernetes.io/instance: logging
     # Replace the container image with this dev-optimized image (allows to skip image building during development)
-    devImage: quay.io/rh-ee-pyurkovi/logging-view-plugin:devspace
+    devImage: quay.io/rh-ee-pyurkovi/logging-view-plugin:devspace-pf6
     # Sync files between the local filesystem and the development container
     sync:
       - path: ./web/dist:/opt/app-root/web/dist

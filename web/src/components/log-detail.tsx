@@ -4,14 +4,14 @@ import {
   DescriptionListGroup,
   DescriptionListTerm,
 } from '@patternfly/react-core';
-import React from 'react';
 import './log-detail.css';
+import { FC } from 'react';
 
 interface LogDetailProps {
   data: Record<string, string>;
 }
 
-export const LogDetail: React.FC<LogDetailProps> = ({ data }) => (
+export const LogDetail: FC<LogDetailProps> = ({ data }) => (
   <DescriptionList
     isHorizontal
     isCompact

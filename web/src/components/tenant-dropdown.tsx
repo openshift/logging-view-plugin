@@ -1,4 +1,3 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TENANTS } from '../tenants';
 import { TestIds } from '../test-ids';
@@ -10,6 +9,15 @@ import {
   SelectOption,
 } from '@patternfly/react-core';
 import { isOption } from './filters/filters-from-params';
+import {
+  FC,
+  MouseEvent as ReactMouseEvent,
+  Ref,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 interface TenantDropdownProps {
   selectedTenant?: string;
@@ -17,45 +25,48 @@ interface TenantDropdownProps {
   isDisabled?: boolean;
 }
 
-export const TenantDropdown: React.FC<TenantDropdownProps> = ({
+export const TenantDropdown: FC<TenantDropdownProps> = ({
   selectedTenant,
   onTenantSelected,
   isDisabled = false,
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
-  const selectRef = React.useRef<HTMLDivElement>(null);
+  const selectRef = useRef<HTMLDivElement>(null);
 
   const onToggle = () => setIsOpen(!isOpen);
   const onSelect = (
-    _: React.MouseEvent<Element, MouseEvent> | undefined,
+    _: ReactMouseEvent<Element, MouseEvent> | undefined,
     value: string | number | undefined,
   ) => {
     const selectedValue = isOption(value) ? value.value : String(value);
     setIsOpen(false);
-    if (selectedValue) {
+    if (selectedValue && selectedValue !== selectedTenant) {
       onTenantSelected?.(selectedValue);
     }
   };
 
-  const handleClickOutside = (event: MouseEvent) => {
-    if (isOpen && !selectRef.current?.contains(event.target as Node)) {
-      setIsOpen(false);
-    }
-  };
+  const handleClickOutside = useCallback(
+    (event: MouseEvent) => {
+      if (isOpen && !selectRef.current?.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    },
+    [isOpen, setIsOpen],
+  );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       window.addEventListener('click', handleClickOutside);
     }
     return () => {
       window.removeEventListener('click', handleClickOutside);
     };
-  }, [isOpen]);
+  }, [isOpen, handleClickOutside]);
 
-  const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
+  const toggle = (toggleRef: Ref<MenuToggleElement>) => (
     <MenuToggle
       isDisabled={isDisabled}
       ref={toggleRef}
@@ -63,7 +74,7 @@ export const TenantDropdown: React.FC<TenantDropdownProps> = ({
       isExpanded={isOpen}
       data-test={TestIds.TenantToggle}
     >
-      {selectedTenant}
+      {selectedTenant ? selectedTenant : t('Select a tenant')}
     </MenuToggle>
   );
 
@@ -71,14 +82,15 @@ export const TenantDropdown: React.FC<TenantDropdownProps> = ({
     <div ref={selectRef}>
       <Select
         id="logging-view-tenant-dropdown"
-        isOpen={isOpen}
+        selected={selectedTenant}
         onSelect={onSelect}
-        placeholder={t('Select a tenant')}
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
         toggle={toggle}
       >
         <SelectList>
           {TENANTS.map((tenant) => (
-            <SelectOption key={tenant} value={tenant} isSelected={selectedTenant === tenant}>
+            <SelectOption key={tenant} value={tenant}>
               {tenant}
             </SelectOption>
           ))}

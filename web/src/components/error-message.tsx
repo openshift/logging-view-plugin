@@ -1,11 +1,12 @@
 import { Alert, CodeBlock, CodeBlockCode, Content, ContentVariants } from '@patternfly/react-core';
-import React from 'react';
-import { TFunction, useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { isFetchError } from '../cancellable-fetch';
 import { Schema } from '../logs.types';
 import { getStreamLabelsFromSchema, ResourceLabel } from '../parse-resources';
 import { capitalize, notUndefined } from '../value-utils';
 import './error-message.css';
+import { FC, PropsWithChildren, ReactElement, useMemo } from 'react';
+import { TFunction } from 'i18next';
 
 interface ErrorMessageProps {
   error: unknown | Error;
@@ -31,11 +32,11 @@ subjects:
 const queryWithNamespaceCode = (schema: Schema) =>
   `{ ${getStreamLabelsFromSchema(schema)[ResourceLabel.Namespace]} = "<namespace>"}`;
 
-const Suggestion: React.FC = ({ children }) => (
+const Suggestion: FC<PropsWithChildren> = ({ children }) => (
   <Content component={ContentVariants.small}>{children}</Content>
 );
 
-const ForbiddenWithNamespace: React.FC<{ t: TFunction }> = ({ t }) => (
+const ForbiddenWithNamespace: FC<{ t: TFunction }> = ({ t }) => (
   <Suggestion>
     <p>{t('You do not have permission to view logs in the selected namespace.')}</p>
     <p>
@@ -52,7 +53,7 @@ const ForbiddenWithNamespace: React.FC<{ t: TFunction }> = ({ t }) => (
   </Suggestion>
 );
 
-const ForbiddenWithoutNamespace: React.FC<{ t: TFunction; schema: Schema }> = ({ t, schema }) => (
+const ForbiddenWithoutNamespace: FC<{ t: TFunction; schema: Schema }> = ({ t, schema }) => (
   <Suggestion>
     <p>
       <strong>{t('Try selecting a specific namespace')}</strong>
@@ -83,7 +84,7 @@ const ForbiddenWithoutNamespace: React.FC<{ t: TFunction; schema: Schema }> = ({
   </Suggestion>
 );
 
-const messages: (t: TFunction) => Record<string, React.ReactElement> = (t) => ({
+const messages: (t: TFunction) => Record<string, ReactElement> = (t) => ({
   'max entries limit': (
     <>
       <Suggestion>{t('Select a smaller time range to reduce the number of results')}</Suggestion>
@@ -132,11 +133,7 @@ const messages: (t: TFunction) => Record<string, React.ReactElement> = (t) => ({
   ),
 });
 
-export const ErrorMessage: React.FC<ErrorMessageProps> = ({
-  error,
-  hasNamespaceFilter,
-  schema,
-}) => {
+export const ErrorMessage: FC<ErrorMessageProps> = ({ error, hasNamespaceFilter, schema }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
   let errorMessage = (error as Error).message || String(error);
@@ -159,7 +156,7 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
     }
   }
 
-  const suggestions = React.useMemo(() => {
+  const suggestions = useMemo(() => {
     const translatedMessages = messages(t);
 
     return Object.keys(translatedMessages)
@@ -171,7 +168,7 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
       .filter(notUndefined);
   }, [errorMessage, t]);
 
-  const forbiddenSuggestion = React.useMemo(() => {
+  const forbiddenSuggestion = useMemo(() => {
     if (!isForbidden) return null;
     return hasNamespaceFilter ? (
       <ForbiddenWithNamespace t={t} />

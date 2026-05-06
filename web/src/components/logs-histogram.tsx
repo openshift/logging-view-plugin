@@ -9,7 +9,6 @@ import {
 } from '@patternfly/react-charts/victory';
 import { getResizeObserver } from '@patternfly/react-core';
 import { Alert, Card, CardBody } from '@patternfly/react-core';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { dateToFormat, getTimeFormatFromInterval, getTimeFormatFromTimeRange } from '../date-utils';
 import {
@@ -26,6 +25,7 @@ import { intervalFromTimeRange, numericTimeRange } from '../time-range';
 import { valueWithScalePrefix } from '../value-utils';
 import { CenteredContainer } from './centered-container';
 import './logs-histogram.css';
+import { FC, useEffect, useMemo, useRef, useState } from 'react';
 
 const GRAPH_HEIGHT = 130;
 const LEFT_PADDING = 50;
@@ -163,9 +163,11 @@ const getChartsData = (
 const tickCountFromTimeRange = (timeRange: TimeRangeNumber, interval: number): number =>
   Math.ceil((timeRange.end - timeRange.start) / interval);
 
-const HistogramTooltip: React.FC<
-  ChartLegendTooltipProps & { interval: number; timezone?: string }
-> = ({ interval, timezone, ...props }) => {
+const HistogramTooltip: FC<ChartLegendTooltipProps & { interval: number; timezone?: string }> = ({
+  interval,
+  timezone,
+  ...props
+}) => {
   const { x: xProps, y: yProps, center, height } = props;
 
   if (!center) {
@@ -211,7 +213,7 @@ interface SelectionComponentProps {
   height?: number;
 }
 
-const BrushHandleComponent: React.FC<SelectionComponentProps> = ({ x, y, width, height }) => {
+const BrushHandleComponent: FC<SelectionComponentProps> = ({ x, y, width, height }) => {
   if (x === undefined || y === undefined || width === undefined || height === undefined) {
     return null;
   }
@@ -251,7 +253,7 @@ const clampTimeToChartRange = (time: number, timeRange: TimeRangeNumber): number
 
 const SelectVoronoiContainer = createContainer('brush', 'voronoi');
 
-export const LogsHistogram: React.FC<LogHistogramProps> = ({
+export const LogsHistogram: FC<LogHistogramProps> = ({
   histogramData,
   timeRange,
   isLoading,
@@ -263,9 +265,9 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
-  const containerRef = React.useRef<HTMLDivElement | null>(null);
-  const [width, setWidth] = React.useState<number>(0);
-  const [timeRangeValue, setTimeRangeValue] = React.useState(numericTimeRange(timeRange));
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [width, setWidth] = useState<number>(0);
+  const [timeRangeValue, setTimeRangeValue] = useState(numericTimeRange(timeRange));
 
   const handleResize = () => {
     if (containerRef.current?.clientWidth) {
@@ -273,20 +275,20 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     const observer = containerRef.current
       ? getResizeObserver(containerRef.current, handleResize)
       : undefined;
     return () => observer?.();
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setTimeRangeValue(numericTimeRange(timeRange));
   }, [timeRange, interval, histogramData]);
 
   const intervalValue = interval ?? intervalFromTimeRange(timeRangeValue);
 
-  const groupsCharts = React.useMemo(() => {
+  const groupsCharts = useMemo(() => {
     if (!histogramData || histogramData.data.result.length === 0) {
       return { ticks: [], charts: null, availableGroups: [] };
     }
@@ -328,9 +330,9 @@ export const LogsHistogram: React.FC<LogHistogramProps> = ({
       charts,
       availableGroups,
     };
-  }, [histogramData, timeRangeValue, interval, width]);
+  }, [histogramData, timeRangeValue, width, intervalValue, schema, timezone]);
 
-  const legendData = React.useMemo(
+  const legendData = useMemo(
     () =>
       groupsCharts.availableGroups.map((group) => ({
         name: group,

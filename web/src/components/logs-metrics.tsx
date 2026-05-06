@@ -10,7 +10,6 @@ import {
 } from '@patternfly/react-charts/victory';
 import { Alert } from '@patternfly/react-core';
 import { InnerScrollContainer, Table, Tbody, Td, Th, Thead, Tr } from '@patternfly/react-table';
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { DateFormat, dateToFormat, getTimeFormatFromTimeRange } from '../date-utils';
 import { useRefWidth } from '../hooks/useRefWidth';
@@ -20,6 +19,7 @@ import { defaultTimeRange, intervalFromTimeRange, numericTimeRange } from '../ti
 import { CenteredContainer } from './centered-container';
 import './logs-metrics.css';
 import { formatValue } from './value-formatter';
+import { FC, useMemo } from 'react';
 
 const colors = getThemeColors(ChartThemeColor.multiUnordered).line?.colorScale;
 
@@ -102,7 +102,7 @@ const matrixToMetricsData = ({
 
 const CursorVoronoiContainer = createContainer('voronoi', 'cursor');
 
-export const LogsMetrics: React.FC<LogsMetricsProps> = ({
+export const LogsMetrics: FC<LogsMetricsProps> = ({
   logsData,
   isLoading,
   error,
@@ -114,26 +114,29 @@ export const LogsMetrics: React.FC<LogsMetricsProps> = ({
   const { t } = useTranslation('plugin__logging-view-plugin');
 
   const [containerRef, width] = useRefWidth();
-  const [timeRangeValue, setTimeRangeValue] = React.useState(numericTimeRange(timeRange));
-  const { data, xDomain, yDomain } = React.useMemo(
-    () => matrixToMetricsData({ response: logsData, timeRange: timeRange ?? defaultTimeRange() }),
-    [logsData],
-  );
-
-  React.useEffect(() => {
-    setTimeRangeValue(numericTimeRange(timeRange));
+  const timeRangeValues = useMemo<{ format: DateFormat; interval: number }>(() => {
+    const numericTimeRangeValue = numericTimeRange(timeRange);
+    return {
+      format: getTimeFormatFromTimeRange(numericTimeRangeValue),
+      interval: intervalFromTimeRange(numericTimeRangeValue),
+    };
   }, [timeRange]);
 
-  const toolTipData = React.useMemo(
+  const { data, xDomain, yDomain } = useMemo(
+    () => matrixToMetricsData({ response: logsData, timeRange: timeRange ?? defaultTimeRange() }),
+    [logsData, timeRange],
+  );
+
+  const toolTipData = useMemo(
     () =>
       data?.map((series) => ({
         childName: series.name,
         name: displayLegendTable ? undefined : series.name,
       })),
-    [data],
+    [data, displayLegendTable],
   );
 
-  const { legendTableData, legendTableColumns } = React.useMemo(() => {
+  const { legendTableData, legendTableColumns } = useMemo(() => {
     const tableData: Array<{ childName: string; labels: Record<string, string> }> = [];
     const columns = new Set<string>();
 
@@ -152,8 +155,6 @@ export const LogsMetrics: React.FC<LogsMetricsProps> = ({
 
     return { legendTableData: tableData, legendTableColumns: Array.from(columns) };
   }, [data]);
-
-  const intervalValue = intervalFromTimeRange(timeRangeValue);
 
   const dataIsEmpty = data ? data?.length === 0 : false;
 
@@ -185,13 +186,7 @@ export const LogsMetrics: React.FC<LogsMetricsProps> = ({
                 labelComponent={
                   <ChartLegendTooltip
                     legendData={toolTipData}
-                    title={(datum) =>
-                      dateToFormat(
-                        datum.x ?? 0,
-                        getTimeFormatFromTimeRange(timeRangeValue),
-                        timezone,
-                      )
-                    }
+                    title={(datum) => dateToFormat(datum.x ?? 0, timeRangeValues.format, timezone)}
                   />
                 }
                 constrainToVisibleArea
@@ -219,7 +214,7 @@ export const LogsMetrics: React.FC<LogsMetricsProps> = ({
               tickFormat={(tick: number) =>
                 dateToFormat(
                   tick,
-                  intervalValue < 60 * 1000 ? DateFormat.TimeMed : DateFormat.TimeShort,
+                  timeRangeValues.interval < 60 * 1000 ? DateFormat.TimeMed : DateFormat.TimeShort,
                   timezone,
                 )
               }

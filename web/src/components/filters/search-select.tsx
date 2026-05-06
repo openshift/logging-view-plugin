@@ -14,7 +14,18 @@ import {
   TextInputGroupUtilities,
 } from '@patternfly/react-core';
 import { TimesIcon } from '@patternfly/react-icons';
-import React, { useEffect } from 'react';
+import {
+  CSSProperties,
+  FC,
+  FormEvent,
+  KeyboardEvent,
+  Ref,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  MouseEvent as ReactMouseEvent,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { TestIds } from '../../test-ids';
 import { useAttributeValueData } from './attribute-value-data';
@@ -35,14 +46,25 @@ const NO_RESULTS = 'no results';
 
 const createItemId = (value: string) => `select-multi-typeahead-${value.replace(' ', '-')}`;
 
-const getOptionComponents = (
-  attributeOptions: SelectOptionProps[],
-  attributeError: Error | undefined,
-  attributeLoading: boolean,
-  selections: Array<string>,
-  focusedItemIndex: number | null,
-  onInputKeyDown: (event: React.KeyboardEvent) => void,
-) => {
+const OptionComponents: FC<{
+  viewableOptions: SelectOptionProps[];
+  attributeError: Error | undefined;
+  attributeLoading: boolean;
+  selections: Array<string>;
+  focusedItemIndex: number | null;
+  onInputKeyDown: (event: KeyboardEvent) => void;
+  emptyStateMessage?: string | null;
+}> = ({
+  viewableOptions: attributeOptions,
+  attributeError,
+  attributeLoading,
+  selections,
+  focusedItemIndex,
+  onInputKeyDown,
+  emptyStateMessage,
+}) => {
+  const { t } = useTranslation('plugin__logging-view-plugin');
+
   if (attributeLoading) {
     return [
       <SelectOption isLoading key="custom-loading" value="loading" hasCheckbox={false}>
@@ -80,6 +102,19 @@ const getOptionComponents = (
     return String(a.value).localeCompare(String(b.value));
   });
 
+  if (sortedOptions.length === 0) {
+    return [
+      <SelectOption key="no-results" value={NO_RESULTS} isAriaDisabled>
+        <Alert
+          variant="warning"
+          isInline
+          isPlain
+          title={emptyStateMessage || t('No results found')}
+        />
+      </SelectOption>,
+    ];
+  }
+
   return sortedOptions.map((attributeOption, index) => (
     <SelectOption
       key={attributeOption.value || attributeOption.children}
@@ -95,7 +130,7 @@ const getOptionComponents = (
   ));
 };
 
-export const SearchSelect: React.FC<SearchSelectProps> = ({
+export const SearchSelect: FC<SearchSelectProps> = ({
   attribute,
   onSelect,
   filters,
@@ -106,33 +141,36 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
 
   const { getAttributeOptions, attributeOptions, attributeError, attributeLoading } =
     useAttributeValueData(attribute);
-  const [selections, setSelections] = React.useState<Array<string>>([]);
-  const [viewableOptions, setViewableOptions] = React.useState<SelectOptionProps[]>([]);
+  const [selections, setSelections] = useState<Array<string>>([]);
+  const [viewableOptions, setViewableOptions] = useState<SelectOptionProps[]>([]);
 
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [inputValue, setInputValue] = React.useState<string>('');
-  const [focusedItemIndex, setFocusedItemIndex] = React.useState<number | null>(null);
-  const [activeItemId, setActiveItemId] = React.useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [inputValue, setInputValue] = useState<string>('');
+  const [focusedItemIndex, setFocusedItemIndex] = useState<number | null>(null);
+  const [activeItemId, setActiveItemId] = useState<string | null>(null);
 
-  const textInputRef = React.useRef<HTMLInputElement>();
-  const listRef = React.useRef<HTMLDivElement>(null);
+  const textInputRef = useRef<HTMLInputElement>();
+  const listRef = useRef<HTMLDivElement>(null);
 
-  const handleClickOutside = (event: MouseEvent) => {
-    if (isOpen && !listRef.current?.contains(event.target as Node)) {
-      setIsOpen(false);
-    }
-  };
+  const handleClickOutside = useCallback(
+    (event: MouseEvent) => {
+      if (isOpen && !listRef.current?.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    },
+    [isOpen, setIsOpen],
+  );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       window.addEventListener('click', handleClickOutside);
     }
     return () => {
       window.removeEventListener('click', handleClickOutside);
     };
-  }, [isOpen]);
+  }, [isOpen, handleClickOutside]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     let newSelectOptions: SelectOptionProps[] = attributeOptions.map((attributeOption) => {
       return { ...attributeOption, hasCheckbox: true };
     });
@@ -169,7 +207,7 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
       }
     }
     setViewableOptions(newSelectOptions);
-  }, [inputValue, attributeOptions]);
+  }, [inputValue, attributeOptions, isOpen, t]);
 
   const setActiveAndFocusedItem = (itemIndex: number) => {
     setFocusedItemIndex(itemIndex);
@@ -193,10 +231,10 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
     } else {
       setSelections(Array.from(filters[attribute.id] ?? []));
     }
-  }, [filters, attributeOptions]);
+  }, [filters, attributeOptions, attribute]);
 
   const handleSelect = (
-    _: React.MouseEvent<Element, MouseEvent> | undefined,
+    _: ReactMouseEvent<Element, MouseEvent> | undefined,
     value: string | number | undefined,
   ) => {
     const selectedValue = isOption(value) ? value.value : String(value);
@@ -237,8 +275,14 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
     textInputRef?.current?.focus();
   };
 
-  React.useEffect(() => {
-    getAttributeOptions();
+  const emptyStateMessage =
+    typeof attribute.emptyStateMessage === 'function'
+      ? attribute.emptyStateMessage(filters)
+      : attribute.emptyStateMessage;
+
+  useEffect(() => {
+    getAttributeOptions(filters);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenant]);
 
   const resetActiveAndFocusedItem = () => {
@@ -259,7 +303,7 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
     }
   };
 
-  const onInputKeyDown = (event: React.KeyboardEvent) => {
+  const onInputKeyDown = (event: KeyboardEvent) => {
     const focusedItem = focusedItemIndex !== null ? viewableOptions[focusedItemIndex] : null;
     const keypress = event.key;
 
@@ -300,14 +344,14 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
     }
   };
 
-  const onTextInputChange = (_event: React.FormEvent<HTMLInputElement>, value: string) => {
+  const onTextInputChange = (_event: FormEvent<HTMLInputElement>, value: string) => {
     setInputValue(value);
     resetActiveAndFocusedItem();
   };
 
   const titleId = `attribute-value-selector-${attribute.id}`;
 
-  const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
+  const toggle = (toggleRef: Ref<MenuToggleElement>) => (
     <MenuToggle
       variant="typeahead"
       ref={toggleRef}
@@ -318,7 +362,7 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
         {
           width: '230px',
           alignItems: 'center',
-        } as React.CSSProperties
+        } as CSSProperties
       }
       key={`attribute-toggle-${attribute.id}`}
       className="lv-plugin__typeahead-toggle"
@@ -361,11 +405,10 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
         {attribute.name}
       </span>
       <Select
+        selected={selections}
         onSelect={handleSelect}
         isOpen={isOpen}
-        placeholder={t('Filter by {{attributeName}}', {
-          attributeName: attribute.name,
-        })}
+        onOpenChange={setIsOpen}
         aria-labelledby={titleId}
         aria-placeholder={t('Search')}
         className="lv-plugin__search-select"
@@ -376,14 +419,15 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
           isAriaMultiselectable
           key={`select-list-${attribute.id}-${viewableOptions.length}`}
         >
-          {getOptionComponents(
-            viewableOptions,
-            attributeError,
-            attributeLoading,
-            selections,
-            focusedItemIndex,
-            onInputKeyDown,
-          )}
+          <OptionComponents
+            viewableOptions={viewableOptions}
+            attributeError={attributeError}
+            attributeLoading={attributeLoading}
+            selections={selections}
+            focusedItemIndex={focusedItemIndex}
+            onInputKeyDown={onInputKeyDown}
+            emptyStateMessage={emptyStateMessage}
+          />
         </SelectList>
       </Select>
     </div>
