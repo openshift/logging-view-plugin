@@ -109,6 +109,8 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
   };
 
   const runQuery = ({ queryToUse }: { queryToUse?: string } = {}) => {
+    if (!configLoaded) return;
+
     getLogs({
       query: queryToUse ?? query,
       timeRange,
@@ -346,12 +348,13 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
   );
 };
 
-const LogsDevPageWrapper: React.FC<LogsDevPageProps> = (props) => {
+const LogsDevPageWrapper: React.FC<LogsDevPageProps> = React.memo((props) => {
   return (
     <LogsConfigProvider>
       <LogsDevPage {...props} />
     </LogsConfigProvider>
   );
-};
+});
+LogsDevPageWrapper.displayName = 'LogsDevPageWrapper';
 
 export default LogsDevPageWrapper;

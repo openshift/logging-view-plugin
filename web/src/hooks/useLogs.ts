@@ -269,7 +269,8 @@ export const useLogs = (
     throw new Error('useLogs must be used within a LogsProvider');
   }
 
-  const { fetchConfig } = logsContext;
+  const configRef = React.useRef(logsContext.config);
+  configRef.current = logsContext.config;
 
   const [
     {
@@ -336,7 +337,7 @@ export const useLogs = (
         logsAbort.current();
       }
 
-      const config = await fetchConfig();
+      const config = configRef.current;
 
       const { request, abort } = executeQueryRange({
         query,
@@ -405,7 +406,7 @@ export const useLogs = (
         logsAbort.current();
       }
 
-      const config = await fetchConfig();
+      const config = configRef.current;
 
       const { request, abort } = executeQueryRange({
         query,
@@ -550,7 +551,7 @@ export const useLogs = (
         volumeAbort.current();
       }
 
-      const config = await fetchConfig();
+      const config = configRef.current;
 
       // Volume API only accepts labels, so have to extract them from the query.
       // Only grabs the data within the { }
@@ -626,7 +627,7 @@ export const useLogs = (
 
       const { start, end } = numericTimeRange(currentTimeRange.current);
 
-      const config = await fetchConfig();
+      const config = configRef.current;
 
       const { request, abort } = executeHistogramQuery({
         query,
