@@ -14,6 +14,11 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
+	"k8s.io/apiserver/pkg/server/dynamiccertificates"
+
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/record"
 )
 
 var slog = logrus.WithField("module", "server")
@@ -124,16 +129,55 @@ func createHTTPServer(ctx context.Context, cfg *Config) (*http.Server, error) {
 	router.Use(corsHeaderMiddleware(cfg))
 
 	// clients must use TLS 1.2 or higher
-	tlsConfig := &tls.Config{
-		MinVersion: tls.VersionTLS12,
-	}
+	tlsConfig := &tls.Config{}
 
-	if cfg.TLSMinVersion != 0 {
-		tlsConfig.MinVersion = cfg.TLSMinVersion
-	}
+	tlsEnabled := cfg.IsTLSEnabled()
+	if tlsEnabled {
+		if cfg.TLSMinVersion != 0 {
+			tlsConfig.MinVersion = cfg.TLSMinVersion
+		} else {
+			tlsConfig.MinVersion = tls.VersionTLS12
+		}
 
-	if len(cfg.TLSCipherSuites) > 0 {
-		tlsConfig.CipherSuites = cfg.TLSCipherSuites
+		if len(cfg.TLSCipherSuites) > 0 {
+			tlsConfig.CipherSuites = cfg.TLSCipherSuites
+		}
+
+		// Build and run the controller which reloads the certificate and key
+		// files whenever they change.
+		certKeyPair, err := dynamiccertificates.NewDynamicServingContentFromFiles("serving-cert", cfg.CertFile, cfg.PrivateKeyFile)
+		if err != nil {
+			slog.WithError(err).Fatal("unable to create TLS controller")
+		}
+
+		if err := certKeyPair.RunOnce(ctx); err != nil {
+			slog.WithError(err).Fatal("failed to initialize cert/key content")
+		}
+
+		eventBroadcaster := record.NewBroadcaster()
+		eventBroadcaster.StartLogging(func(format string, args ...interface{}) {
+			slog.Infof(format, args...)
+		})
+
+		ctrl := dynamiccertificates.NewDynamicServingCertificateController(
+			tlsConfig,
+			nil,
+			certKeyPair,
+			nil,
+			record.NewEventRecorderAdapter(
+				eventBroadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: "logging-view-plugin"}),
+			),
+		)
+
+		// Configure the server to use the cert/key pair for all client connections.
+		tlsConfig.GetConfigForClient = ctrl.GetConfigForClient
+
+		// Notify cert/key file changes to the controller.
+		certKeyPair.AddListener(ctrl)
+
+		// Start certificate controllers in background
+		go ctrl.Run(1, ctx.Done())
+		go certKeyPair.Run(ctx, 1)
 	}
 
 	httpServer := &http.Server{
