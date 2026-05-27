@@ -15,6 +15,7 @@ import {
 } from '../logs.types';
 import { parseName, parseResources, ResourceLabel } from '../parse-resources';
 import { severityFromString } from '../severity';
+import { numericComparator, bigIntDifference } from '../sort-utils';
 import { TestIds } from '../test-ids';
 import { LogDetail } from './log-detail';
 import './logs-table.css';
@@ -38,8 +39,6 @@ interface LogsTableProps {
   schema: Schema;
 }
 
-type TableCellValue = string | number | Resource | Array<Resource>;
-
 const isJSONObject = (value: string): boolean => {
   const trimmedValue = value.trim();
 
@@ -52,7 +51,14 @@ const streamToTableData = (stream: StreamLogData, timezone?: string): Array<LogT
   return values.map((value) => {
     const logValue = String(value[1]);
     const message = isJSONObject(logValue) ? stream.stream['message'] || logValue : logValue;
-    const timestamp = parseFloat(String(value[0]));
+    const rawTimestamp = String(value[0]);
+    const timestamp = parseFloat(rawTimestamp);
+    const observedTimestamp = stream.stream.observedTimestamp
+      ? BigInt(stream.stream.observedTimestamp)
+      : undefined;
+    const openshiftSequence = stream.stream.openshift_sequence
+      ? BigInt(stream.stream.openshift_sequence)
+      : undefined;
     const time = timestamp / 1e6;
     const formattedTime = dateToFormat(time, DateFormat.Full, timezone);
     const severity = parseName(stream.stream, ResourceLabel.Severity);
@@ -69,6 +75,8 @@ const streamToTableData = (stream: StreamLogData, timezone?: string): Array<LogT
       namespace,
       podName,
       type: 'log',
+      observedTimestamp,
+      openshiftSequence,
       // index is 0 here to match the type, but it will be recalculated when flattening the array
       logIndex: 0,
     };
@@ -96,13 +104,6 @@ const getSeverityClass = (severity: string) => {
   return severity ? `lv-plugin__table__severity-${severity}` : '';
 };
 
-// sort with an appropriate numeric comparator for big floats
-const numericComparator = <T extends TableCellValue>(
-  a: T,
-  b: T,
-  directionMultiplier: number,
-): number => (a < b ? -1 : a > b ? 1 : 0) * directionMultiplier;
-
 const columns: Array<TableColumn<LogTableData>> = [
   {
     id: 'expand',
@@ -119,7 +120,14 @@ const columns: Array<TableColumn<LogTableData>> = [
     },
     sort: (data, sortDirection) =>
       data.sort((a, b) =>
-        numericComparator(a.timestamp, b.timestamp, sortDirection === 'asc' ? 1 : -1),
+        numericComparator(
+          a.timestamp,
+          b.timestamp,
+          sortDirection === 'asc' ? 1 : -1,
+          a.openshiftSequence !== undefined && b.openshiftSequence !== undefined
+            ? bigIntDifference(a.openshiftSequence, b.openshiftSequence)
+            : bigIntDifference(a.observedTimestamp, b.observedTimestamp),
+        ),
       ),
   },
   {
@@ -326,8 +334,17 @@ export const LogsTable: React.FC<LogsTableProps> = ({
       }
     }
 
-    return dataCopy.sort((a, b) => numericComparator(a.timestamp, b.timestamp, -1));
-  }, [tableData, sortBy]);
+    return dataCopy.sort((a, b) =>
+      numericComparator(
+        a.timestamp,
+        b.timestamp,
+        direction === 'backward' ? -1 : 1,
+        a.openshiftSequence !== undefined && b.openshiftSequence !== undefined
+          ? bigIntDifference(a.openshiftSequence, b.openshiftSequence)
+          : bigIntDifference(a.observedTimestamp, b.observedTimestamp),
+      ),
+    );
+  }, [tableData, sortBy, direction]);
 
   const dataIsEmpty = sortedData.length === 0;
 
