@@ -106,7 +106,7 @@ describe('Logs Table Sorting', () => {
 
     // Default direction is 'backward' (desc) — largest observedTimestamp first
     // observedTimestamp order: C(+300) > B(+200) > A(+100)
-    cy.byTestID(TestIds.LogsTable)
+    cy.getByTestId(TestIds.LogsTable)
       .should('exist')
       .within(() => {
         cy.get('td[data-label="message"]').should('have.length', 3);
