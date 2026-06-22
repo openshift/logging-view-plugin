@@ -39,7 +39,7 @@ interface LogsTableProps {
   isLoading?: boolean;
   hasMoreLogsData?: boolean;
   isLoadingMore?: boolean;
-  onLoadMore?: (lastTimestamp: number) => void;
+  onLoadMore?: (lastTimestamp: string) => void;
   onSortByDate?: (direction?: Direction) => void;
   direction?: Direction;
   showResources?: boolean;
@@ -80,6 +80,7 @@ const streamToTableData = (stream: StreamLogData, timezone?: string): Array<LogT
     return {
       time: formattedTime,
       timestamp,
+      rawTimestamp,
       message,
       severity: severityFromString(severity) ?? 'other',
       data: stream.stream,
@@ -361,7 +362,7 @@ export const LogsTable: FC<PropsWithChildren<LogsTableProps>> = ({
   const dataIsEmpty = sortedData.length === 0;
 
   const handleLoadMore = () => {
-    onLoadMore?.(tableData[tableData.length - 1].timestamp / 1e6);
+    onLoadMore?.(tableData[tableData.length - 1].rawTimestamp);
   };
 
   const RowComponent = useMemo(
