@@ -84,6 +84,7 @@ const streamToTableData = (stream: StreamLogData): Array<LogTableData> => {
     return {
       time: formattedTime,
       timestamp,
+      rawTimestamp,
       message,
       severity: severityFromString(stream.stream.level) ?? 'other',
       data: stream.stream,
@@ -339,7 +340,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   const dataIsEmpty = sortedData.length === 0;
 
   const handleLoadMore = () => {
-    onLoadMore?.(tableData[tableData.length - 1].timestamp / 1e6);
+    onLoadMore?.(tableData[tableData.length - 1].rawTimestamp);
   };
 
   return (
