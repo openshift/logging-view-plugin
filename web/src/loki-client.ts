@@ -19,8 +19,8 @@ const LOKI_ENDPOINT = '/api/proxy/plugin/logging-view-plugin/backend';
 
 type QueryRangeParams = {
   query: string;
-  start: number;
-  end: number;
+  start: string;
+  end: string;
   config?: Config;
   namespace?: string;
   tenant: string;
@@ -155,8 +155,8 @@ export const executeQueryRange = ({
 
   const params: Record<string, string> = {
     query: extendedQuery,
-    start: String(start * 1000000),
-    end: String(end * 1000000),
+    start,
+    end,
     limit: String(config?.logsLimit ?? 100),
   };
 

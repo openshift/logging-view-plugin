@@ -123,7 +123,7 @@ const LogsDetailPage: FC<LogsDetailPageProps> = ({
     toggleStreaming({ query, schema });
   };
 
-  const handleLoadMoreData = (lastTimestamp: number) => {
+  const handleLoadMoreData = (lastTimestamp: string) => {
     if (!isLoadingMoreLogsData) {
       getMoreLogs({ lastTimestamp, query, namespace, direction, schema });
     }

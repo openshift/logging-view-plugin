@@ -16,7 +16,6 @@ import {
   executeVolumeRange,
 } from '../loki-client';
 import { intervalFromTimeRange, numericTimeRange, timeRangeFromDuration } from '../time-range';
-import { millisecondsFromDuration } from '../value-utils';
 
 import { LogQLQuery } from '../logql-query';
 import { LogsContext } from './LogsConfigProvider';
@@ -307,7 +306,7 @@ export const useLogs = (
     direction,
     schema,
   }: {
-    lastTimestamp: number;
+    lastTimestamp: string;
     query: string;
     namespace?: string;
     direction?: Direction;
@@ -323,14 +322,18 @@ export const useLogs = (
       currentTime.current = Date.now();
       currentDirection.current = direction ?? currentDirection.current;
 
-      const oneHourMilliseconds = millisecondsFromDuration('1h');
+      const lastTs = BigInt(lastTimestamp);
+      const oneHourNs = 3_600_000_000_000n;
 
-      let start = lastTimestamp - oneHourMilliseconds;
-      let end = lastTimestamp - 1;
+      let startNs: string;
+      let endNs: string;
 
       if (currentDirection.current === 'forward') {
-        start = lastTimestamp + 1;
-        end = lastTimestamp + oneHourMilliseconds;
+        startNs = String(lastTs + 1n);
+        endNs = String(lastTs + oneHourNs);
+      } else {
+        startNs = String(lastTs - oneHourNs);
+        endNs = String(lastTs - 1n);
       }
 
       dispatch({ type: 'moreLogsRequest' });
@@ -343,8 +346,8 @@ export const useLogs = (
 
       const { request, abort } = executeQueryRange({
         query,
-        start,
-        end,
+        start: startNs,
+        end: endNs,
         config,
         tenant: currentTenant.current,
         namespace,
@@ -412,8 +415,8 @@ export const useLogs = (
 
       const { request, abort } = executeQueryRange({
         query,
-        start,
-        end,
+        start: String(start * 1000000),
+        end: String(end * 1000000),
         config,
         tenant: currentTenant.current,
         namespace,

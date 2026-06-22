@@ -111,6 +111,7 @@ export type Resource = {
 export type LogTableData = {
   time: string;
   timestamp: number;
+  rawTimestamp: string;
   severity: string;
   namespace?: string;
   podName?: string;
