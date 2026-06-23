@@ -17,7 +17,7 @@ import {
   executeVolumeRange,
 } from '../loki-client';
 import { intervalFromTimeRange, numericTimeRange, timeRangeFromDuration } from '../time-range';
-import { millisecondsFromDuration } from '../value-utils';
+import { msToNs } from '../value-utils';
 
 import { LogQLQuery } from '../logql-query';
 
@@ -328,12 +328,12 @@ export const useLogs = (
   }, [configLoaded]);
 
   const getMoreLogs = async ({
-    lastTimestamp,
+    lastTimestampNs,
     query,
     namespace,
     direction,
   }: {
-    lastTimestamp: number;
+    lastTimestampNs: string;
     query: string;
     namespace?: string;
     direction?: Direction;
@@ -347,14 +347,18 @@ export const useLogs = (
       currentQuery.current = query;
       currentDirection.current = direction ?? currentDirection.current;
 
-      const oneHourMilliseconds = millisecondsFromDuration('1h');
+      const lastTs = BigInt(lastTimestampNs);
+      const oneHourNs = 3_600_000_000_000n;
 
-      let start = lastTimestamp - oneHourMilliseconds;
-      let end = lastTimestamp - 1;
+      let startNs: string;
+      let endNs: string;
 
       if (currentDirection.current === 'forward') {
-        start = lastTimestamp + 1;
-        end = lastTimestamp + oneHourMilliseconds;
+        startNs = String(lastTs + 1n);
+        endNs = String(lastTs + oneHourNs);
+      } else {
+        startNs = String(lastTs - oneHourNs);
+        endNs = String(lastTs);
       }
 
       dispatch({ type: 'moreLogsRequest' });
@@ -367,8 +371,8 @@ export const useLogs = (
 
       const { request, abort } = executeQueryRange({
         query,
-        start,
-        end,
+        startNs,
+        endNs,
         config: currentConfig.current,
         tenant: currentTenant.current,
         namespace,
@@ -432,8 +436,8 @@ export const useLogs = (
 
       const { request, abort } = executeQueryRange({
         query,
-        start,
-        end,
+        startNs: msToNs(start),
+        endNs: msToNs(end),
         config: currentConfig.current,
         tenant: currentTenant.current,
         namespace,
@@ -482,6 +486,7 @@ export const useLogs = (
       query,
       tenant: currentTenant.current,
       namespace,
+      config: currentConfig.current,
     });
 
     ws.current.onerror((error) => {
@@ -552,8 +557,7 @@ export const useLogs = (
     try {
       currentQuery.current = query;
       currentTenant.current = tenant ?? currentTenant.current;
-      currentTime.current = Date.now();
-      lastExecutionTime.current.logs = Date.now();
+      lastExecutionTime.current.volume = Date.now();
       currentTimeRange.current = timeRange ?? currentTimeRange.current;
 
       const { start, end } = numericTimeRange(currentTimeRange.current);
@@ -578,8 +582,8 @@ export const useLogs = (
 
       const { request, abort } = executeVolumeRange({
         query,
-        start,
-        end,
+        startNs: msToNs(start),
+        endNs: msToNs(end),
         config: currentConfig.current,
         tenant: currentTenant.current,
         namespace,
@@ -640,8 +644,8 @@ export const useLogs = (
 
       const { request, abort } = executeHistogramQuery({
         query,
-        start,
-        end,
+        startNs: msToNs(start),
+        endNs: msToNs(end),
         interval: intervalFromTimeRange(currentTimeRange.current),
         config: currentConfig.current,
         tenant: currentTenant.current,

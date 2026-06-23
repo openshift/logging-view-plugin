@@ -85,9 +85,9 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
     toggleStreaming({ query });
   };
 
-  const handleLoadMoreData = (lastTimestamp: number) => {
+  const handleLoadMoreData = (lastTimestampNs: string) => {
     if (!isLoadingMoreLogsData) {
-      getMoreLogs({ lastTimestamp, query, namespace, direction });
+      getMoreLogs({ lastTimestampNs, query, namespace, direction });
     }
   };
 

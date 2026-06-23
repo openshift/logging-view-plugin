@@ -47,8 +47,10 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
-  const { name: podnameFromParams, ns: namespaceFromParams } =
-    useParams<{ name: string; ns: string }>();
+  const { name: podnameFromParams, ns: namespaceFromParams } = useParams<{
+    name: string;
+    ns: string;
+  }>();
   const namespace = namespaceFromParams || namespaceFromProps;
   const podname = podnameFromParams || podNameFromProps;
   const defaultQuery = `{ kubernetes_pod_name = "${podname}" } | json`;
@@ -106,9 +108,9 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
     toggleStreaming({ query });
   };
 
-  const handleLoadMoreData = (lastTimestamp: number) => {
+  const handleLoadMoreData = (lastTimestampNs: string) => {
     if (!isLoadingMoreLogsData) {
-      getMoreLogs({ lastTimestamp, query, namespace, direction });
+      getMoreLogs({ lastTimestampNs, query, namespace, direction });
     }
   };
 
