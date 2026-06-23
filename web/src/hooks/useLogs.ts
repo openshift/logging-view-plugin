@@ -252,7 +252,6 @@ export const useLogs = (
   const currentQuery = React.useRef<string | undefined>();
   const currentTenant = React.useRef<string>(initialTenant);
   const currentTimeRange = React.useRef<TimeRange>(initialTimeRange);
-  const currentTime = React.useRef<number>(Date.now());
   const lastExecutionTime = React.useRef<{ logs?: number; histogram?: number; volume?: number }>({
     logs: undefined,
     histogram: undefined,
@@ -318,7 +317,6 @@ export const useLogs = (
 
     try {
       currentQuery.current = query;
-      currentTime.current = Date.now();
       currentDirection.current = direction ?? currentDirection.current;
 
       const lastTs = BigInt(lastTimestampNs);
@@ -397,7 +395,6 @@ export const useLogs = (
     try {
       currentQuery.current = query;
       currentTenant.current = tenant ?? currentTenant.current;
-      currentTime.current = Date.now();
       lastExecutionTime.current.logs = Date.now();
       currentTimeRange.current = timeRange ?? currentTimeRange.current;
       currentDirection.current = direction ?? currentDirection.current;
@@ -456,7 +453,6 @@ export const useLogs = (
   }) => {
     currentQuery.current = query;
     currentTenant.current = tenant ?? currentTenant.current;
-    currentTime.current = Date.now();
 
     if (ws.current) {
       ws.current.destroy();
@@ -618,7 +614,6 @@ export const useLogs = (
     try {
       currentQuery.current = query;
       currentTenant.current = tenant ?? currentTenant.current;
-      currentTime.current = Date.now();
       lastExecutionTime.current.histogram = Date.now();
       currentTimeRange.current = timeRange ?? currentTimeRange.current;
 
