@@ -39,7 +39,7 @@ interface LogsTableProps {
   isLoading?: boolean;
   hasMoreLogsData?: boolean;
   isLoadingMore?: boolean;
-  onLoadMore?: (lastTimestamp: string) => void;
+  onLoadMore?: (lastTimestampNs: string) => void;
   onSortByDate?: (direction?: Direction) => void;
   direction?: Direction;
   showResources?: boolean;

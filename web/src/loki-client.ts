@@ -19,8 +19,8 @@ const LOKI_ENDPOINT = '/api/proxy/plugin/logging-view-plugin/backend';
 
 type QueryRangeParams = {
   query: string;
-  start: string;
-  end: string;
+  startNs: string;
+  endNs: string;
   config?: Config;
   namespace?: string;
   tenant: string;
@@ -30,8 +30,8 @@ type QueryRangeParams = {
 
 type VolumeRangeParams = {
   query: string;
-  start: number;
-  end: number;
+  startNs: string;
+  endNs: string;
   config?: Config;
   namespace?: string;
   tenant: string;
@@ -41,8 +41,8 @@ type VolumeRangeParams = {
 
 type HistogramQuerParams = {
   query: string;
-  start: number;
-  end: number;
+  startNs: string;
+  endNs: string;
   interval: number;
   config?: Config;
   namespace?: string;
@@ -52,16 +52,14 @@ type HistogramQuerParams = {
 
 type LokiTailQueryParams = {
   query: string;
-  delay_for?: string;
-  limit?: number;
-  start?: number;
+  startNs?: string;
   config?: Config;
   namespace?: string;
   tenant: string;
   schema: Schema;
 };
 
-const MAX_RANGE_REQUEST = 60 * 60 * 6 * 1000; // 6 hours
+const MAX_RANGE_REQUEST_NS = 21_600_000_000_000n; // 6 hours in nanoseconds
 
 export const getFetchConfig = ({
   config,
@@ -139,8 +137,8 @@ export const executeSeries = ({
 
 export const executeQueryRange = ({
   query,
-  start,
-  end,
+  startNs,
+  endNs,
   config,
   tenant,
   namespace,
@@ -155,8 +153,8 @@ export const executeQueryRange = ({
 
   const params: Record<string, string> = {
     query: extendedQuery,
-    start,
-    end,
+    start: startNs,
+    end: endNs,
     limit: String(config?.logsLimit ?? 100),
   };
 
@@ -174,8 +172,8 @@ export const executeQueryRange = ({
 
 export const executeVolumeRange = ({
   query,
-  start,
-  end,
+  startNs,
+  endNs,
   config,
   tenant,
   namespace,
@@ -189,8 +187,8 @@ export const executeVolumeRange = ({
 
   const params: Record<string, string> = {
     query: extendedQuery,
-    start: String(start * 1000000),
-    end: String(end * 1000000),
+    start: startNs,
+    end: endNs,
   };
 
   const { endpoint, requestInit } = getFetchConfig({ config, tenant });
@@ -201,26 +199,28 @@ export const executeVolumeRange = ({
   );
 };
 
-const splitQueryRange = (start: number, end: number) => {
-  const ranges = [];
+const splitQueryRange = (startNs: string, endNs: string): string[][] => {
+  const start = BigInt(startNs);
+  const end = BigInt(endNs);
+  const ranges: string[][] = [];
   let currentStart = start;
-  let currentEnd = start + MAX_RANGE_REQUEST;
+  let currentEnd = start + MAX_RANGE_REQUEST_NS;
 
   while (currentEnd < end) {
-    ranges.push([currentStart, currentEnd]);
+    ranges.push([String(currentStart), String(currentEnd)]);
     currentStart = currentEnd;
-    currentEnd = currentEnd + MAX_RANGE_REQUEST;
+    currentEnd = currentEnd + MAX_RANGE_REQUEST_NS;
   }
 
-  ranges.push([currentStart, end]);
+  ranges.push([String(currentStart), String(end)]);
 
   return ranges;
 };
 
 export const executeHistogramQuery = ({
   query,
-  start,
-  end,
+  startNs,
+  endNs,
   interval,
   config,
   tenant,
@@ -242,18 +242,18 @@ export const executeHistogramQuery = ({
 
   const params = {
     query: histogramQuery,
-    start: String(start * 1000000),
-    end: String(end * 1000000),
+    start: startNs,
+    end: endNs,
     step: intervalString,
   };
 
   const { endpoint, requestInit } = getFetchConfig({ config, tenant });
 
-  const timeRange = end - start;
+  const timeRangeNs = BigInt(endNs) - BigInt(startNs);
 
   // for large time ranges, split the query into multiple smaller queries
-  if (timeRange > MAX_RANGE_REQUEST) {
-    const ranges = splitQueryRange(start, end);
+  if (timeRangeNs > MAX_RANGE_REQUEST_NS) {
+    const ranges = splitQueryRange(startNs, endNs);
 
     const queries: Array<CancellableFetch<QueryRangeResponse<MatrixResult>>> = [];
 
@@ -261,8 +261,8 @@ export const executeHistogramQuery = ({
       const [rangeStart, rangeEnd] = range;
       const rangeParams = {
         ...params,
-        start: String(rangeStart * 1000000),
-        end: String(rangeEnd * 1000000),
+        start: rangeStart,
+        end: rangeEnd,
       };
       const subQuery = cancellableFetch<QueryRangeResponse<MatrixResult>>(
         `${endpoint}/loki/api/v1/query_range?${new URLSearchParams(rangeParams)}`,
@@ -312,6 +312,7 @@ export const executeHistogramQuery = ({
 
 export const connectToTailSocket = ({
   query,
+  startNs,
   config,
   tenant,
   namespace,
@@ -323,10 +324,14 @@ export const connectToTailSocket = ({
     schema,
   });
 
-  const params = {
+  const params: Record<string, string> = {
     query: extendedQuery,
     limit: String(config?.logsLimit ?? 200),
   };
+
+  if (startNs) {
+    params.start = startNs;
+  }
 
   const { endpoint } = getFetchConfig({ config, tenant });
 

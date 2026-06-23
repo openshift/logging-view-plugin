@@ -4,6 +4,7 @@ import {
   millisecondsFromDuration,
   valueWithScalePrefix,
   capitalize,
+  msToNs,
 } from '../value-utils';
 
 describe('value utils', () => {
@@ -41,5 +42,14 @@ describe('value utils', () => {
     expect(capitalize('')).toBe('');
     expect(capitalize('123')).toBe('123');
     expect(capitalize()).toBe('');
+  });
+
+  it('should convert milliseconds to nanosecond strings', () => {
+    expect(msToNs(0)).toBe('0');
+    expect(msToNs(1)).toBe('1000000');
+    expect(msToNs(1000)).toBe('1000000000');
+    expect(msToNs(1666003060000)).toBe('1666003060000000000');
+    expect(msToNs(1000.7)).toBe('1001000000');
+    expect(msToNs(1000.3)).toBe('1000000000');
   });
 });
