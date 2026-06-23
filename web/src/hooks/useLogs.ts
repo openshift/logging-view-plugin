@@ -251,8 +251,6 @@ export const useLogs = (
   const currentQuery = useRef<string | undefined>();
   const currentTenant = useRef<string>(initialTenant);
   const currentTimeRange = useRef<TimeRange>(initialTimeRange);
-  // eslint-disable-next-line react-hooks/purity
-  const currentTime = useRef<number>(Date.now());
   const lastExecutionTime = useRef<{ logs?: number; histogram?: number; volume?: number }>({
     logs: undefined,
     histogram: undefined,
@@ -319,7 +317,6 @@ export const useLogs = (
 
     try {
       currentQuery.current = query;
-      currentTime.current = Date.now();
       currentDirection.current = direction ?? currentDirection.current;
 
       const lastTs = BigInt(lastTimestamp);
@@ -398,7 +395,6 @@ export const useLogs = (
     try {
       currentQuery.current = query;
       currentTenant.current = tenant ?? currentTenant.current;
-      currentTime.current = Date.now();
       lastExecutionTime.current.logs = Date.now();
       currentTimeRange.current = timeRange ?? currentTimeRange.current;
       currentDirection.current = direction ?? currentDirection.current;
@@ -457,7 +453,6 @@ export const useLogs = (
   }) => {
     currentQuery.current = query;
     currentTenant.current = tenant ?? currentTenant.current;
-    currentTime.current = Date.now();
 
     if (ws.current) {
       ws.current.destroy();
@@ -544,7 +539,6 @@ export const useLogs = (
     try {
       currentQuery.current = query;
       currentTenant.current = tenant ?? currentTenant.current;
-      currentTime.current = Date.now();
       lastExecutionTime.current.logs = Date.now();
       currentTimeRange.current = timeRange ?? currentTimeRange.current;
 
@@ -619,7 +613,6 @@ export const useLogs = (
     try {
       currentQuery.current = query;
       currentTenant.current = tenant ?? currentTenant.current;
-      currentTime.current = Date.now();
       lastExecutionTime.current.histogram = Date.now();
       currentTimeRange.current = timeRange ?? currentTimeRange.current;
 
