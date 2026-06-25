@@ -50,8 +50,10 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
-  const { name: podnameFromParams, ns: namespaceFromParams } =
-    useParams<{ name: string; ns: string }>();
+  const { name: podnameFromParams, ns: namespaceFromParams } = useParams<{
+    name: string;
+    ns: string;
+  }>();
   const namespace = namespaceFromParams || namespaceFromProps;
   const podname = podnameFromParams || podNameFromProps;
   const [isHistogramVisible, setIsHistogramVisible] = React.useState(false);
@@ -121,9 +123,9 @@ const LogsDetailPage: React.FC<LogsDetailPageProps> = ({
     toggleStreaming({ query, schema });
   };
 
-  const handleLoadMoreData = (lastTimestamp: number) => {
+  const handleLoadMoreData = (lastTimestampNs: string) => {
     if (!isLoadingMoreLogsData) {
-      getMoreLogs({ lastTimestamp, query, namespace, direction, schema });
+      getMoreLogs({ lastTimestampNs, query, namespace, direction, schema });
     }
   };
 

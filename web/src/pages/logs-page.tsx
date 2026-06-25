@@ -91,9 +91,9 @@ const LogsPage: React.FC = () => {
     toggleStreaming({ query, schema });
   };
 
-  const handleLoadMoreData = (lastTimestamp: number) => {
+  const handleLoadMoreData = (lastTimestampNs: string) => {
     if (!isLoadingMoreLogsData) {
-      getMoreLogs({ lastTimestamp, query, direction, schema });
+      getMoreLogs({ lastTimestampNs, query, direction, schema });
     }
   };
 
