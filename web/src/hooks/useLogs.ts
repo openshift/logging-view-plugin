@@ -16,7 +16,7 @@ import {
   executeVolumeRange,
 } from '../loki-client';
 import { intervalFromTimeRange, numericTimeRange, timeRangeFromDuration } from '../time-range';
-import { millisecondsFromDuration } from '../value-utils';
+import { msToNs } from '../value-utils';
 
 import { LogQLQuery } from '../logql-query';
 import { LogsContext } from './LogsConfigProvider';
@@ -252,8 +252,6 @@ export const useLogs = (
   const currentQuery = useRef<string | undefined>();
   const currentTenant = useRef<string>(initialTenant);
   const currentTimeRange = useRef<TimeRange>(initialTimeRange);
-  // eslint-disable-next-line react-hooks/purity
-  const currentTime = useRef<number>(Date.now());
   const lastExecutionTime = useRef<{ logs?: number; histogram?: number; volume?: number }>({
     logs: undefined,
     histogram: undefined,
@@ -301,13 +299,13 @@ export const useLogs = (
   });
 
   const getMoreLogs = async ({
-    lastTimestamp,
+    lastTimestampNs,
     query,
     namespace,
     direction,
     schema,
   }: {
-    lastTimestamp: number;
+    lastTimestampNs: string;
     query: string;
     namespace?: string;
     direction?: Direction;
@@ -320,17 +318,20 @@ export const useLogs = (
 
     try {
       currentQuery.current = query;
-      currentTime.current = Date.now();
       currentDirection.current = direction ?? currentDirection.current;
 
-      const oneHourMilliseconds = millisecondsFromDuration('1h');
+      const lastTs = BigInt(lastTimestampNs);
+      const oneHourNs = 3_600_000_000_000n;
 
-      let start = lastTimestamp - oneHourMilliseconds;
-      let end = lastTimestamp - 1;
+      let startNs: string;
+      let endNs: string;
 
       if (currentDirection.current === 'forward') {
-        start = lastTimestamp + 1;
-        end = lastTimestamp + oneHourMilliseconds;
+        startNs = String(lastTs + 1n);
+        endNs = String(lastTs + oneHourNs);
+      } else {
+        startNs = String(lastTs - oneHourNs);
+        endNs = String(lastTs);
       }
 
       dispatch({ type: 'moreLogsRequest' });
@@ -343,8 +344,8 @@ export const useLogs = (
 
       const { request, abort } = executeQueryRange({
         query,
-        start,
-        end,
+        startNs,
+        endNs,
         config,
         tenant: currentTenant.current,
         namespace,
@@ -395,7 +396,6 @@ export const useLogs = (
     try {
       currentQuery.current = query;
       currentTenant.current = tenant ?? currentTenant.current;
-      currentTime.current = Date.now();
       lastExecutionTime.current.logs = Date.now();
       currentTimeRange.current = timeRange ?? currentTimeRange.current;
       currentDirection.current = direction ?? currentDirection.current;
@@ -412,8 +412,8 @@ export const useLogs = (
 
       const { request, abort } = executeQueryRange({
         query,
-        start,
-        end,
+        startNs: msToNs(start),
+        endNs: msToNs(end),
         config,
         tenant: currentTenant.current,
         namespace,
@@ -454,7 +454,6 @@ export const useLogs = (
   }) => {
     currentQuery.current = query;
     currentTenant.current = tenant ?? currentTenant.current;
-    currentTime.current = Date.now();
 
     if (ws.current) {
       ws.current.destroy();
@@ -467,6 +466,7 @@ export const useLogs = (
       tenant: currentTenant.current,
       namespace,
       schema,
+      config: configRef.current,
     });
 
     ws.current.onerror((error) => {
@@ -541,8 +541,7 @@ export const useLogs = (
     try {
       currentQuery.current = query;
       currentTenant.current = tenant ?? currentTenant.current;
-      currentTime.current = Date.now();
-      lastExecutionTime.current.logs = Date.now();
+      lastExecutionTime.current.volume = Date.now();
       currentTimeRange.current = timeRange ?? currentTimeRange.current;
 
       const { start, end } = numericTimeRange(currentTimeRange.current);
@@ -567,8 +566,8 @@ export const useLogs = (
 
       const { request, abort } = executeVolumeRange({
         query,
-        start,
-        end,
+        startNs: msToNs(start),
+        endNs: msToNs(end),
         config,
         tenant: currentTenant.current,
         namespace,
@@ -616,7 +615,6 @@ export const useLogs = (
     try {
       currentQuery.current = query;
       currentTenant.current = tenant ?? currentTenant.current;
-      currentTime.current = Date.now();
       lastExecutionTime.current.histogram = Date.now();
       currentTimeRange.current = timeRange ?? currentTimeRange.current;
 
@@ -633,8 +631,8 @@ export const useLogs = (
 
       const { request, abort } = executeHistogramQuery({
         query,
-        start,
-        end,
+        startNs: msToNs(start),
+        endNs: msToNs(end),
         interval: intervalFromTimeRange(currentTimeRange.current),
         config,
         tenant: currentTenant.current,
