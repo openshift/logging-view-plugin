@@ -66,6 +66,8 @@ export const millisecondsFromDuration = (duration: string): number => {
   }
 };
 
+export const msToNs = (ms: number): string => String(BigInt(Math.round(ms)) * 1_000_000n);
+
 export const padLeadingZero = (value: number, length = 2): string =>
   String(value).padStart(length, '0');
 

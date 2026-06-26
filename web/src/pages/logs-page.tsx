@@ -80,9 +80,9 @@ const LogsPage: React.FC = () => {
     toggleStreaming({ query });
   };
 
-  const handleLoadMoreData = (lastTimestamp: number) => {
+  const handleLoadMoreData = (lastTimestampNs: string) => {
     if (!isLoadingMoreLogsData) {
-      getMoreLogs({ lastTimestamp, query, direction });
+      getMoreLogs({ lastTimestampNs, query, direction });
     }
   };
 
