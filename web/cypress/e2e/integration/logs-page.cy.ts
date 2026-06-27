@@ -560,17 +560,25 @@ describe('Logs Page', () => {
   });
 
   it('displays log based metrics when query results are matrix type', () => {
-    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeMatrixValidResponse());
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeStreams',
+    );
 
     cy.visit(LOGS_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.byTestID(TestIds.LogsMetrics).should('exist');
   });
 
   it('histogram is disabled and not visible when query results are matrix type', () => {
-    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeMatrixValidResponse());
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeStreams',
+    );
 
     cy.visit(LOGS_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.byTestID(TestIds.LogsMetrics).should('exist');
     cy.byTestID(TestIds.ToggleHistogramButton).should('be.disabled');
@@ -578,10 +586,16 @@ describe('Logs Page', () => {
   });
 
   it('histogram is disabled after beign enabled by a streams result when query results are matrix type', () => {
-    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeStreamsWithMessage());
-    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse());
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeStreamsWithMessage()).as(
+      'queryRangeStreams',
+    );
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrix',
+    );
 
     cy.visit(LOGS_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.byTestID(TestIds.ToggleHistogramButton).click();
 
@@ -607,6 +621,8 @@ describe('Logs Page', () => {
 
     cy.byTestID(TestIds.ExecuteQueryButton).click();
 
+    cy.wait('@queryRangeMatrix');
+
     cy.byTestID(TestIds.LogsMetrics).should('exist');
     cy.byTestID(TestIds.ToggleHistogramButton).should('be.disabled');
     cy.byTestID(TestIds.LogsHistogram).should('not.exist');
@@ -621,6 +637,9 @@ describe('Logs Page', () => {
     });
 
     cy.byTestID(TestIds.ExecuteQueryButton).click();
+
+    cy.wait('@queryRangeStreams');
+
     cy.byTestID(TestIds.LogsMetrics).should('not.exist');
     cy.byTestID(TestIds.ToggleHistogramButton).should('be.enabled');
     cy.byTestID(TestIds.ToggleHistogramButton).click();

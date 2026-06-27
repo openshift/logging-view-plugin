@@ -1,6 +1,6 @@
 module github.com/openshift/logging-view-plugin
 
-go 1.25.0
+go 1.26.3
 
 require (
 	github.com/evanphx/json-patch v5.6.0+incompatible
