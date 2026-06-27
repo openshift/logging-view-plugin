@@ -12,7 +12,7 @@ RUN make install-frontend-ci-clean
 COPY web/ web/
 RUN make build-frontend
 
-FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:rhel_9_1.24 as go-builder
+FROM registry.access.redhat.com/ubi9/go-toolset:1.26 AS go-builder
 
 WORKDIR /opt/app-root
 
@@ -31,7 +31,7 @@ ENV CGO_ENABLED=1
 
 RUN make build-backend BUILD_OPTS="-tags strictfipsruntime"
 
-FROM registry.redhat.io/rhel9-4-els/rhel:9.4
+FROM registry.access.redhat.com/ubi9/ubi-minimal
 
 COPY --from=web-builder /opt/app-root/web/dist /opt/app-root/web/dist
 COPY --from=go-builder /opt/app-root/plugin-backend /opt/app-root
