@@ -153,17 +153,25 @@ describe('Logs Detail Page', () => {
   });
 
   it('displays log based metrics when query results are matrix type', () => {
-    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeMatrixValidResponse());
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeStreams',
+    );
 
     cy.visit(LOGS_DETAIL_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.byTestID(TestIds.LogsMetrics).should('exist');
   });
 
   it('histogram is disabled and not visible when query results are matrix type', () => {
-    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeMatrixValidResponse());
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeStreams',
+    );
 
     cy.visit(LOGS_DETAIL_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.byTestID(TestIds.LogsMetrics).should('exist');
     cy.byTestID(TestIds.ToggleHistogramButton).should('be.disabled');
@@ -174,10 +182,14 @@ describe('Logs Detail Page', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
       queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
+    ).as('queryRangeStreams');
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrix',
     );
-    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse());
 
     cy.visit(LOGS_DETAIL_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.byTestID(TestIds.ToggleHistogramButton).click();
 
@@ -203,6 +215,8 @@ describe('Logs Detail Page', () => {
 
     cy.byTestID(TestIds.ExecuteQueryButton).click();
 
+    cy.wait('@queryRangeMatrix');
+
     cy.byTestID(TestIds.LogsMetrics).should('exist');
     cy.byTestID(TestIds.ToggleHistogramButton).should('be.disabled');
     cy.byTestID(TestIds.LogsHistogram).should('not.exist');
@@ -217,6 +231,9 @@ describe('Logs Detail Page', () => {
     });
 
     cy.byTestID(TestIds.ExecuteQueryButton).click();
+
+    cy.wait('@queryRangeStreams');
+
     cy.byTestID(TestIds.LogsMetrics).should('not.exist');
     cy.byTestID(TestIds.ToggleHistogramButton).should('be.enabled');
     cy.byTestID(TestIds.ToggleHistogramButton).click();
