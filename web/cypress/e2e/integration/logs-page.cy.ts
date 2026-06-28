@@ -559,29 +559,40 @@ describe('Logs Page', () => {
   });
 
   it('displays log based metrics when query results are matrix type', () => {
-    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeMatrixValidResponse());
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeStreams',
+    );
 
     cy.visit(LOGS_PAGE_URL);
 
+    cy.wait('@queryRangeStreams');
     cy.getByTestId(TestIds.LogsMetrics).should('exist');
   });
 
   it('histogram is disabled and not visible when query results are matrix type', () => {
-    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeMatrixValidResponse());
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeStreams',
+    );
 
     cy.visit(LOGS_PAGE_URL);
 
+    cy.wait('@queryRangeStreams');
     cy.getByTestId(TestIds.LogsMetrics).should('exist');
     cy.getByTestId(TestIds.ToggleHistogramButton).should('be.disabled');
     cy.getByTestId(TestIds.LogsHistogram).should('not.exist');
   });
 
   it('histogram is disabled after beign enabled by a streams result when query results are matrix type', () => {
-    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeStreamsWithMessage());
-    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse());
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeStreamsWithMessage()).as(
+      'queryRangeStreams',
+    );
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrix',
+    );
 
     cy.visit(LOGS_PAGE_URL);
 
+    cy.wait('@queryRangeStreams');
     cy.getByTestId(TestIds.ToggleHistogramButton).click();
 
     cy.getByTestId(TestIds.LogsHistogram)
@@ -606,6 +617,7 @@ describe('Logs Page', () => {
 
     cy.getByTestId(TestIds.ExecuteQueryButton).click();
 
+    cy.wait('@queryRangeMatrix');
     cy.getByTestId(TestIds.LogsMetrics).should('exist');
     cy.getByTestId(TestIds.ToggleHistogramButton).should('be.disabled');
     cy.getByTestId(TestIds.LogsHistogram).should('not.exist');
@@ -618,6 +630,8 @@ describe('Logs Page', () => {
           parseSpecialCharSequences: false,
         });
     });
+
+    cy.wait('@queryRangeStreams');
 
     cy.getByTestId(TestIds.ExecuteQueryButton).click();
     cy.getByTestId(TestIds.LogsMetrics).should('not.exist');
