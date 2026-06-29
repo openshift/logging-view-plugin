@@ -16,7 +16,6 @@
   "Run Query": "Run Query",
   "Gives the volume of data for the given stream selector": "Gives the volume of data for the given stream selector",
   "Explain Log Volume": "Explain Log Volume",
-  "Search by {{attributeName}}": "Search by {{attributeName}}",
   "Attribute": "Attribute",
   "Filter by {{attributeName}}": "Filter by {{attributeName}}",
   "Search": "Search",
