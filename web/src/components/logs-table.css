@@ -51,7 +51,7 @@
   bottom: 3px;
   width: 3px;
   left: 3px;
-  background-color: var(--pf-t--global--text--color--disabled);
+  background-color: var(--lv-severity-color, var(--pf-t--global--text--color--disabled));
 }
 
 .lv-plugin__table__row--expanded::before {
@@ -60,30 +60,6 @@
 
 .lv-plugin__table__row--expanded-details::before {
   top: 0;
-}
-
-.lv-plugin__table__severity-critical::before {
-  background-color: var(--pf-t--global--text--color--status--info--default);
-}
-
-.lv-plugin__table__severity-error::before {
-  background-color: var(--pf-t--global--icon--color--status--danger--default);
-}
-
-.lv-plugin__table__severity-warning::before {
-  background-color: var(--pf-t--global--icon--color--status--warning--default);
-}
-
-.lv-plugin__table__severity-info::before {
-  background-color: var(--pf-t--global--color--status--success--default);
-}
-
-.lv-plugin__table__severity-debug::before {
-  background-color: var(--pf-t--global--color--brand--default);
-}
-
-.lv-plugin__table__severity-trace::before {
-  background-color: var(--pf-t--global--text--color--status--custom--default);
 }
 
 .lv-plugin__table__row-info {

@@ -228,7 +228,11 @@ export const LogsMetrics: FC<LogsMetricsProps> = ({
           </Chart>
           {displayLegendTable && (
             <InnerScrollContainer>
-              <Table variant="compact" aria-label="alert metrics">
+              <Table
+                variant="compact"
+                aria-label="alert metrics"
+                className="lv-plugin__metrics-legend-table"
+              >
                 <Thead>
                   <Tr>
                     <Th isStickyColumn stickyMinWidth="20px" style={{ width: '20px' }}></Th>

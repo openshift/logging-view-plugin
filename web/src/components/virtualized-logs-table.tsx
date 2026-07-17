@@ -39,6 +39,7 @@ interface VirtualizedLogsTableProps<D> {
   isLoading?: boolean;
   dataIsEmpty?: boolean;
   getRowClassName?: (obj: D) => string;
+  getRowStyle?: (obj: D) => React.CSSProperties;
   hasMoreLogsData?: boolean;
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
@@ -112,6 +113,7 @@ type VirtualizedTableBodyProps<D, R = unknown> = {
   getRowId?: (obj: D) => string;
   getRowTitle?: (obj: D) => string;
   getRowClassName?: (obj: D) => string;
+  getRowStyle?: (obj: D) => React.CSSProperties;
   scrollToIndex?: number;
   expandedItems?: Set<number>;
   showResources?: boolean;
@@ -149,6 +151,7 @@ const VirtualizedTableBody = ({
   getRowId,
   getRowTitle,
   getRowClassName,
+  getRowStyle,
   scrollToIndex,
   expandedItems,
   showResources,
@@ -217,7 +220,7 @@ const VirtualizedTableBody = ({
             id={getRowId?.(rowArgs.obj) ?? key}
             index={index}
             trKey={key}
-            style={style}
+            style={{ ...style, ...getRowStyle?.(rowArgs.obj) }}
             title={getRowTitle?.(rowArgs.obj)}
             className={getRowClassName?.(rowArgs.obj)}
           >
@@ -291,6 +294,7 @@ export const VirtualizedLogsTable = ({
   columns,
   getSortParams,
   getRowClassName,
+  getRowStyle,
   error,
   isStreaming,
   isLoading,
@@ -396,6 +400,7 @@ export const VirtualizedLogsTable = ({
                         scrollTop={scrollTop}
                         width={width}
                         getRowClassName={getRowClassName}
+                        getRowStyle={getRowStyle}
                         scrollToIndex={scrollToIndex}
                         expandedItems={expandedItems}
                         showResources={showResources}

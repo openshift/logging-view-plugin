@@ -4,6 +4,7 @@ import { Split, SplitItem } from '@patternfly/react-core';
 import { ISortBy, SortByDirection, Td, ThProps } from '@patternfly/react-table';
 import {
   Children,
+  CSSProperties,
   FC,
   MouseEvent,
   MutableRefObject,
@@ -26,7 +27,7 @@ import {
   StreamLogData,
 } from '../logs.types';
 import { parseName, parseResources, ResourceLabel } from '../parse-resources';
-import { severityFromString } from '../severity';
+import { getSeverityColor, Severity, severityFromString } from '../severity';
 import { numericComparator, bigIntDifference } from '../sort-utils';
 import { TestIds } from '../test-ids';
 import { LogDetail } from './log-detail';
@@ -113,8 +114,11 @@ const aggregateStreamLogData = (
   return [];
 };
 
-const getSeverityClass = (severity: string) => {
-  return severity ? `lv-plugin__table__severity-${severity}` : '';
+const getRowSeverityStyle = (severity: string): CSSProperties => {
+  if (!severity) {
+    return {};
+  }
+  return { '--lv-severity-color': getSeverityColor(severity as Severity) } as CSSProperties;
 };
 
 const columns: Array<TableColumn<LogTableData>> = [
@@ -385,8 +389,13 @@ export const LogsTable: FC<PropsWithChildren<LogsTableProps>> = ({
           ? 'lv-plugin__table__row--expanded'
           : 'lv-plugin__table__row--expanded-details';
     }
-    return `lv-plugin__table__row ${getSeverityClass(row.severity)} ${expandedClass}`;
+    return `lv-plugin__table__row ${expandedClass}`;
   }, []);
+
+  const getRowStyle = useCallback(
+    (row: LogTableData): CSSProperties => getRowSeverityStyle(row.severity),
+    [],
+  );
 
   return (
     <div data-test={TestIds.LogsTable} className="lv-plugin__table">
@@ -399,6 +408,7 @@ export const LogsTable: FC<PropsWithChildren<LogsTableProps>> = ({
         columns={columns}
         getSortParams={getSortParams}
         getRowClassName={getRowClassName}
+        getRowStyle={getRowStyle}
         error={error}
         isLoading={isLoading}
         isStreaming={isStreaming}
