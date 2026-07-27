@@ -173,7 +173,7 @@ func TestSecureServerRunning(t *testing.T) {
 		CertFile:       testClientCertFile,
 		PrivateKeyFile: testClientKeyFile,
 		TLSConfig: &tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: true, // #nosec G402
 		},
 	}
 	httpClient, err := httpConfig.buildHTTPClient()
@@ -197,9 +197,9 @@ func TestSecureServerRunning(t *testing.T) {
 		CertFile:       testClientCertFile,
 		PrivateKeyFile: testClientKeyFile,
 		TLSConfig: &tls.Config{
-			InsecureSkipVerify: true,
-			MinVersion:         tls.VersionTLS10,
-			MaxVersion:         tls.VersionTLS11,
+			InsecureSkipVerify: true,             // #nosec G402
+			MinVersion:         tls.VersionTLS10, // #nosec G402
+			MaxVersion:         tls.VersionTLS11, // #nosec G402
 		},
 	}
 	httpClientTLS11, err := httpConfigTLS11.buildHTTPClient()
@@ -422,7 +422,7 @@ func TestTLSConfigWithCustomSettings(t *testing.T) {
 		CertFile:       testClientCertFile,
 		PrivateKeyFile: testClientKeyFile,
 		TLSConfig: &tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: true, // #nosec G402
 			MinVersion:         tls.VersionTLS13,
 			MaxVersion:         tls.VersionTLS13,
 		},
@@ -440,7 +440,7 @@ func TestTLSConfigWithCustomSettings(t *testing.T) {
 		CertFile:       testClientCertFile,
 		PrivateKeyFile: testClientKeyFile,
 		TLSConfig: &tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: true, // #nosec G402
 			MinVersion:         tls.VersionTLS12,
 			MaxVersion:         tls.VersionTLS12,
 			CipherSuites:       []uint16{tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256},
@@ -457,9 +457,9 @@ func TestTLSConfigWithCustomSettings(t *testing.T) {
 		CertFile:       testClientCertFile,
 		PrivateKeyFile: testClientKeyFile,
 		TLSConfig: &tls.Config{
-			InsecureSkipVerify: true,
-			MinVersion:         tls.VersionTLS10,
-			MaxVersion:         tls.VersionTLS11,
+			InsecureSkipVerify: true,             // #nosec G402
+			MinVersion:         tls.VersionTLS10, // #nosec G402
+			MaxVersion:         tls.VersionTLS11, // #nosec G402
 		},
 	}
 	httpClientTLS11, err := httpConfigTLS11.buildHTTPClient()
@@ -510,7 +510,7 @@ func TestTLSConfigWithDefaults(t *testing.T) {
 		CertFile:       testClientCertFile,
 		PrivateKeyFile: testClientKeyFile,
 		TLSConfig: &tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: true, // #nosec G402
 			MinVersion:         tls.VersionTLS12,
 		},
 	}
@@ -527,7 +527,7 @@ func TestTLSConfigWithDefaults(t *testing.T) {
 		CertFile:       testClientCertFile,
 		PrivateKeyFile: testClientKeyFile,
 		TLSConfig: &tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: true, // #nosec G402
 			MinVersion:         tls.VersionTLS13,
 		},
 	}
@@ -542,8 +542,8 @@ func TestTLSConfigWithDefaults(t *testing.T) {
 		CertFile:       testClientCertFile,
 		PrivateKeyFile: testClientKeyFile,
 		TLSConfig: &tls.Config{
-			InsecureSkipVerify: true,
-			MaxVersion:         tls.VersionTLS11,
+			InsecureSkipVerify: true,             // #nosec G402
+			MaxVersion:         tls.VersionTLS11, // #nosec G402
 		},
 	}
 	httpClientTLS11, err := httpConfigTLS11.buildHTTPClient()
@@ -594,7 +594,7 @@ func TestTLSConfigMinVersionOnly(t *testing.T) {
 		CertFile:       testClientCertFile,
 		PrivateKeyFile: testClientKeyFile,
 		TLSConfig: &tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: true, // #nosec G402
 			MinVersion:         tls.VersionTLS13,
 		},
 	}
@@ -611,7 +611,7 @@ func TestTLSConfigMinVersionOnly(t *testing.T) {
 		CertFile:       testClientCertFile,
 		PrivateKeyFile: testClientKeyFile,
 		TLSConfig: &tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: true, // #nosec G402
 			MinVersion:         tls.VersionTLS12,
 			MaxVersion:         tls.VersionTLS12,
 		},

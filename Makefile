@@ -60,6 +60,10 @@ build-backend:
 test-unit-backend:
 	go test ./...
 
+.PHONY: security-scan-backend
+security-scan-backend:
+	gosec ./...
+
 .PHONY: start-console
 start-console:
 	cd web && ./scripts/start-console.sh

@@ -237,7 +237,9 @@ func filesHandler(root http.FileSystem) http.Handler {
 
 func healthHandler() http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("ok"))
+		if _, err := w.Write([]byte("ok")); err != nil {
+			slog.WithError(err).Error("cannot write health response")
+		}
 	})
 }
 
@@ -262,7 +264,9 @@ func featuresHandler(cfg *Config) http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(jsonFeatures)
+		if _, err := w.Write(jsonFeatures); err != nil {
+			slog.WithError(err).Error("cannot write features response")
+		}
 	})
 }
 
@@ -274,7 +278,9 @@ func configHandler(cfg *Config) http.HandlerFunc {
 
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte("{}"))
+			if _, err := w.Write([]byte("{}")); err != nil {
+				slog.WithError(err).Error("cannot write default config response")
+			}
 		})
 	}
 
@@ -299,6 +305,8 @@ func configHandler(cfg *Config) http.HandlerFunc {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(jsonPluginConfig)
+		if _, err := w.Write(jsonPluginConfig); err != nil {
+			slog.WithError(err).Error("cannot write plugin config response")
+		}
 	})
 }
