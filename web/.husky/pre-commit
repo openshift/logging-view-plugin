@@ -1,4 +1,7 @@
 #!/usr/bin/env sh
+
+set -eo pipefail
+
 . "$(dirname -- "$0")/_/husky.sh"
 cd web
 npm run pre-commit:check

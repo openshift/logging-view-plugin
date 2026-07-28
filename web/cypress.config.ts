@@ -87,8 +87,13 @@ export default defineConfig({
       on('after:screenshot', (details) => {
         // Prepend "1_", "2_", etc. to screenshot filenames because they are sorted alphanumerically in CI's artifacts dir
         const pathObj = path.parse(details.path);
-        fs.readdir(pathObj.dir, (error, files) => {
-          const newPath = `${pathObj.dir}${path.sep}${files.length}_${pathObj.base}`;
+        const screenshotDir = path.resolve(pathObj.dir);
+        fs.readdir(screenshotDir, (error, files) => {
+          const safeBase = path.basename(pathObj.base);
+          const newPath = path.resolve(screenshotDir, `${files.length}_${safeBase}`);
+          if (!newPath.startsWith(screenshotDir + path.sep)) {
+            return;
+          }
           return new Promise((resolve, reject) => {
             // eslint-disable-next-line consistent-return
             fs.rename(details.path, newPath, (err) => {
