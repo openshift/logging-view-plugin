@@ -372,7 +372,7 @@ describe('Logs Dev Page', () => {
     cy.byTestID(TestIds.ShowQueryToggle).click();
 
     cy.byTestID(TestIds.LogsQueryInput).within(() => {
-      cy.get('textarea').type('{selectAll}').type('{backspace}').type('{ job = "some_job" }', {
+      cy.get('textarea').clear().type('{ job = "some_job" }', {
         parseSpecialCharSequences: false,
       });
     });
@@ -423,8 +423,7 @@ describe('Logs Dev Page', () => {
 
     cy.byTestID(TestIds.LogsQueryInput).within(() => {
       cy.get('textarea')
-        .type('{selectAll}')
-        .type('{backspace}')
+        .clear()
         .type(
           'sum by (level) (count_over_time({ kubernetes_namespace_name="my-namespace" })[10m])',
           {
@@ -442,15 +441,12 @@ describe('Logs Dev Page', () => {
     cy.byTestID(TestIds.LogsHistogram).should('not.exist');
 
     cy.byTestID(TestIds.LogsQueryInput).within(() => {
-      cy.get('textarea')
-        .type('{selectAll}')
-        .type('{backspace}')
-        .type('{ kubernetes_namespace_name="my-namespace" }', {
-          parseSpecialCharSequences: false,
-        });
+      cy.get('textarea').clear().type('{ kubernetes_namespace_name="my-namespace" }', {
+        parseSpecialCharSequences: false,
+      });
     });
 
-    cy.byTestID(TestIds.ExecuteQueryButton).click();
+    cy.byTestID(TestIds.ExecuteQueryButton).click({ force: true });
     cy.byTestID(TestIds.LogsMetrics).should('not.exist');
     cy.byTestID(TestIds.ToggleHistogramButton).should('be.enabled');
     cy.byTestID(TestIds.ToggleHistogramButton).click();
