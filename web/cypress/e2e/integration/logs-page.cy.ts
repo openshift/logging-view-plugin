@@ -271,6 +271,8 @@ describe('Logs Page', () => {
     cy.getByTestId(TestIds.TenantToggle).click();
     cy.contains('infrastructure').click();
 
+    cy.wait('@queryRangeStreamsInfrastructure');
+
     cy.getByTestId(TestIds.ExecuteQueryButton).click();
 
     cy.getByTestId(TestIds.LogsHistogram)
