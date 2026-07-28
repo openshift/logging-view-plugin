@@ -100,7 +100,9 @@ describe('Logs Page', () => {
       queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     ).as('queryRangeStreams');
 
-    cy.visit(LOGS_PAGE_URL).wait(500);
+    cy.visit(LOGS_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.byTestID(TestIds.ShowStatsToggle).click();
     cy.byTestID(TestIds.LogsStats).should('exist');
@@ -274,6 +276,7 @@ describe('Logs Page', () => {
 
     cy.byTestID(TestIds.TenantToggle).click();
     cy.contains('infrastructure').click();
+    cy.wait(50); // Wait for frontend to update after clicking
 
     cy.byTestID(TestIds.ExecuteQueryButton).click();
 
