@@ -134,7 +134,9 @@ describe('Logs Dev Page', () => {
         cy.contains(TEST_MESSAGE);
       });
 
-    cy.byTestID(TestIds.SeverityDropdown).click();
+    cy.byTestID(TestIds.SeverityDropdown).within(() => {
+      cy.get('button').should('not.be.disabled').click();
+    });
     cy.contains('warning').click();
 
     cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
