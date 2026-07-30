@@ -26,6 +26,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LogTableData, Schema } from '../logs.types';
+import { getSeverityColor, Severity } from '../severity';
 import { CenteredContainer } from './centered-container';
 import { ErrorMessage } from './error-message';
 
@@ -39,7 +40,6 @@ interface VirtualizedLogsTableProps<D> {
   isLoading?: boolean;
   dataIsEmpty?: boolean;
   getRowClassName?: (obj: D) => string;
-  getRowStyle?: (obj: D) => React.CSSProperties;
   hasMoreLogsData?: boolean;
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
@@ -100,6 +100,13 @@ export const TableData: FC<PropsWithChildren<TableDataProps>> = ({
   ) : null;
 TableData.displayName = 'TableData';
 
+const getRowSeverityStyle = (severity: string): CSSProperties => {
+  if (!severity) {
+    return {};
+  }
+  return { '--lv-severity-color': getSeverityColor(severity as Severity) } as CSSProperties;
+};
+
 type VirtualizedTableBodyProps<D, R = unknown> = {
   Row: ComponentType<RowProps<D, R>>;
   data: D[];
@@ -113,7 +120,6 @@ type VirtualizedTableBodyProps<D, R = unknown> = {
   getRowId?: (obj: D) => string;
   getRowTitle?: (obj: D) => string;
   getRowClassName?: (obj: D) => string;
-  getRowStyle?: (obj: D) => React.CSSProperties;
   scrollToIndex?: number;
   expandedItems?: Set<number>;
   showResources?: boolean;
@@ -151,7 +157,6 @@ const VirtualizedTableBody = ({
   getRowId,
   getRowTitle,
   getRowClassName,
-  getRowStyle,
   scrollToIndex,
   expandedItems,
   showResources,
@@ -220,7 +225,7 @@ const VirtualizedTableBody = ({
             id={getRowId?.(rowArgs.obj) ?? key}
             index={index}
             trKey={key}
-            style={{ ...style, ...getRowStyle?.(rowArgs.obj) }}
+            style={{ ...style, ...getRowSeverityStyle(rowArgs.obj.severity) }}
             title={getRowTitle?.(rowArgs.obj)}
             className={getRowClassName?.(rowArgs.obj)}
           >
@@ -294,7 +299,6 @@ export const VirtualizedLogsTable = ({
   columns,
   getSortParams,
   getRowClassName,
-  getRowStyle,
   error,
   isStreaming,
   isLoading,
@@ -400,7 +404,6 @@ export const VirtualizedLogsTable = ({
                         scrollTop={scrollTop}
                         width={width}
                         getRowClassName={getRowClassName}
-                        getRowStyle={getRowStyle}
                         scrollToIndex={scrollToIndex}
                         expandedItems={expandedItems}
                         showResources={showResources}
