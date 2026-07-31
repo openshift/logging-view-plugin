@@ -1,11 +1,3 @@
-import chartGrayColor from '@patternfly/react-tokens/dist/esm/chart_color_black_200';
-import chartBlueColor from '@patternfly/react-tokens/dist/esm/chart_color_blue_200';
-import chartCyanColor from '@patternfly/react-tokens/dist/esm/chart_color_teal_200';
-import chartYellowColor from '@patternfly/react-tokens/dist/esm/chart_color_yellow_200';
-import chartGreenColor from '@patternfly/react-tokens/dist/esm/chart_color_green_200';
-import chartPurpleColor from '@patternfly/react-tokens/dist/esm/chart_color_purple_200';
-import chartRedColor from '@patternfly/react-tokens/dist/esm/chart_color_red_orange_100';
-
 export type Severity =
   | 'critical'
   | 'error'
@@ -44,26 +36,20 @@ export const isSeverity = (value: string): value is Severity =>
 
 export const getSeverityColor = (severity: Severity): string => {
   switch (severity) {
-    case 'critical':
-      return chartPurpleColor.value;
-      break;
-    case 'error':
-      return chartRedColor.value;
-      break;
-    case 'warning':
-      return chartYellowColor.value;
-      break;
+    case 'critical': // orange
+      return 'var(--pf-t--chart--global--warning--color--100)';
+    case 'error': // red
+      return 'var(--pf-t--chart--global--danger--color--100)';
+    case 'warning': // yellow
+      return 'var(--pf-t--chart--global--warning--color--200)';
     case 'info':
-      return chartGreenColor.value;
-      break;
+      return 'var(--pf-t--chart--color--purple--300)';
     case 'debug':
-      return chartBlueColor.value;
-      break;
+      return 'var(--pf-t--chart--color--blue--300)';
     case 'trace':
-      return chartCyanColor.value;
-      break;
-    default:
-      return chartGrayColor.value;
+      return 'var(--pf-t--chart--color--teal--300)';
+    default: // gray
+      return 'var(--pf-t--chart--color--black--300)';
   }
 };
 

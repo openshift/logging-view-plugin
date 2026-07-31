@@ -278,6 +278,8 @@ describe('Logs Page', () => {
     cy.contains('infrastructure').click();
     cy.wait(50); // Wait for frontend to update after clicking
 
+    cy.wait('@queryRangeStreamsInfrastructure');
+
     cy.byTestID(TestIds.ExecuteQueryButton).click();
 
     cy.byTestID(TestIds.LogsHistogram)

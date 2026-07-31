@@ -113,10 +113,6 @@ const aggregateStreamLogData = (
   return [];
 };
 
-const getSeverityClass = (severity: string) => {
-  return severity ? `lv-plugin__table__severity-${severity}` : '';
-};
-
 const columns: Array<TableColumn<LogTableData>> = [
   {
     id: 'expand',
@@ -385,7 +381,7 @@ export const LogsTable: FC<PropsWithChildren<LogsTableProps>> = ({
           ? 'lv-plugin__table__row--expanded'
           : 'lv-plugin__table__row--expanded-details';
     }
-    return `lv-plugin__table__row ${getSeverityClass(row.severity)} ${expandedClass}`;
+    return `lv-plugin__table__row ${expandedClass}`;
   }, []);
 
   return (

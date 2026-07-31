@@ -26,6 +26,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LogTableData, Schema } from '../logs.types';
+import { getSeverityColor, Severity } from '../severity';
 import { CenteredContainer } from './centered-container';
 import { ErrorMessage } from './error-message';
 
@@ -98,6 +99,13 @@ export const TableData: FC<PropsWithChildren<TableDataProps>> = ({
     </Td>
   ) : null;
 TableData.displayName = 'TableData';
+
+const getRowSeverityStyle = (severity: string): CSSProperties => {
+  if (!severity) {
+    return {};
+  }
+  return { '--lv-severity-color': getSeverityColor(severity as Severity) } as CSSProperties;
+};
 
 type VirtualizedTableBodyProps<D, R = unknown> = {
   Row: ComponentType<RowProps<D, R>>;
@@ -217,7 +225,7 @@ const VirtualizedTableBody = ({
             id={getRowId?.(rowArgs.obj) ?? key}
             index={index}
             trKey={key}
-            style={style}
+            style={{ ...style, ...getRowSeverityStyle(rowArgs.obj.severity) }}
             title={getRowTitle?.(rowArgs.obj)}
             className={getRowClassName?.(rowArgs.obj)}
           >
