@@ -485,7 +485,7 @@ describe('Attribute filters', () => {
         filters: {
           pod: new Set(['.*etcd.*']),
         },
-        expectedQuery: '{ kubernetes_pod_name=~".*etcd.*" }',
+        expectedQuery: '{ kubernetes_pod_name=~".*etcd.*" } | json',
       },
       {
         initialQuery: '{ kubernetes_pod_name=~"a-pod|b-pod" }',
@@ -494,17 +494,17 @@ describe('Attribute filters', () => {
         filters: {
           pod: new Set(['openshift.pod']),
         },
-        expectedQuery: '{ kubernetes_pod_name="openshift.pod" }',
+        expectedQuery: '{ kubernetes_pod_name="openshift.pod" } | json',
       },
       {
-        initialQuery: '{ kubernetes_pod_name=~"a-pod|b-pod" }',
+        initialQuery: '{ kubernetes_pod_name=~"a-pod|b-pod" } | json',
         // A regex including a dot must have a quantifier (* or + or ?)
         // as regex match in LogQL is fully anchored
         // https://grafana.com/docs/loki/latest/query/log_queries/#log-stream-selector
         filters: {
           pod: new Set(['openshift.*pod']),
         },
-        expectedQuery: '{ kubernetes_pod_name=~"openshift.*pod" }',
+        expectedQuery: '{ kubernetes_pod_name=~"openshift.*pod" } | json',
       },
       {
         initialQuery: '{ kubernetes_pod_name=~"a-pod|b-pod" }',
@@ -514,7 +514,7 @@ describe('Attribute filters', () => {
         filters: {
           pod: new Set(['openshift.+pod']),
         },
-        expectedQuery: '{ kubernetes_pod_name=~"openshift.+pod" }',
+        expectedQuery: '{ kubernetes_pod_name=~"openshift.+pod" } | json',
       },
       {
         initialQuery: '{ kubernetes_pod_name=~"a-pod|b-pod" }',
@@ -524,14 +524,14 @@ describe('Attribute filters', () => {
         filters: {
           pod: new Set(['openshift.?pod']),
         },
-        expectedQuery: '{ kubernetes_pod_name=~"openshift.?pod" }',
+        expectedQuery: '{ kubernetes_pod_name=~"openshift.?pod" } | json',
       },
       {
         initialQuery: '{ kubernetes_pod_name=~"a-pod|b-pod" }',
         filters: {
           pod: new Set(['ns-1']),
         },
-        expectedQuery: '{ kubernetes_pod_name="ns-1" }',
+        expectedQuery: '{ kubernetes_pod_name="ns-1" } | json',
       },
       {
         initialQuery:
@@ -542,27 +542,35 @@ describe('Attribute filters', () => {
       },
       {
         initialQuery:
-          '{ kubernetes_pod_name=~"a-pod|b-pod", kubernetes_namespace_name=~"ns-1|ns-2", label="test", kubernetes_container_name="container-1" } |="some line content" | other="filter" | level="err|eror" or level="unknown" or level=""',
-        filters: {},
-        expectedQuery: '{ label="test" } | other="filter"',
+          '{ kubernetes_pod_name=~`a-pod|b-pod`, kubernetes_namespace_name=~`ns-1|ns-2`, label=`test`, kubernetes_container_name=`container-1` } |=`some line content` | other=`filter` | level=`err|eror` or level=`unknown` or level=``',
+        filters: undefined,
+        expectedQuery:
+          '{ kubernetes_pod_name=~`a-pod|b-pod`, kubernetes_namespace_name=~`ns-1|ns-2`, label=`test`, kubernetes_container_name=`container-1` } |= `some line content` | other=`filter` | level=`err|eror` or level=`unknown` or level=``',
       },
       {
         initialQuery:
-          '{ kubernetes_pod_name=~"a-pod|b-pod", kubernetes_namespace_name=~"ns-1|ns-2", label="test", kubernetes_container_name="container-1" } |="some line content" | other="filter" | level="err|eror" or level="unknown" or level=""',
+          '{ kubernetes_pod_name=~"a-pod|b-pod", kubernetes_namespace_name=~"ns-1|ns-2", label="test", kubernetes_container_name="container-1" } | json |="some line content" | other="filter" | level="err|eror" or level="unknown" or level=""',
+        filters: {},
+        expectedQuery: '{ label="test" } | json | other="filter"',
+      },
+      {
+        initialQuery:
+          '{ kubernetes_pod_name=~"a-pod|b-pod", kubernetes_namespace_name=~"ns-1|ns-2", label="test", kubernetes_container_name="container-1" } | json |="some line content" | other="filter" | level="err|eror" or level="unknown" or level=""',
         filters: {
           namespace: new Set(['namespace-3']),
         },
-        expectedQuery: '{ kubernetes_namespace_name="namespace-3", label="test" } | other="filter"',
+        expectedQuery:
+          '{ kubernetes_namespace_name="namespace-3", label="test" } | json | other="filter"',
       },
       {
         initialQuery:
-          '{ kubernetes_pod_name=~"a-pod|b-pod", kubernetes_namespace_name=~"ns-1|ns-2", label="test", kubernetes_container_name="container-1" } |="some line content" | other="filter" | level="err|eror" or level="unknown" or level=""',
+          '{ kubernetes_pod_name=~"a-pod|b-pod", kubernetes_namespace_name=~"ns-1|ns-2", label="test", kubernetes_container_name="container-1" } | json |="some line content" | other="filter" | level="err|eror" or level="unknown" or level=""',
         filters: {
           namespace: new Set(['namespace-3', 'namespace-4']),
           severity: new Set(['unknown', 'error']),
         },
         expectedQuery:
-          '{ kubernetes_namespace_name=~"namespace-3|namespace-4", label="test" } | other="filter" | level="unknown" or level="" or level=~"error|err|eror"',
+          '{ kubernetes_namespace_name=~"namespace-3|namespace-4", label="test" } | json | other="filter" | level="unknown" or level="" or level=~"error|err|eror"',
       },
       {
         initialQuery:
@@ -573,7 +581,7 @@ describe('Attribute filters', () => {
           severity: new Set(['error', 'unknown']),
         },
         expectedQuery:
-          '{ kubernetes_namespace_name=~"namespace-3|namespace-4", label="test" } |= `new line filter` | other="filter" | level="unknown" or level="" or level=~"error|err|eror"',
+          '{ kubernetes_namespace_name=~"namespace-3|namespace-4", label="test" } |= `new line filter` | json | other="filter" | level="unknown" or level="" or level=~"error|err|eror"',
       },
       {
         initialQuery:
@@ -584,7 +592,7 @@ describe('Attribute filters', () => {
           severity: new Set(['error']),
         },
         expectedQuery:
-          '{ kubernetes_namespace_name=~"namespace-3|namespace-4", label="test" } |= `new line filter` | other="filter" | level=~"error|err|eror"',
+          '{ kubernetes_namespace_name=~"namespace-3|namespace-4", label="test" } |= `new line filter` | json | other="filter" | level=~"error|err|eror"',
       },
       {
         initialQuery:
@@ -596,7 +604,7 @@ describe('Attribute filters', () => {
           pod: new Set(['some-pod']),
         },
         expectedQuery:
-          '{ kubernetes_pod_name="some-pod", kubernetes_namespace_name=~"namespace-3|namespace-4", label="test" } |= `new line filter` | other="filter" | level=~"error|err|eror|info|inf|information|notice"',
+          '{ kubernetes_pod_name="some-pod", kubernetes_namespace_name=~"namespace-3|namespace-4", label="test" } |= `new line filter` | json | other="filter" | level=~"error|err|eror|info|inf|information|notice"',
       },
       {
         initialQuery:
@@ -608,7 +616,7 @@ describe('Attribute filters', () => {
           pod: new Set(['some-pod']),
         },
         expectedQuery:
-          '{ kubernetes_pod_name="some-pod", kubernetes_namespace_name=~"namespace-3|namespace-4", label="test" } |= `new line filter` | other="filter"',
+          '{ kubernetes_pod_name="some-pod", kubernetes_namespace_name=~"namespace-3|namespace-4", label="test" } |= `new line filter` | json | other="filter"',
       },
       {
         initialQuery:
@@ -620,7 +628,7 @@ describe('Attribute filters', () => {
           pod: new Set(['some-pod']),
         },
         expectedQuery:
-          '{ kubernetes_pod_name="some-pod", kubernetes_namespace_name=~"namespace-3|namespace-4", label="test" } | other="filter"',
+          '{ kubernetes_pod_name="some-pod", kubernetes_namespace_name=~"namespace-3|namespace-4", label="test" } | json | other="filter"',
       },
       {
         initialQuery:
@@ -632,7 +640,7 @@ describe('Attribute filters', () => {
           pod: new Set<string>(),
         },
         expectedQuery:
-          '{ kubernetes_namespace_name=~"namespace-3|namespace-4", label="test" } | other="filter"',
+          '{ kubernetes_namespace_name=~"namespace-3|namespace-4", label="test" } | json | other="filter"',
       },
       // Add otel labels keeping the viaq labels
       {
