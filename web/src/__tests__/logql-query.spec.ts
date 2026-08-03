@@ -436,7 +436,7 @@ describe('LogQL query', () => {
         expected: '{ foo="var" } | json | level="err|error"',
       },
       {
-        query: '{ foo="var" } | json |= "line search"',
+        query: '{ foo="var" } |= "line search" | json',
         pipeline: { operator: '|=' },
         matchOptions: { matchLabel: 'non-match-label' },
         expected: '{ foo="var" } | json',
@@ -464,20 +464,20 @@ describe('LogQL query', () => {
         expected: 'max_over_time({ logs_type=~".+" }[10m]))',
       },
       {
-        query: '{ foo="var" } | json |= "line search"',
-        expected: '{ foo="var" } | json |= "line search"',
+        query: '{ foo="var" } |= "line search" | json',
+        expected: '{ foo="var" } |= "line search" | json',
       },
       {
-        query: '{ foo= } | json |= "line search"',
-        expected: '{ foo= } | json |= "line search"',
+        query: '{ foo= } |= "line search" | json',
+        expected: '{ foo= } |= "line search" | json',
       },
       {
         query: '{ foo="bar" } | json "line search"',
         expected: '{ foo="bar" } | json "line search"',
       },
       {
-        query: '{ foo } | json |= "line search"',
-        expected: '{ foo } | json |= "line search"',
+        query: '{ foo } |= "line search" | json',
+        expected: '{ foo } |= "line search" | json',
       },
       {
         query: '{ foo="var" } | unknown',
@@ -509,15 +509,15 @@ describe('LogQL query', () => {
       },
       {
         query:
-          '{ log_type=~".+" } | json != "tekton" |= "TLS handshake error from 10." != "10.128"',
+          '{ log_type=~".+" } != "tekton" |= "TLS handshake error from 10." | json != "10.128"',
         expected:
-          '{ log_type=~".+" } | json != "tekton" |= "TLS handshake error from 10." != "10.128"',
+          '{ log_type=~".+" } != "tekton" |= "TLS handshake error from 10." != "10.128" | json',
       },
       {
         query:
           '{ log_type=~".+" } | json | level="unknown" or level="" != "tekton" |= "TLS handshake error from 10." !~ "10.128" |~ "10.128"',
         expected:
-          '{ log_type=~".+" } | json | level="unknown" or level="" != "tekton" |= "TLS handshake error from 10." !~ "10.128" |~ "10.128"',
+          '{ log_type=~".+" } != "tekton" |= "TLS handshake error from 10." !~ "10.128" |~ "10.128" | json | level="unknown" or level=""',
       },
       {
         query: '{ app="foobar" } |> "I <_>" | json',
@@ -526,6 +526,10 @@ describe('LogQL query', () => {
       {
         query: '{ app="foobar" } !> "I <_>" | json',
         expected: '{ app="foobar" } !> "I <_>" | json',
+      },
+      {
+        query: '{ app="x" } | line_format "{{.message}}" |= "error"',
+        expected: '{ app="x" } | line_format "{{.message}}" |= "error"',
       },
     ].forEach(({ query, expected }) => {
       const logql = new LogQLQuery(query);

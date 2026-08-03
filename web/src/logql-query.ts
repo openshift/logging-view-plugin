@@ -143,6 +143,48 @@ const parsePipelineStages = (
   return pipelineStages;
 };
 
+// place line filters first for better performance
+const operatorSort = (a: PipelineStage, b: PipelineStage) => {
+  const lineFilterOperators = ['|=', '!=', '|~', '!~'];
+
+  if (
+    lineFilterOperators.includes(a.operator ?? '') &&
+    !lineFilterOperators.includes(b.operator ?? '')
+  ) {
+    return -1;
+  } else if (
+    !lineFilterOperators.includes(a.operator ?? '') &&
+    lineFilterOperators.includes(b.operator ?? '')
+  ) {
+    return 1;
+  }
+
+  return 0;
+};
+
+const isLineTransformStage = (stage: PipelineStage): boolean => {
+  return stage.value?.startsWith('line_format') ?? false;
+};
+
+const sortPipelineWithBoundaries = (pipeline: Array<PipelineStage>): Array<PipelineStage> => {
+  const result: Array<PipelineStage> = [];
+  let segment: Array<PipelineStage> = [];
+
+  for (const stage of pipeline) {
+    if (isLineTransformStage(stage)) {
+      result.push(...segment.sort(operatorSort));
+      result.push(stage);
+      segment = [];
+    } else {
+      segment.push(stage);
+    }
+  }
+
+  result.push(...segment.sort(operatorSort));
+
+  return result;
+};
+
 export class LogQLQuery {
   streamSelector: Array<LabelMatcher> = [];
   pipeline: Array<PipelineStage> = [];
@@ -295,7 +337,7 @@ export class LogQLQuery {
 
     const pipeline =
       this.streamSelector.length > 0
-        ? `${this.pipeline
+        ? `${sortPipelineWithBoundaries(this.pipeline)
             .map(({ operator, value }) => ` ${operator} ${value !== undefined ? value : ''}`)
             .join('')}`
         : '';

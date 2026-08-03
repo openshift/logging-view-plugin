@@ -50,10 +50,7 @@ export const defaultQueryFromTenant = ({
   schema: Schema;
 }) => {
   const logType = ResourceToStreamLabels[ResourceLabel.LogType];
-  if (schema === Schema.otel) {
-    return `{ ${logType.otel}="${tenant}" }`;
-  }
-  return `{ ${logType.viaq}="${tenant}" } | json`;
+  return `{ ${schema === Schema.otel ? logType.otel : logType.viaq}="${tenant}" }${schema === Schema.viaq ? ' | json' : ''}`;
 };
 
 const getDirectionValue = (value?: string | null): Direction =>
@@ -153,7 +150,6 @@ export const useURLState = ({
         attributes,
         tenant,
         schema: selectedSchema,
-        addJSONParser: true,
       });
       newQueryParams.set(QUERY_PARAM_KEY, newQuery);
 
