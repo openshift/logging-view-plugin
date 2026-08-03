@@ -106,7 +106,7 @@ const LogsDetailPage: FC<LogsDetailPageProps> = ({
       const labelMatchers = getStreamLabelsFromSchema(s);
       const podLabel = labelMatchers[ResourceLabel.Pod];
 
-      return `{ ${podLabel} = "${podname}" }${s == Schema.viaq ? ' | json' : ''}`;
+      return `{ ${podLabel} = "${podname}" } ${s == Schema.viaq ? '| json' : ''}`;
     },
     getAttributes: ({ config: c, schema: s }) => {
       if (namespace && podname) {
