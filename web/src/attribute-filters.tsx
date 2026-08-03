@@ -548,14 +548,12 @@ export const queryFromFilters = ({
   attributes,
   tenant,
   schema,
-  addJSONParser,
 }: {
   existingQuery: string;
   filters?: Filters;
   attributes: AttributeList;
   tenant?: string;
   schema: Schema;
-  addJSONParser?: boolean;
 }): string => {
   const query = new LogQLQuery(existingQuery);
 
@@ -617,8 +615,8 @@ export const queryFromFilters = ({
     query.removeSelectorMatcher({ label: tenantLabel });
   }
 
-  if (schema === Schema.viaq && !!addJSONParser) {
-    query.addPipelineStage({ operator: '| json' }, { placement: 'start' });
+  if (schema === Schema.viaq) {
+    query.addPipelineStage({ operator: '|', value: 'json' }, { placement: 'start' });
   }
 
   return query.toString();
