@@ -1,6 +1,6 @@
 import { WSFactory } from '@openshift-console/dynamic-plugin-sdk/lib/utils/k8s/ws-factory';
 import { queryWithNamespace } from './attribute-filters';
-import { CancellableFetch, cancellableFetch, RequestInitWithTimeout } from './cancellable-fetch';
+import { CancellableFetch, cancellableFetch } from './cancellable-fetch';
 import {
   Config,
   Direction,
@@ -61,22 +61,23 @@ export const getFetchConfig = ({
   config?: Config;
   tenant: string;
   endpoint?: string;
-}): { requestInit?: RequestInitWithTimeout; endpoint: string } => {
+}): { requestInit?: RequestInit; endpoint: string; timeout?: number } => {
+  const timeout = config?.timeout ? config.timeout * 1000 : undefined;
+
   if (config && config.useTenantInHeader === true) {
     return {
       requestInit: {
         headers: { 'X-Scope-OrgID': tenant },
-        timeout: config?.timeout ? config.timeout * 1000 : undefined,
       },
       endpoint: LOKI_ENDPOINT,
+      timeout,
     };
   }
 
   return {
-    requestInit: {
-      timeout: config?.timeout ? config.timeout * 1000 : undefined,
-    },
+    requestInit: {},
     endpoint: `${LOKI_ENDPOINT}/api/logs/v1/${tenant}`,
+    timeout,
   };
 };
 
@@ -91,7 +92,7 @@ export const executeLabelValue = ({
   config?: Config;
   tenant: string;
 }): CancellableFetch<LabelValueResponse> => {
-  const { endpoint, requestInit } = getFetchConfig({ config, tenant });
+  const { endpoint, requestInit, timeout } = getFetchConfig({ config, tenant });
 
   const params: Record<string, string> = {};
 
@@ -102,6 +103,7 @@ export const executeLabelValue = ({
   return cancellableFetch<LabelValueResponse>(
     `${endpoint}/loki/api/v1/label/${labelName}/values?${new URLSearchParams(params)}`,
     requestInit,
+    timeout,
   );
 };
 
@@ -130,11 +132,12 @@ export const executeQueryRange = ({
     params.direction = direction;
   }
 
-  const { endpoint, requestInit } = getFetchConfig({ config, tenant });
+  const { endpoint, requestInit, timeout } = getFetchConfig({ config, tenant });
 
   return cancellableFetch<QueryRangeResponse>(
     `${endpoint}/loki/api/v1/query_range?${new URLSearchParams(params)}`,
     requestInit,
+    timeout,
   );
 };
 
@@ -157,11 +160,12 @@ export const executeVolumeRange = ({
     end: endNs,
   };
 
-  const { endpoint, requestInit } = getFetchConfig({ config, tenant });
+  const { endpoint, requestInit, timeout } = getFetchConfig({ config, tenant });
 
   return cancellableFetch<VolumeRangeResponse>(
     `${endpoint}/loki/api/v1/index/volume_range?${new URLSearchParams(params)}`,
     requestInit,
+    timeout,
   );
 };
 
@@ -208,7 +212,7 @@ export const executeHistogramQuery = ({
     step: intervalString,
   };
 
-  const { endpoint, requestInit } = getFetchConfig({ config, tenant });
+  const { endpoint, requestInit, timeout } = getFetchConfig({ config, tenant });
 
   const timeRangeNs = BigInt(endNs) - BigInt(startNs);
 
@@ -228,6 +232,7 @@ export const executeHistogramQuery = ({
       const subQuery = cancellableFetch<QueryRangeResponse<MatrixResult>>(
         `${endpoint}/loki/api/v1/query_range?${new URLSearchParams(rangeParams)}`,
         requestInit,
+        timeout,
       );
 
       queries.push(subQuery);
@@ -268,6 +273,7 @@ export const executeHistogramQuery = ({
   return cancellableFetch<QueryRangeResponse<MatrixResult>>(
     `${endpoint}/loki/api/v1/query_range?${new URLSearchParams(params)}`,
     requestInit,
+    timeout,
   );
 };
 
@@ -313,7 +319,7 @@ export const getRules = ({
   tenant: string;
   namespace?: string;
 }) => {
-  const { endpoint, requestInit } = getFetchConfig({
+  const { endpoint, requestInit, timeout } = getFetchConfig({
     config,
     tenant,
   });
@@ -327,5 +333,5 @@ export const getRules = ({
     url = `${url}?${alertingRulesNamespaceLabelKey}=${namespace}`;
   }
 
-  return cancellableFetch<RulesResponse>(url, requestInit);
+  return cancellableFetch<RulesResponse>(url, requestInit, timeout);
 };
