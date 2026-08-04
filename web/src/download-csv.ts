@@ -9,7 +9,12 @@ export const escapeCSVValue = (value: string | number) => {
     return '';
   }
 
-  const stringValue = String(value);
+  let stringValue = String(value);
+
+  if (/^[=+\-@\t\r]/.test(stringValue)) {
+    stringValue = "'" + stringValue;
+  }
+
   if (stringValue.includes('"')) {
     return `"${stringValue.replace(/"/g, '""')}"`;
   }
@@ -33,13 +38,13 @@ export const csvFromQueryResponse = (response?: QueryRangeResponse): string => {
 
     const uniqueColumns = Array.from(['time', ...new Set(columns), 'raw']);
 
-    csvData += uniqueColumns.join(',') + '\n';
+    csvData += uniqueColumns.map((col) => escapeCSVValue(col)).join(',') + '\n';
 
     for (const res of response.data.result) {
       for (const value of res.values) {
         for (const col of uniqueColumns) {
           if (col === 'time') {
-            csvData += value?.[0] + ',';
+            csvData += escapeCSVValue(value?.[0]) + ',';
             continue;
           }
 
@@ -58,18 +63,18 @@ export const csvFromQueryResponse = (response?: QueryRangeResponse): string => {
 
     const uniqueColumns = Array.from(['time', 'y', ...new Set(columns)]);
 
-    csvData += uniqueColumns.join(',') + '\n';
+    csvData += uniqueColumns.map((col) => escapeCSVValue(col)).join(',') + '\n';
 
     for (const res of response.data.result) {
       for (const value of res.values) {
         for (const col of uniqueColumns) {
           if (col === 'time') {
-            csvData += value[0] + ',';
+            csvData += escapeCSVValue(value[0]) + ',';
             continue;
           }
 
           if (col === 'y') {
-            csvData += value[1] + ',';
+            csvData += escapeCSVValue(value[1]) + ',';
             continue;
           }
 
