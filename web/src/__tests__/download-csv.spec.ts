@@ -522,6 +522,64 @@ describe('download CSV', () => {
 1738136036,0.041666666666666664,,
 `,
       },
+      {
+        response: {
+          status: 'success',
+          data: {
+            resultType: 'streams',
+            result: [
+              {
+                stream: {
+                  '=col': '+val',
+                },
+                values: [
+                  ['100', '=1+1'],
+                  ['101', '-1+1'],
+                  ['102', '@SUM(A1)'],
+                  ['103', '\tcmd'],
+                  ['104', '\rcmd'],
+                ],
+              },
+            ],
+            stats: {},
+          },
+        },
+        csv: `time,'=col,raw
+100,'+val,'=1+1,
+101,'+val,'-1+1,
+102,'+val,'@SUM(A1),
+103,'+val,'\tcmd,
+104,'+val,"'\\rcmd",
+`,
+      },
+      {
+        response: {
+          status: 'success',
+          data: {
+            resultType: 'matrix',
+            result: [
+              {
+                metric: {
+                  '-col': '@val',
+                },
+                values: [
+                  [100, '=1+1'],
+                  [101, '+1+1'],
+                  [102, '\tcmd'],
+                  [103, '\rcmd'],
+                ],
+              },
+            ],
+            stats: {},
+          },
+        },
+        csv: `time,y,'-col
+100,'=1+1,'@val,
+101,'+1+1,'@val,
+102,'\tcmd,'@val,
+103,"'\\rcmd",'@val,
+`,
+      },
     ].forEach(({ response, csv }) => {
       expect(csvFromQueryResponse(response as QueryRangeResponse)).toEqual(csv);
     });
