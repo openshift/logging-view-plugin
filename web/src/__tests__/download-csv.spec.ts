@@ -16,6 +16,17 @@ describe('download CSV', () => {
         data: `{"count":0,"host":"2a1b688652c6.1.00000000000000007A44C9E5C6264200","lvl":"warn","msg":"OS not found try installing one","stream":"stdout","ts":"2025-01-29T07:23:52.6392194{"coun{"count":1,"host":"2a1b688652c6.1.00000000000000007A44C9E5C6264200","lvl":"debug","msg":"failed to reach the cloud, try again on a rainy day","stream":"s{"count":2,"host":"2a1b688652c6.0.000000000000{"count":2,"host":"2a1b688652c6.1.00000000000000007A44C9E5C6264200","lvl":"error","msg":"failing to cook potatoes","stream":"stdout","ts"{"co{"count":3,"host":"2a1b688652c6.0.00000000000000004D08FC57CDAD6659","lvl":"error","msg":"failing to cook potatoes","stream":"stdout","ts":"2025-01-29T07:23:52.657082657{"co{"count":4,"host":"2a1b688652c6.0.00000000000000004D08FC57CDAD6659","lvl":"debug","msg":"random error happened during compression","stream":"stdout","ts":"2025-01-29T07:23:52.657454906Z"}`,
         escapedData: `"{""count"":0,""host"":""2a1b688652c6.1.00000000000000007A44C9E5C6264200"",""lvl"":""warn"",""msg"":""OS not found try installing one"",""stream"":""stdout"",""ts"":""2025-01-29T07:23:52.6392194{""coun{""count"":1,""host"":""2a1b688652c6.1.00000000000000007A44C9E5C6264200"",""lvl"":""debug"",""msg"":""failed to reach the cloud, try again on a rainy day"",""stream"":""s{""count"":2,""host"":""2a1b688652c6.0.000000000000{""count"":2,""host"":""2a1b688652c6.1.00000000000000007A44C9E5C6264200"",""lvl"":""error"",""msg"":""failing to cook potatoes"",""stream"":""stdout"",""ts""{""co{""count"":3,""host"":""2a1b688652c6.0.00000000000000004D08FC57CDAD6659"",""lvl"":""error"",""msg"":""failing to cook potatoes"",""stream"":""stdout"",""ts"":""2025-01-29T07:23:52.657082657{""co{""count"":4,""host"":""2a1b688652c6.0.00000000000000004D08FC57CDAD6659"",""lvl"":""debug"",""msg"":""random error happened during compression"",""stream"":""stdout"",""ts"":""2025-01-29T07:23:52.657454906Z""}"`,
       },
+      { data: '=', escapedData: "'=" },
+      { data: '=1+1', escapedData: "'=1+1" },
+      { data: '+1+1', escapedData: "'+1+1" },
+      { data: '-1+1', escapedData: "'-1+1" },
+      { data: '@SUM(A1:A2)', escapedData: "'@SUM(A1:A2)" },
+      {
+        data: '=HYPERLINK("http://test.com","Click")',
+        escapedData: `"'=HYPERLINK(""http://test.com"",""Click"")"`,
+      },
+      { data: '\tcmd', escapedData: 'cmd' },
+      { data: '\rcmd', escapedData: 'cmd' },
     ].forEach(({ data, escapedData }) => {
       expect(escapeCSVValue(data)).toEqual(escapedData);
     });
@@ -509,6 +520,64 @@ describe('download CSV', () => {
 1738135574,0.041666666666666664,,
 1738135588,0.041666666666666664,,
 1738136036,0.041666666666666664,,
+`,
+      },
+      {
+        response: {
+          status: 'success',
+          data: {
+            resultType: 'streams',
+            result: [
+              {
+                stream: {
+                  '=col': '+val',
+                },
+                values: [
+                  ['100', '=1+1'],
+                  ['101', '-1+1'],
+                  ['102', '@SUM(A1)'],
+                  ['103', '\tcmd'],
+                  ['104', '\rcmd'],
+                ],
+              },
+            ],
+            stats: {},
+          },
+        },
+        csv: `time,'=col,raw
+100,'+val,'=1+1,
+101,'+val,'-1+1,
+102,'+val,'@SUM(A1),
+103,'+val,cmd,
+104,'+val,cmd,
+`,
+      },
+      {
+        response: {
+          status: 'success',
+          data: {
+            resultType: 'matrix',
+            result: [
+              {
+                metric: {
+                  '-col': '@val',
+                },
+                values: [
+                  [100, '=1+1'],
+                  [101, '+1+1'],
+                  [102, '\tcmd'],
+                  [103, '\rcmd'],
+                ],
+              },
+            ],
+            stats: {},
+          },
+        },
+        csv: `time,y,'-col
+100,'=1+1,'@val,
+101,'+1+1,'@val,
+102,cmd,'@val,
+103,cmd,'@val,
 `,
       },
     ].forEach(({ response, csv }) => {
