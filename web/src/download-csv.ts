@@ -9,7 +9,7 @@ export const escapeCSVValue = (value: string | number) => {
     return '';
   }
 
-  let stringValue = String(value).trim()
+  let stringValue = String(value).trim();
 
   if (/^[=+\-@\t\r]/.test(stringValue)) {
     stringValue = "'" + stringValue;
