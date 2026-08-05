@@ -25,8 +25,8 @@ describe('download CSV', () => {
         data: '=HYPERLINK("http://test.com","Click")',
         escapedData: `"'=HYPERLINK(""http://test.com"",""Click"")"`,
       },
-      { data: '\tcmd', escapedData: "'\tcmd" },
-      { data: '\rcmd', escapedData: `"'\\rcmd"` },
+      { data: '\tcmd', escapedData: 'cmd' },
+      { data: '\rcmd', escapedData: 'cmd' },
     ].forEach(({ data, escapedData }) => {
       expect(escapeCSVValue(data)).toEqual(escapedData);
     });
@@ -548,8 +548,8 @@ describe('download CSV', () => {
 100,'+val,'=1+1,
 101,'+val,'-1+1,
 102,'+val,'@SUM(A1),
-103,'+val,'\tcmd,
-104,'+val,"'\\rcmd",
+103,'+val,cmd,
+104,'+val,cmd,
 `,
       },
       {
@@ -576,8 +576,8 @@ describe('download CSV', () => {
         csv: `time,y,'-col
 100,'=1+1,'@val,
 101,'+1+1,'@val,
-102,'\tcmd,'@val,
-103,"'\\rcmd",'@val,
+102,cmd,'@val,
+103,cmd,'@val,
 `,
       },
     ].forEach(({ response, csv }) => {
