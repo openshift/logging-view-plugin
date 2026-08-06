@@ -1,3 +1,8 @@
+jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
+  consoleFetchJSON: jest.fn(),
+  K8sResourceCommon: {},
+}));
+
 import {
   filtersFromQuery,
   getContentPipelineStage,

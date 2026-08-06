@@ -1,7 +1,10 @@
 import { SchemaConfig } from '../logs.types';
 import { getFetchConfig } from '../loki-client';
 
-jest.mock('@openshift-console/dynamic-plugin-sdk');
+jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
+  consoleFetchJSON: jest.fn(),
+  K8sResourceCommon: {},
+}));
 
 describe('Loki Client', () => {
   it('should generate a valid config', () => {
@@ -15,7 +18,8 @@ describe('Loki Client', () => {
         },
         expectedFetchConfig: {
           endpoint: '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application',
-          requestInit: { timeout: undefined },
+          requestInit: {},
+          timeout: undefined,
         },
       },
       {
@@ -26,6 +30,7 @@ describe('Loki Client', () => {
         expectedFetchConfig: {
           endpoint: '/api/proxy/plugin/logging-view-plugin/backend',
           requestInit: { headers: { 'X-Scope-OrgID': 'application' } },
+          timeout: undefined,
         },
       },
       {
@@ -35,7 +40,8 @@ describe('Loki Client', () => {
         },
         expectedFetchConfig: {
           endpoint: '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/infrastructure',
-          requestInit: { timeout: undefined },
+          requestInit: {},
+          timeout: undefined,
         },
       },
       {
@@ -50,7 +56,8 @@ describe('Loki Client', () => {
         },
         expectedFetchConfig: {
           endpoint: '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/infrastructure',
-          requestInit: { timeout: 2000 },
+          requestInit: {},
+          timeout: 2000,
         },
       },
     ].forEach(({ config, expectedFetchConfig }) => {
