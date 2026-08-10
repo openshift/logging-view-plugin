@@ -410,7 +410,9 @@ describe('Logs Dev Page', () => {
       QUERY_RANGE_STREAMS_URL_MATCH,
       queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
     );
-    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse());
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
+      'queryRangeMatrix',
+    );
 
     cy.visit(LOGS_DEV_PAGE_URL);
 
@@ -437,6 +439,8 @@ describe('Logs Dev Page', () => {
     });
 
     cy.getByTestId(TestIds.ExecuteQueryButton).click();
+
+    cy.wait('@queryRangeMatrix');
 
     cy.getByTestId(TestIds.LogsMetrics).should('exist');
     cy.getByTestId(TestIds.ToggleHistogramButton).should('be.disabled');
