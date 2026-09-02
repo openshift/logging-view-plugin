@@ -3,6 +3,7 @@ reviewers:
   - kyoto
   - zhuje
   - peteryurkovich
+  - dchromik
 approvers:
   - jgbernalp
   - kyoto
@@ -12,3 +13,4 @@ approvers:
   - xperimental
   - zhuje
   - peteryurkovich
+  - dchromik
