@@ -1,5 +1,5 @@
 import { SchemaConfig } from '../logs.types';
-import { getFetchConfig } from '../loki-client';
+import { getFetchConfig, isQueryRangeResponse, throwResponseError } from '../loki-client';
 
 jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
   consoleFetchJSON: jest.fn(),
@@ -63,5 +63,19 @@ describe('Loki Client', () => {
     ].forEach(({ config, expectedFetchConfig }) => {
       expect(getFetchConfig(config)).toEqual(expectedFetchConfig);
     });
+  });
+
+  it('rejects Loki error responses', () => {
+    expect(() =>
+      throwResponseError({
+        status: 'error',
+        errorType: 'bad_data',
+        error: 'parse error at line 1, col 1',
+      }),
+    ).toThrow('bad_data: parse error at line 1, col 1');
+  });
+
+  it('identifies malformed successful responses', () => {
+    expect(isQueryRangeResponse({ status: 'success', data: {} })).toBe(false);
   });
 });

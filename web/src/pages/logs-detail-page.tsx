@@ -186,6 +186,8 @@ const LogsDetailPage: FC<LogsDetailPageProps> = ({
 
   const isQueryEmpty = query === '';
 
+  const isLoadingLogs = isLoadingLogsData || isLoadingMoreLogsData;
+
   const resultIsMetric = isMatrixResult(logsData?.data);
 
   useEffect(() => {
@@ -221,7 +223,11 @@ const LogsDetailPage: FC<LogsDetailPageProps> = ({
                 isDisabled={isQueryEmpty}
               />
             )}
-            <RefreshIntervalDropdown onRefresh={runQuery} isDisabled={isQueryEmpty} />
+            <RefreshIntervalDropdown
+              onRefresh={runQuery}
+              isDisabled={isQueryEmpty}
+              refreshEnabled={!isLoadingLogs}
+            />
             <Tooltip content={<div>Refresh</div>}>
               <Button
                 icon={<SyncAltIcon />}

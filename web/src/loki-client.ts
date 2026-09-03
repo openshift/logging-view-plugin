@@ -61,6 +61,54 @@ type LokiTailQueryParams = {
 
 const MAX_RANGE_REQUEST_NS = 21_600_000_000_000n; // 6 hours in nanoseconds
 
+const isRecord = (response: unknown): response is Record<string, unknown> =>
+  typeof response === 'object' && response !== null && !Array.isArray(response);
+
+const toRecord = (response: unknown): Record<string, unknown> => {
+  if (!isRecord(response)) {
+    throw new Error('Invalid Loki query response');
+  }
+
+  return response;
+};
+
+export const throwResponseError = (response: Record<string, unknown>): Record<string, unknown> => {
+  if (response.status !== 'error') {
+    return response;
+  }
+
+  const errorType = typeof response.errorType === 'string' ? response.errorType : undefined;
+  const error = typeof response.error === 'string' ? response.error : undefined;
+  throw new Error([errorType, error].filter(Boolean).join(': ') || 'Loki query failed');
+};
+
+export const isQueryRangeResponse = (
+  response: Record<string, unknown>,
+): response is QueryRangeResponse => {
+  const data = response.data;
+  return isRecord(data) && Array.isArray(data.result);
+};
+
+const toQueryRangeResponse = (response: Record<string, unknown>): QueryRangeResponse => {
+  if (!isQueryRangeResponse(response)) {
+    throw new Error('Invalid Loki query response: missing data.result');
+  }
+
+  return response;
+};
+
+export const validateQueryRangeResponse = (response: QueryRangeResponse): QueryRangeResponse => {
+  if (response.status !== 'success') {
+    throw new Error(`Invalid Loki query response status: ${String(response.status)}`);
+  }
+
+  if (response.data.resultType !== 'streams' && response.data.resultType !== 'matrix') {
+    throw new Error('Invalid Loki query response: invalid data.resultType');
+  }
+
+  return response;
+};
+
 export const getFetchConfig = ({
   config,
   tenant,
@@ -147,7 +195,7 @@ export const executeQueryRange = ({
   namespace,
   direction,
   schema,
-}: QueryRangeParams): CancellableFetch<QueryRangeResponse> => {
+}: QueryRangeParams): { request: () => Promise<QueryRangeResponse> } => {
   const extendedQuery = queryWithNamespace({
     query,
     namespace,
@@ -167,11 +215,22 @@ export const executeQueryRange = ({
 
   const { endpoint, requestInit, timeout } = getFetchConfig({ config, tenant });
 
-  return cancellableFetch<QueryRangeResponse>(
+  const { request } = cancellableFetch<unknown>(
     `${endpoint}/loki/api/v1/query_range?${new URLSearchParams(params)}`,
     requestInit,
     timeout,
   );
+
+  return {
+    // consoleFetchJSON can return null, empty arrays, strings and other primitives
+    // Perform type narrowing and validations at each layer
+    request: () =>
+      request()
+        .then(toRecord)
+        .then(throwResponseError)
+        .then(toQueryRangeResponse)
+        .then(validateQueryRangeResponse),
+  };
 };
 
 export const executeVolumeRange = ({
@@ -242,8 +301,8 @@ export const executeHistogramQuery = ({
     schema,
   });
 
-  // eslint-disable-next-line max-len
-  const histogramQuery = `sum by (${labelSeverity}) (count_over_time(${extendedQuery} [${intervalString}]))`;
+  const histogramQuery =
+    `sum by (${labelSeverity}) ` + `(count_over_time(${extendedQuery} [${intervalString}]))`;
 
   const params = {
     query: histogramQuery,

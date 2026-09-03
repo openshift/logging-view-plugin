@@ -173,6 +173,8 @@ const LogsPage: FC = () => {
 
   const resultIsMetric = isMatrixResult(logsData?.data);
 
+  const isLoadingLogs = isLoadingLogsData || isLoadingMoreLogsData;
+
   useEffect(() => {
     if (resultIsMetric) {
       setIsHistogramVisible(false);
@@ -206,7 +208,11 @@ const LogsPage: FC = () => {
                 isDisabled={isQueryEmpty}
               />
             )}
-            <RefreshIntervalDropdown onRefresh={runQuery} isDisabled={isQueryEmpty} />
+            <RefreshIntervalDropdown
+              onRefresh={runQuery}
+              isDisabled={isQueryEmpty}
+              refreshEnabled={!isLoadingLogs}
+            />
             <Tooltip content={<div>Refresh</div>}>
               <Button
                 icon={<SyncAltIcon />}

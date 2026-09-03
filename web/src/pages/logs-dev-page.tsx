@@ -207,6 +207,7 @@ const LogsDevPage: FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => {
   const isQueryEmpty = query === '';
   const isNamespaceFilterEmpty =
     filters?.['namespace'] === undefined || filters['namespace'].size === 0;
+  const isLoadingLogs = isLoadingLogsData || isLoadingMoreLogsData;
   const isRunQueryDisabled = isQueryEmpty || isNamespaceFilterEmpty;
 
   const resultIsMetric = isMatrixResult(logsData?.data);
@@ -241,7 +242,11 @@ const LogsDevPage: FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => {
                 isDisabled={isQueryEmpty}
               />
             )}
-            <RefreshIntervalDropdown onRefresh={runQuery} isDisabled={isRunQueryDisabled} />
+            <RefreshIntervalDropdown
+              onRefresh={runQuery}
+              isDisabled={isRunQueryDisabled}
+              refreshEnabled={!isLoadingLogs}
+            />
             <Tooltip content={<div>Refresh</div>}>
               <Button
                 icon={<SyncAltIcon />}

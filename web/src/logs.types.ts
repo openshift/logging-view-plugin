@@ -79,6 +79,12 @@ export type QueryRangeResponse<T = MatrixResult | StreamsResult> = {
   };
 };
 
+export type LokiErrorResponse = {
+  status: 'error';
+  errorType?: string;
+  error?: string;
+};
+
 export type VolumeRangeResponse = QueryRangeResponse<MatrixResult>;
 
 export type Rule = {

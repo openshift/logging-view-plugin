@@ -24,6 +24,8 @@ import { useContext, useReducer, useRef } from 'react';
 
 const DEFAULT_TIME_SPAN = '1h';
 const STREAMING_MAX_LOGS_LIMIT = 1e3;
+const DUPLICATE_LOG_QUERY_DELAY = 1_000;
+const LOG_QUERY_THROTTLE = 50;
 
 const isAbortError = (error: unknown): boolean =>
   error instanceof Error && error.name === 'AbortError';
@@ -159,6 +161,7 @@ const reducer = (state: State, action: Action): State => {
       return {
         ...state,
         isLoadingLogsData: true,
+        isLoadingMoreLogsData: false,
         logsData: undefined,
         logsError: undefined,
         hasMoreLogsData: false,
@@ -252,13 +255,16 @@ export const useLogs = (
   const currentQuery = useRef<string | undefined>();
   const currentTenant = useRef<string>(initialTenant);
   const currentTimeRange = useRef<TimeRange>(initialTimeRange);
+  const currentNamespace = useRef<string | undefined>();
+  const currentSchema = useRef<Schema | undefined>();
+  const currentLastTimestampNs = useRef<string | undefined>();
   const lastExecutionTime = useRef<{ logs?: number; histogram?: number; volume?: number }>({
     logs: undefined,
     histogram: undefined,
     volume: undefined,
   });
   const currentDirection = useRef<Direction>('backward');
-  const logsAbort = useRef<() => void | undefined>();
+  const logsRequestID = useRef(0);
   const histogramAbort = useRef<() => void | undefined>();
   const volumeAbort = useRef<() => void | undefined>();
   const ws = useRef<WSFactory | null>();
@@ -316,9 +322,42 @@ export const useLogs = (
       return;
     }
 
+    const requestTime = Date.now();
+
+    // Throttle extremely rapid requests
+    if (
+      lastExecutionTime.current.logs &&
+      requestTime - lastExecutionTime.current.logs < LOG_QUERY_THROTTLE
+    ) {
+      return;
+    }
+
+    const sameQuery = currentQuery.current === query;
+    const sameLastTimestamp = currentLastTimestampNs.current === lastTimestampNs;
+    const sameDirection = !direction || currentDirection.current === direction;
+    const sameNamespace = currentNamespace.current === namespace;
+    const sameSchema = currentSchema.current === schema;
+
+    const sameLogRequest =
+      sameQuery && sameLastTimestamp && sameDirection && sameNamespace && sameSchema;
+
+    if (
+      sameLogRequest &&
+      lastExecutionTime.current.logs &&
+      requestTime - lastExecutionTime.current.logs < DUPLICATE_LOG_QUERY_DELAY
+    ) {
+      return;
+    }
+
+    const requestID = ++logsRequestID.current;
+
     try {
       currentQuery.current = query;
       currentDirection.current = direction ?? currentDirection.current;
+      currentNamespace.current = namespace ?? currentNamespace.current;
+      currentSchema.current = schema;
+      currentLastTimestampNs.current = lastTimestampNs;
+      lastExecutionTime.current.logs = requestTime;
 
       const lastTs = BigInt(lastTimestampNs);
       const oneHourNs = 3_600_000_000_000n;
@@ -336,13 +375,9 @@ export const useLogs = (
 
       dispatch({ type: 'moreLogsRequest' });
 
-      if (logsAbort.current) {
-        logsAbort.current();
-      }
-
       const config = configRef.current;
 
-      const { request, abort } = executeQueryRange({
+      const { request } = executeQueryRange({
         query,
         startNs,
         endNs,
@@ -353,16 +388,16 @@ export const useLogs = (
         schema,
       });
 
-      logsAbort.current = abort;
-
       const queryResponse = await request();
 
-      dispatch({
-        type: 'moreLogsResponse',
-        payload: { logsData: queryResponse, config },
-      });
+      if (requestID === logsRequestID.current) {
+        dispatch({
+          type: 'moreLogsResponse',
+          payload: { logsData: queryResponse, config },
+        });
+      }
     } catch (error) {
-      if (!isAbortError(error)) {
+      if (requestID === logsRequestID.current && !isAbortError(error)) {
         dispatch({ type: 'logsError', payload: { error } });
       }
     }
@@ -388,29 +423,64 @@ export const useLogs = (
       return;
     }
 
-    // Throttle requests
-    if (lastExecutionTime.current.logs && Date.now() - lastExecutionTime.current.logs < 50) {
+    const requestTime = Date.now();
+
+    // Throttle extremely rapid requests
+    if (
+      lastExecutionTime.current.logs &&
+      requestTime - lastExecutionTime.current.logs < LOG_QUERY_THROTTLE
+    ) {
       return;
     }
+
+    const sameQuery = currentQuery.current === query;
+    const sameTimeRange =
+      !timeRange ||
+      (currentTimeRange.current.start === timeRange.start &&
+        currentTimeRange.current.end === timeRange.end);
+    const sameDirection = !direction || currentDirection.current === direction;
+    const sameTenant = !tenant || currentTenant.current === tenant;
+    const sameNamespace = currentNamespace.current === namespace;
+    const sameSchema = currentSchema.current === schema;
+
+    const sameLogRequest =
+      sameQuery &&
+      sameTimeRange &&
+      sameDirection &&
+      sameTenant &&
+      sameNamespace &&
+      sameSchema &&
+      // don't throttle if the previous caller was getMoreLogs rather than getLogs
+      currentLastTimestampNs.current === undefined;
+
+    // Throttle requests that are the same for a longer period of time
+    if (
+      sameLogRequest &&
+      lastExecutionTime.current.logs &&
+      requestTime - lastExecutionTime.current.logs < DUPLICATE_LOG_QUERY_DELAY
+    ) {
+      return;
+    }
+
+    const requestID = ++logsRequestID.current;
 
     try {
       currentQuery.current = query;
       currentTenant.current = tenant ?? currentTenant.current;
-      lastExecutionTime.current.logs = Date.now();
+      lastExecutionTime.current.logs = requestTime;
       currentTimeRange.current = timeRange ?? currentTimeRange.current;
       currentDirection.current = direction ?? currentDirection.current;
+      currentNamespace.current = namespace;
+      currentSchema.current = schema;
+      currentLastTimestampNs.current = undefined;
 
       const { start, end } = numericTimeRange(currentTimeRange.current);
 
       dispatch({ type: 'logsRequest' });
 
-      if (logsAbort.current) {
-        logsAbort.current();
-      }
-
       const config = configRef.current;
 
-      const { request, abort } = executeQueryRange({
+      const { request } = executeQueryRange({
         query,
         startNs: msToNs(start),
         endNs: msToNs(end),
@@ -421,13 +491,13 @@ export const useLogs = (
         schema,
       });
 
-      logsAbort.current = abort;
-
       const queryResponse = await request();
 
-      dispatch({ type: 'logsResponse', payload: { logsData: queryResponse, config } });
+      if (requestID === logsRequestID.current) {
+        dispatch({ type: 'logsResponse', payload: { logsData: queryResponse, config } });
+      }
     } catch (error) {
-      if (!isAbortError(error)) {
+      if (requestID === logsRequestID.current && !isAbortError(error)) {
         dispatch({ type: 'logsError', payload: { error } });
       }
     }
@@ -454,6 +524,8 @@ export const useLogs = (
   }) => {
     currentQuery.current = query;
     currentTenant.current = tenant ?? currentTenant.current;
+    currentNamespace.current = namespace ?? currentNamespace.current;
+    currentSchema.current = schema;
 
     if (ws.current) {
       ws.current.destroy();
@@ -507,6 +579,8 @@ export const useLogs = (
   }) => {
     currentQuery.current = query;
     currentTenant.current = tenant ?? currentTenant.current;
+    currentNamespace.current = namespace ?? currentNamespace.current;
+    currentSchema.current = schema;
 
     if (isStreaming) {
       pauseTailLog();
@@ -541,6 +615,8 @@ export const useLogs = (
     try {
       currentQuery.current = query;
       currentTenant.current = tenant ?? currentTenant.current;
+      currentNamespace.current = namespace ?? currentNamespace.current;
+      currentSchema.current = schema;
       lastExecutionTime.current.volume = Date.now();
       currentTimeRange.current = timeRange ?? currentTimeRange.current;
 
@@ -615,6 +691,8 @@ export const useLogs = (
     try {
       currentQuery.current = query;
       currentTenant.current = tenant ?? currentTenant.current;
+      currentNamespace.current = namespace ?? currentNamespace.current;
+      currentSchema.current = schema;
       lastExecutionTime.current.histogram = Date.now();
       currentTimeRange.current = timeRange ?? currentTimeRange.current;
 
