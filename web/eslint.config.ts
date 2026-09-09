@@ -20,6 +20,12 @@ const compat = new FlatCompat({
 
 export default defineConfig([
   {
+    linterOptions: {
+      // eslint --fix will get in a loop where there is no error so it deletes the directive,
+      // which in turn causes the error to then be shown.
+      reportUnusedDisableDirectives: 'off',
+    },
+
     extends: fixupConfigRules(
       compat.extends(
         'eslint:recommended',

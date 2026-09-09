@@ -24,4 +24,5 @@ export enum TestIds {
   NamespaceDropdown = 'NamespaceDropdown',
   NamespaceToggle = 'NamespaceToggle',
   SchemaToggle = 'SchemaToggle',
+  LoadMoreLogs = 'LoadMoreLogs',
 }

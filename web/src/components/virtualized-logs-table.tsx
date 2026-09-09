@@ -27,6 +27,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { LogTableData, Schema } from '../logs.types';
 import { getSeverityColor, Severity } from '../severity';
+import { TestIds } from '../test-ids';
 import { CenteredContainer } from './centered-container';
 import { ErrorMessage } from './error-message';
 
@@ -420,6 +421,7 @@ export const VirtualizedLogsTable = ({
           <Tbody>
             <Tr
               className="lv-plugin__table__row-info lv-plugin__table__row-more-data"
+              data-test={TestIds.LoadMoreLogs}
               onClick={() => {
                 setScrollToIndex(data.length - 1);
                 onLoadMore?.();

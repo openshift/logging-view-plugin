@@ -29,11 +29,13 @@ const refreshIntervalOptions = [
 interface RefreshIntervalDropdownProps {
   onRefresh?: () => void;
   isDisabled?: boolean;
+  refreshEnabled?: boolean;
 }
 
 export const RefreshIntervalDropdown: FC<RefreshIntervalDropdownProps> = ({
   onRefresh,
   isDisabled = false,
+  refreshEnabled = true,
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
@@ -51,6 +53,9 @@ export const RefreshIntervalDropdown: FC<RefreshIntervalDropdownProps> = ({
   const onRefreshRef = useRef(onRefresh);
   // eslint-disable-next-line react-hooks/refs
   onRefreshRef.current = onRefresh;
+  const refreshEnabledRef = useRef(refreshEnabled);
+  // eslint-disable-next-line react-hooks/refs
+  refreshEnabledRef.current = refreshEnabled;
 
   const clearTimer = () => {
     if (timer.current) {
@@ -70,8 +75,14 @@ export const RefreshIntervalDropdown: FC<RefreshIntervalDropdownProps> = ({
     clearTimer();
 
     if (delay !== 0) {
-      onRefreshRef.current?.();
-      timer.current = setInterval(() => onRefreshRef.current?.(), delay);
+      if (refreshEnabledRef.current) {
+        onRefreshRef.current?.();
+      }
+      timer.current = setInterval(() => {
+        if (refreshEnabledRef.current) {
+          onRefreshRef.current?.();
+        }
+      }, delay);
     }
 
     return () => clearTimer();
