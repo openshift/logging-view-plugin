@@ -4,7 +4,7 @@ const path = require('path');
 const report_dir = process.env.ARTIFACT_DIR || '/tmp';
 
 export default defineConfig({
-  screenshotsFolder:  path.join(report_dir, 'cypress', 'screenshots'),
+  screenshotsFolder: path.join(report_dir, 'cypress', 'screenshots'),
   screenshotOnRunFailure: true,
   trashAssetsBeforeRuns: true,
   videosFolder: path.join(report_dir, 'cypress', 'videos'),
@@ -14,22 +14,22 @@ export default defineConfig({
   reporterOptions: {
     reporterEnabled: 'mocha-junit-reporter, mochawesome',
     mochaJunitReporterReporterOptions: {
-      mochaFile:  path.join(report_dir, 'junit_cypress-[hash].xml'),
-      toConsole: false
+      mochaFile: path.join(report_dir, 'junit_cypress-[hash].xml'),
+      toConsole: false,
     },
     mochawesomeReporterOptions: {
       reportDir: report_dir,
       reportFilename: 'cypress_report',
       overwrite: false,
       html: false,
-      json: true
-    }
+      json: true,
+    },
   },
   env: {
     grepFilterSpecs: false,
-    'KUBECONFIG_PATH': process.env.KUBECONFIG,
-    'NOO_CS_IMAGE': process.env.MULTISTAGE_PARAM_OVERRIDE_CYPRESS_NOO_CS_IMAGE,
-    'OPENSHIFT_VERSION': process.env.CYPRESS_OPENSHIFT_VERSION,
+    KUBECONFIG_PATH: process.env.KUBECONFIG,
+    NOO_CS_IMAGE: process.env.MULTISTAGE_PARAM_OVERRIDE_CYPRESS_NOO_CS_IMAGE,
+    OPENSHIFT_VERSION: process.env.CYPRESS_OPENSHIFT_VERSION,
   },
   fixturesFolder: 'fixtures',
   defaultCommandTimeout: 30000,
@@ -42,27 +42,30 @@ export default defineConfig({
   e2e: {
     baseUrl: process.env.CYPRESS_BASE_URL || process.env.BASE_URL || 'http://localhost:9003',
     setupNodeEvents(on, config) {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      require('@cypress/code-coverage/task')(on, config);
-      on('before:browser:launch', (browser = {
-        name: "",
-        family: "chromium",
-        channel: "",
-        displayName: "",
-        version: "",
-        majorVersion: "",
-        path: "",
-        isHeaded: false,
-        isHeadless: false
-      }, launchOptions) => {
-        if (browser.family === 'chromium' && browser.name !== 'electron') {
-          // auto open devtools
-          launchOptions.args.push('--enable-precise-memory-info')
-        }
+      on(
+        'before:browser:launch',
+        (
+          browser = {
+            name: '',
+            family: 'chromium',
+            channel: '',
+            displayName: '',
+            version: '',
+            majorVersion: '',
+            path: '',
+            isHeaded: false,
+            isHeadless: false,
+          },
+          launchOptions,
+        ) => {
+          if (browser.family === 'chromium' && browser.name !== 'electron') {
+            // auto open devtools
+            launchOptions.args.push('--enable-precise-memory-info');
+          }
 
-        return launchOptions
-
-      });
+          return launchOptions;
+        },
+      );
       // `on` is used to hook into various events Cypress emits
       on('task', {
         log(message) {
@@ -100,21 +103,18 @@ export default defineConfig({
           });
         });
       });
-      on(
-        'after:spec',
-        (spec: Cypress.Spec, results: CypressCommandLine.RunResult) => {
-          if (results && results.video) {
-            // Do we have failures for any retry attempts?
-            const failures = results.tests.some((test) =>
-              test.attempts.some((attempt) => attempt.state === 'failed')
-            )
-            if (!failures && fs.existsSync(results.video)) {
-              // delete the video if the spec passed and no tests retried
-              fs.unlinkSync(results.video)
-            }
+      on('after:spec', (spec: Cypress.Spec, results: CypressCommandLine.RunResult) => {
+        if (results && results.video) {
+          // Do we have failures for any retry attempts?
+          const failures = results.tests.some((test) =>
+            test.attempts.some((attempt) => attempt.state === 'failed'),
+          );
+          if (!failures && fs.existsSync(results.video)) {
+            // delete the video if the spec passed and no tests retried
+            fs.unlinkSync(results.video);
           }
         }
-      );
+      });
       require('@cypress/grep/src/plugin')(config);
       return config;
     },
@@ -125,7 +125,7 @@ export default defineConfig({
     experimentalModifyObstructiveThirdPartyCode: true,
     experimentalOriginDependencies: true,
     experimentalMemoryManagement: true,
-    experimentalCspAllowList: ['default-src', 'script-src']
+    experimentalCspAllowList: ['default-src', 'script-src'],
   },
   numTestsKeptInMemory: 2,
   video: false,
