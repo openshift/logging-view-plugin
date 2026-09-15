@@ -431,6 +431,7 @@ describe('Logs Dev Page', () => {
           'sum by (level) (count_over_time({ kubernetes_namespace_name="my-namespace" })[10m])',
           {
             parseSpecialCharSequences: false,
+            delay: 1,
           },
         );
     });
@@ -449,6 +450,7 @@ describe('Logs Dev Page', () => {
         .type('{backspace}')
         .type('{ kubernetes_namespace_name="my-namespace" }', {
           parseSpecialCharSequences: false,
+          delay: 1,
         });
     });
 
