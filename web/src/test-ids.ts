@@ -18,4 +18,10 @@ export enum TestIds {
   TimeRangeSelectModal = 'TimeRangeSelectModal',
   TimeRangeDropdownSaveButton = 'TimeRangeDropdownSaveButton',
   ToggleHistogramButton = 'ToggleHistogramButton',
+  AvailableAttributes = 'AvailableAttributes',
+  AttributeOptions = 'AttributeOptions',
+  NamespaceDropdown = 'NamespaceDropdown',
+  NamespaceToggle = 'NamespaceToggle',
+  SchemaToggle = 'SchemaToggle',
+  LoadMoreLogs = 'LoadMoreLogs',
 }

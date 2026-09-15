@@ -15,6 +15,10 @@ import {
   executeHistogramQuery,
   executeQueryRange,
   executeVolumeRange,
+  throwResponseError,
+  toQueryRangeResponse,
+  toRecord,
+  validateQueryRangeResponse,
 } from '../loki-client';
 import { intervalFromTimeRange, numericTimeRange, timeRangeFromDuration } from '../time-range';
 import { msToNs } from '../value-utils';
@@ -40,6 +44,7 @@ type State = {
   isLoadingMoreLogsData: boolean;
   logsData?: QueryRangeResponse;
   logsError?: unknown;
+  moreLogsError?: unknown;
   isLoadingVolumeData?: boolean;
   volumeData?: VolumeRangeResponse;
   volumeError?: unknown;
@@ -84,6 +89,10 @@ type Action =
     }
   | {
       type: 'logsError';
+      payload: { error: unknown };
+    }
+  | {
+      type: 'moreLogsError';
       payload: { error: unknown };
     }
   | {
@@ -171,7 +180,9 @@ const reducer = (state: State, action: Action): State => {
         isLoadingLogsData: true,
         logsData: undefined,
         logsError: undefined,
+        moreLogsError: undefined,
         hasMoreLogsData: false,
+        isLoadingMoreLogsData: false,
         isStreaming: false,
         isLoadingVolumeData: false,
       };
@@ -180,6 +191,7 @@ const reducer = (state: State, action: Action): State => {
         ...state,
         logsData: undefined,
         logsError: undefined,
+        moreLogsError: undefined,
         hasMoreLogsData: false,
         isStreaming: true,
       };
@@ -220,11 +232,13 @@ const reducer = (state: State, action: Action): State => {
         ...state,
         isLoadingMoreLogsData: true,
         logsError: undefined,
+        moreLogsError: undefined,
       };
     case 'logsResponse':
       return {
         ...state,
         isLoadingLogsData: false,
+        isLoadingMoreLogsData: false,
         showVolumeGraph: false,
         logsData: action.payload.logsData,
         hasMoreLogsData: hasMoreLogs(action.payload.logsData, state.config.logsLimit),
@@ -242,6 +256,15 @@ const reducer = (state: State, action: Action): State => {
         isLoadingLogsData: false,
         isLoadingMoreLogsData: false,
         logsError: action.payload.error,
+        moreLogsError: undefined,
+      };
+    case 'moreLogsError':
+      return {
+        ...state,
+        isLoadingLogsData: false,
+        isLoadingMoreLogsData: false,
+        logsError: undefined,
+        moreLogsError: action.payload.error,
       };
     case 'setConfig':
       return {
@@ -291,6 +314,7 @@ export const useLogs = (
       histogramError,
       volumeData,
       logsError,
+      moreLogsError,
       volumeError,
       showVolumeGraph,
       hasMoreLogsData,
@@ -339,7 +363,7 @@ export const useLogs = (
     direction?: Direction;
   }) => {
     if (query.length === 0) {
-      dispatch({ type: 'logsError', payload: { error: new Error('Query is empty') } });
+      dispatch({ type: 'moreLogsError', payload: { error: new Error('Query is empty') } });
       return;
     }
 
@@ -381,7 +405,11 @@ export const useLogs = (
 
       logsAbort.current = abort;
 
-      const queryResponse = await request();
+      const queryResponse = await request()
+        .then(toRecord)
+        .then(throwResponseError)
+        .then(toQueryRangeResponse)
+        .then(validateQueryRangeResponse);
 
       dispatch({
         type: 'moreLogsResponse',
@@ -389,7 +417,7 @@ export const useLogs = (
       });
     } catch (error) {
       if (!isAbortError(error)) {
-        dispatch({ type: 'logsError', payload: { error } });
+        dispatch({ type: 'moreLogsError', payload: { error } });
       }
     }
   };
@@ -446,7 +474,11 @@ export const useLogs = (
 
       logsAbort.current = abort;
 
-      const queryResponse = await request();
+      const queryResponse = await request()
+        .then(toRecord)
+        .then(throwResponseError)
+        .then(toQueryRangeResponse)
+        .then(validateQueryRangeResponse);
 
       dispatch({ type: 'logsResponse', payload: { logsData: queryResponse } });
     } catch (error) {
@@ -683,6 +715,7 @@ export const useLogs = (
     getMoreLogs,
     hasMoreLogsData,
     logsError,
+    moreLogsError,
     getHistogram,
     histogramError,
     toggleStreaming,
