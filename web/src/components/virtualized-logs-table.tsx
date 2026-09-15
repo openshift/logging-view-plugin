@@ -1,13 +1,12 @@
 import { RowProps, TableColumn } from '@openshift-console/dynamic-plugin-sdk';
 import { Alert } from '@patternfly/react-core';
 import { Table, Tbody, Td, Th, Thead, ThProps, Tr } from '@patternfly/react-table';
-import { VirtualTableBody } from '@patternfly/react-virtualized-extension';
-import { AutoSizer, WindowScroller } from '@patternfly/react-virtualized-extension';
+import {
+  AutoSizer,
+  VirtualTableBody,
+  WindowScroller,
+} from '@patternfly/react-virtualized-extension';
 import { Scroll } from '@patternfly/react-virtualized-extension/dist/esm/components/Virtualized/types';
-import CellMeasurer, {
-  CellMeasurerCache,
-  MeasuredCellParent,
-} from 'react-virtualized/dist/es/CellMeasurer';
 import classNames from 'classnames';
 import {
   ComponentType,
@@ -25,7 +24,12 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import CellMeasurer, {
+  CellMeasurerCache,
+  MeasuredCellParent,
+} from 'react-virtualized/dist/es/CellMeasurer';
 import { LogTableData, Schema } from '../logs.types';
+import { TestIds } from '../test-ids';
 import { CenteredContainer } from './centered-container';
 import { ErrorMessage } from './error-message';
 
@@ -408,10 +412,11 @@ export const VirtualizedLogsTable = ({
           )}
         </WithScrollContainer>
 
-        {!isLoading && hasMoreLogsData && (
+        {!(isLoading || isLoadingMore) && hasMoreLogsData && (
           <Tbody>
             <Tr
               className="lv-plugin__table__row-info lv-plugin__table__row-more-data"
+              data-test={TestIds.LoadMoreLogs}
               onClick={() => {
                 setScrollToIndex(data.length - 1);
                 onLoadMore?.();

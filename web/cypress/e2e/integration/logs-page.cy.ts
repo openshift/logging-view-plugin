@@ -161,6 +161,90 @@ describe('Logs Page', () => {
       });
   });
 
+  it('displays a Loki error payload returned with HTTP 200', () => {
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, {
+      statusCode: 200,
+      body: {
+        status: 'error',
+        errorType: 'bad_data',
+        error: 'parse error at line 1, col 1: unexpected IDENTIFIER',
+      },
+    }).as('queryRangeStreams');
+
+    cy.visit(LOGS_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
+
+    cy.byTestID(TestIds.LogsTable)
+      .should('exist')
+      .within(() => {
+        cy.contains(/bad_data/i);
+        cy.contains('parse error at line 1, col 1: unexpected IDENTIFIER');
+      });
+  });
+
+  it('keeps load more logs available after a Loki error payload returned with HTTP 200', () => {
+    let requestCount = 0;
+
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, (req) => {
+      requestCount += 1;
+      req.reply(
+        requestCount === 1
+          ? queryRangeStreamsValidResponse({ message: TEST_MESSAGE })
+          : {
+              statusCode: 200,
+              body: {
+                status: 'error',
+                errorType: 'bad_data',
+                error: 'parse error at line 1, col 1: unexpected IDENTIFIER',
+              },
+            },
+      );
+    }).as('queryRangeStreams');
+
+    cy.visit(LOGS_PAGE_URL);
+    cy.wait('@queryRangeStreams');
+
+    cy.byTestID(TestIds.LoadMoreLogs).click();
+    cy.wait('@queryRangeStreams');
+
+    cy.byTestID(TestIds.LoadMoreLogs).should('exist');
+  });
+
+  it('keeps the latest query results when an earlier request completes late', () => {
+    let requestCount = 0;
+
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, (req) => {
+      requestCount += 1;
+      const body = queryRangeStreamsValidResponse({
+        message:
+          requestCount === 1
+            ? 'initial result'
+            : requestCount === 2
+              ? 'stale result'
+              : 'latest result',
+      });
+
+      req.reply(requestCount === 2 ? { body, delay: 3_000 } : body);
+    }).as('queryRangeStreams');
+
+    cy.visit(LOGS_PAGE_URL);
+    cy.wait('@queryRangeStreams');
+
+    cy.byTestID(TestIds.SyncButton).click();
+    cy.byTestID(TestIds.TimeRangeDropdown).click();
+    cy.contains('Last 6 hours').click();
+
+    cy.contains('latest result').should('exist');
+    cy.byTestID(TestIds.LoadMoreLogs).should('exist');
+
+    cy.wait('@queryRangeStreams');
+    cy.wait('@queryRangeStreams');
+    cy.contains('latest result').should('exist');
+    cy.contains('stale result').should('not.exist');
+    cy.byTestID(TestIds.LoadMoreLogs).should('exist');
+  });
+
   it('executes a query when "run query" is pressed', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
