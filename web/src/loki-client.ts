@@ -61,6 +61,54 @@ type LokiTailQueryParams = {
 
 const MAX_RANGE_REQUEST_NS = 21_600_000_000_000n; // 6 hours in nanoseconds
 
+export const isRecord = (response: unknown): response is Record<string, unknown> =>
+  typeof response === 'object' && response !== null && !Array.isArray(response);
+
+export const toRecord = (response: unknown): Record<string, unknown> => {
+  if (!isRecord(response)) {
+    throw new Error('Invalid Loki query response');
+  }
+
+  return response;
+};
+
+export const throwResponseError = (response: Record<string, unknown>): Record<string, unknown> => {
+  if (response.status !== 'error') {
+    return response;
+  }
+
+  const errorType = typeof response.errorType === 'string' ? response.errorType : undefined;
+  const error = typeof response.error === 'string' ? response.error : undefined;
+  throw new Error([errorType, error].filter(Boolean).join(': ') || 'Loki query failed');
+};
+
+export const isQueryRangeResponse = (
+  response: Record<string, unknown>,
+): response is QueryRangeResponse => {
+  const data = response.data;
+  return isRecord(data) && Array.isArray(data.result);
+};
+
+export const toQueryRangeResponse = (response: Record<string, unknown>): QueryRangeResponse => {
+  if (!isQueryRangeResponse(response)) {
+    throw new Error('Invalid Loki query response: missing data.result');
+  }
+
+  return response;
+};
+
+export const validateQueryRangeResponse = (response: QueryRangeResponse): QueryRangeResponse => {
+  if (response.status !== 'success') {
+    throw new Error(`Invalid Loki query response status: ${String(response.status)}`);
+  }
+
+  if (response.data.resultType !== 'streams' && response.data.resultType !== 'matrix') {
+    throw new Error('Invalid Loki query response: invalid data.resultType');
+  }
+
+  return response;
+};
+
 export const getFetchConfig = ({
   config,
   tenant,
