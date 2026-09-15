@@ -85,6 +85,9 @@
 
 .lv-plugin__table__row-more-data td {
   text-align: center;
+}
+
+.lv-plugin__table__row-more-data--clickable td {
   cursor: pointer;
 }
 

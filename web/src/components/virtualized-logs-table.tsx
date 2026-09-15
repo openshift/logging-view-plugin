@@ -417,19 +417,27 @@ export const VirtualizedLogsTable = ({
           )}
         </WithScrollContainer>
 
-        {!(isLoading || isLoadingMore) && hasMoreLogsData && (
+        {!dataIsEmpty && (
           <Tbody>
             <Tr
-              className="lv-plugin__table__row-info lv-plugin__table__row-more-data"
+              className={`lv-plugin__table__row-info lv-plugin__table__row-more-data ${hasMoreLogsData ? 'lv-plugin__table__row-more-data--clickable' : ''}`}
               data-test={TestIds.LoadMoreLogs}
               onClick={() => {
-                setScrollToIndex(data.length - 1);
-                onLoadMore?.();
+                if (!isLoading && !isLoadingMore && hasMoreLogsData) {
+                  setScrollToIndex(data.length - 1);
+                  onLoadMore?.();
+                }
               }}
             >
-              <Td colSpan={colSpan} key="more-data-row">
-                {t('More data available')}, {isLoadingMore ? t('Loading...') : t('Click to load')}
-              </Td>
+              {hasMoreLogsData ? (
+                <Td colSpan={colSpan} key="more-data-row">
+                  {t('More data available')}, {isLoadingMore ? t('Loading...') : t('Click to load')}
+                </Td>
+              ) : (
+                <Td colSpan={colSpan} key="no-more-data-row">
+                  {t('No more data available')}
+                </Td>
+              )}
             </Tr>
           </Tbody>
         )}
