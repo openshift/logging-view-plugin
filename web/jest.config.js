@@ -4,7 +4,8 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   transform: {
-    '^.+\\.js$': 'ts-jest',
+    '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.spec.json' }],
+    '^.+\\.js$': ['ts-jest', { tsconfig: 'tsconfig.spec.json' }],
   },
   transformIgnorePatterns: ['node_modules/(?!(@openshift-console|@patternfly))'],
   moduleNameMapper: {

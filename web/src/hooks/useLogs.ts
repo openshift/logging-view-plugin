@@ -20,7 +20,7 @@ import {
   validateQueryRangeResponse,
 } from '../loki-client';
 import { intervalFromTimeRange, numericTimeRange, timeRangeFromDuration } from '../time-range';
-import { msToNs } from '../value-utils';
+import { getPaginationRange, msToNs } from '../value-utils';
 
 import { LogQLQuery } from '../logql-query';
 import { LogsContext } from './LogsConfigProvider';
@@ -344,19 +344,7 @@ export const useLogs = (
       currentQuery.current = query;
       currentDirection.current = direction ?? currentDirection.current;
 
-      const lastTs = BigInt(lastTimestampNs);
-      const oneHourNs = 3_600_000_000_000n;
-
-      let startNs: string;
-      let endNs: string;
-
-      if (currentDirection.current === 'forward') {
-        startNs = String(lastTs + 1n);
-        endNs = String(lastTs + oneHourNs);
-      } else {
-        startNs = String(lastTs - oneHourNs);
-        endNs = String(lastTs);
-      }
+      const { startNs, endNs } = getPaginationRange(lastTimestampNs, currentDirection.current);
 
       dispatch({ type: 'moreLogsRequest' });
 

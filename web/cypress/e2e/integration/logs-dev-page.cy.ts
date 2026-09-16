@@ -6,7 +6,7 @@ import {
 import { podsLabelValuesResponse } from '../../fixtures/resource-api-fixtures';
 
 Cypress.Keyboard.defaults({
-  keystrokeDelay: 15,
+  keystrokeDelay: 40,
 });
 
 const LOGS_DEV_PAGE_URL = '/dev-monitoring/ns/my-namespace/logs';
@@ -106,7 +106,6 @@ describe('Logs Dev Page', () => {
         .type('{selectAll}')
         .type('{ job = "some_job" }', {
           parseSpecialCharSequences: false,
-          delay: 1,
         })
         .type('{enter}');
     });
@@ -404,12 +403,14 @@ describe('Logs Dev Page', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
       queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
-    );
+    ).as('queryRangeStreams');
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
       'queryRangeMatrix',
     );
 
     cy.visit(LOGS_DEV_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.byTestID(TestIds.ToggleHistogramButton).click();
 
@@ -433,9 +434,10 @@ describe('Logs Dev Page', () => {
         );
     });
 
-    cy.byTestID(TestIds.ExecuteQueryButton).click({ force: true });
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as('executeMatrix');
+    cy.byTestID(TestIds.ExecuteQueryButton).click();
 
-    cy.wait('@queryRangeMatrix');
+    cy.wait('@executeMatrix');
 
     cy.byTestID(TestIds.LogsMetrics).should('exist');
     cy.byTestID(TestIds.ToggleHistogramButton).should('be.disabled');
@@ -450,7 +452,14 @@ describe('Logs Dev Page', () => {
         });
     });
 
+    cy.intercept(
+      QUERY_RANGE_STREAMS_URL_MATCH,
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
+    ).as('executeStreams');
     cy.byTestID(TestIds.ExecuteQueryButton).click();
+
+    cy.wait('@executeStreams');
+
     cy.byTestID(TestIds.LogsMetrics).should('not.exist');
     cy.byTestID(TestIds.ToggleHistogramButton).should('be.enabled');
     cy.byTestID(TestIds.ToggleHistogramButton).click();

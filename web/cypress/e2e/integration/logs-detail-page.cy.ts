@@ -5,7 +5,7 @@ import {
 } from '../../fixtures/query-range-fixtures';
 
 Cypress.Keyboard.defaults({
-  keystrokeDelay: 15,
+  keystrokeDelay: 40,
 });
 
 const LOGS_DETAIL_PAGE_URL = '/k8s/ns/my-namespace/pods/test-pod-name';
@@ -63,7 +63,6 @@ describe('Logs Detail Page', () => {
         .type('{selectAll}')
         .type('{ job = "some_job" }', {
           parseSpecialCharSequences: false,
-          delay: 1,
         })
         .type('{enter}');
     });
@@ -213,9 +212,10 @@ describe('Logs Detail Page', () => {
         );
     });
 
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as('executeMatrix');
     cy.byTestID(TestIds.ExecuteQueryButton).click();
 
-    cy.wait('@queryRangeMatrix');
+    cy.wait('@executeMatrix');
 
     cy.byTestID(TestIds.LogsMetrics).should('exist');
     cy.byTestID(TestIds.ToggleHistogramButton).should('be.disabled');
@@ -230,9 +230,15 @@ describe('Logs Detail Page', () => {
         });
     });
 
+    // Re-alias so the wait targets this execution's streams request rather than a
+    // stale one (initial load or histogram toggle) still held by the shared alias.
+    cy.intercept(
+      QUERY_RANGE_STREAMS_URL_MATCH,
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
+    ).as('executeStreams');
     cy.byTestID(TestIds.ExecuteQueryButton).click();
 
-    cy.wait('@queryRangeStreams');
+    cy.wait('@executeStreams');
 
     cy.byTestID(TestIds.LogsMetrics).should('not.exist');
     cy.byTestID(TestIds.ToggleHistogramButton).should('be.enabled');
