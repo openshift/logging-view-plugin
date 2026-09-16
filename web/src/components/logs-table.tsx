@@ -1,7 +1,7 @@
 import { ResourceLink, RowProps, TableColumn } from '@openshift-console/dynamic-plugin-sdk';
 import { Split, SplitItem } from '@patternfly/react-core';
 import { ISortBy, SortByDirection, Td, ThProps } from '@patternfly/react-table';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { DateFormat, dateToFormat } from '../date-utils';
 import {
@@ -13,10 +13,11 @@ import {
   StreamLogData,
 } from '../logs.types';
 import { severityFromString } from '../severity';
-import { numericComparator, bigIntDifference } from '../sort-utils';
+import { bigIntDifference, numericComparator } from '../sort-utils';
 import { TestIds } from '../test-ids';
 import { notUndefined } from '../value-utils';
 import { LogDetail } from './log-detail';
+import { getLoadMoreTimestamp, getTimestampBounds } from './logs-table-utils';
 import './logs-table.css';
 import { StatsTable } from './stats-table';
 import { TableData, VirtualizedLogsTable } from './virtualized-logs-table';
@@ -339,8 +340,13 @@ export const LogsTable: React.FC<LogsTableProps> = ({
 
   const dataIsEmpty = sortedData.length === 0;
 
+  const timestampBounds = useMemo(() => getTimestampBounds(tableData), [tableData]);
+
   const handleLoadMore = () => {
-    onLoadMore?.(tableData[tableData.length - 1].rawTimestamp);
+    const lastTimestampNs = getLoadMoreTimestamp(timestampBounds, direction);
+    if (lastTimestampNs !== undefined) {
+      onLoadMore?.(lastTimestampNs);
+    }
   };
 
   return (

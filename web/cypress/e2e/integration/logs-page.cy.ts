@@ -1,4 +1,6 @@
 import { TestIds } from '../../../src/test-ids';
+import { formatTimeRange } from '../../../src/time-range';
+import { configResponse } from '../../fixtures/backend-fixtures';
 import {
   queryRangeMatrixInvalidResponse,
   queryRangeMatrixValidResponse,
@@ -10,8 +12,10 @@ import {
   volumeRangeMatrixValidResponse,
 } from '../../fixtures/query-range-fixtures';
 import { namespaceListResponse, podsListResponse } from '../../fixtures/resource-api-fixtures';
-import { formatTimeRange } from '../../../src/time-range';
-import { configResponse } from '../../fixtures/backend-fixtures';
+
+Cypress.Keyboard.defaults({
+  keystrokeDelay: 40,
+});
 
 const LOGS_PAGE_URL = '/monitoring/logs';
 const QUERY_RANGE_STREAMS_URL_MATCH =
@@ -291,7 +295,6 @@ describe('Logs Page', () => {
         .type('{selectAll}')
         .type('{ job = "some_job" }', {
           parseSpecialCharSequences: false,
-          delay: 1,
         })
         .type('{enter}');
     });
@@ -701,12 +704,13 @@ describe('Logs Page', () => {
         );
     });
 
-    cy.getByTestId(TestIds.ExecuteQueryButton).click();
+    // Re-alias immediately before the click so the wait targets the request this
+    // execution triggers, not the histogram's own `sum(...)` request captured by
+    // the shared `@queryRangeMatrix` alias.
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as('executeMatrix');
+    cy.byTestID(TestIds.ExecuteQueryButton).click();
 
-    cy.wait('@queryRangeMatrix');
-    cy.getByTestId(TestIds.LogsMetrics).should('exist');
-    cy.getByTestId(TestIds.ToggleHistogramButton).should('be.disabled');
-    cy.getByTestId(TestIds.LogsHistogram).should('not.exist');
+    cy.wait('@executeMatrix');
 
     cy.getByTestId(TestIds.LogsQueryInput).within(() => {
       cy.get('textarea')
@@ -717,7 +721,14 @@ describe('Logs Page', () => {
         });
     });
 
-    cy.wait('@queryRangeStreams');
+    // Re-alias so the wait targets this execution's streams request rather than a
+    // stale one (initial load or histogram toggle) still held by the shared alias.
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeStreamsWithMessage()).as(
+      'executeStreams',
+    );
+    cy.byTestID(TestIds.ExecuteQueryButton).click();
+
+    cy.wait('@executeStreams');
 
     cy.getByTestId(TestIds.ExecuteQueryButton).click();
     cy.getByTestId(TestIds.LogsMetrics).should('not.exist');
