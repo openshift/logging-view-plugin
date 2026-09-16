@@ -5,6 +5,8 @@ import {
   valueWithScalePrefix,
   capitalize,
   msToNs,
+  getPaginationRange,
+  ONE_HOUR_IN_NS,
 } from '../value-utils';
 
 describe('value utils', () => {
@@ -51,5 +53,31 @@ describe('value utils', () => {
     expect(msToNs(1666003060000)).toBe('1666003060000000000');
     expect(msToNs(1000.7)).toBe('1001000000');
     expect(msToNs(1000.3)).toBe('1000000000');
+  });
+
+  describe('getPaginationRange', () => {
+    const lastTs = '1666003060000000000';
+    const last = BigInt(lastTs);
+
+    it('uses an exclusive upper bound when paginating backward to avoid overlap', () => {
+      const { startNs, endNs } = getPaginationRange(lastTs, 'backward');
+
+      // end must exclude the oldest visible entry (last - 1ns), not re-include it
+      expect(endNs).toBe(String(last - 1n));
+      expect(startNs).toBe(String(last - ONE_HOUR_IN_NS));
+    });
+
+    it('uses an exclusive lower bound when paginating forward to avoid overlap', () => {
+      const { startNs, endNs } = getPaginationRange(lastTs, 'forward');
+
+      expect(startNs).toBe(String(last + 1n));
+      expect(endNs).toBe(String(last + ONE_HOUR_IN_NS));
+    });
+
+    it('honors a custom span', () => {
+      const span = 2n * ONE_HOUR_IN_NS;
+      expect(getPaginationRange(lastTs, 'backward', span).startNs).toBe(String(last - span));
+      expect(getPaginationRange(lastTs, 'forward', span).endNs).toBe(String(last + span));
+    });
   });
 });
