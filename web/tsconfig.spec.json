@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Test-only: skip full type-checking during ts-jest transpilation to cut
+    // CPU/memory. Type errors are still enforced by `npm run lint:tsc`.
+    "isolatedModules": true
+  }
+}

@@ -30,6 +30,7 @@ import { severityFromString } from '../severity';
 import { numericComparator, bigIntDifference } from '../sort-utils';
 import { TestIds } from '../test-ids';
 import { LogDetail } from './log-detail';
+import { getLoadMoreTimestamp, getTimestampBounds } from './logs-table-utils';
 import './logs-table.css';
 import { StatsTable } from './stats-table';
 import { TableData, VirtualizedLogsTable } from './virtualized-logs-table';
@@ -357,8 +358,13 @@ export const LogsTable: FC<PropsWithChildren<LogsTableProps>> = ({
 
   const dataIsEmpty = sortedData.length === 0;
 
+  const timestampBounds = useMemo(() => getTimestampBounds(tableData), [tableData]);
+
   const handleLoadMore = () => {
-    onLoadMore?.(tableData[tableData.length - 1].rawTimestamp);
+    const lastTimestampNs = getLoadMoreTimestamp(timestampBounds, direction);
+    if (lastTimestampNs !== undefined) {
+      onLoadMore?.(lastTimestampNs);
+    }
   };
 
   const RowComponent = useMemo(
