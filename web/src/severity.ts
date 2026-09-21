@@ -1,12 +1,5 @@
 export type Severity =
-  | 'critical'
-  | 'error'
-  | 'warning'
-  | 'info'
-  | 'debug'
-  | 'trace'
-  | 'unknown'
-  | 'other';
+  'critical' | 'error' | 'warning' | 'info' | 'debug' | 'trace' | 'unknown' | 'other';
 
 export const severityAbbreviations: Record<Severity, Array<string>> = {
   critical: ['critical', 'emerg', 'fatal', 'alert', 'crit'],
