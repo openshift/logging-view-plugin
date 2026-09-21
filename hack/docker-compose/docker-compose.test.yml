@@ -43,11 +43,11 @@ services:
       - inner
 
   loki-proxy:
-    image: nginx:alpine
+    image: openresty/openresty:alpine
     ports:
       - 3100:80
     volumes:
-      - ./proxy.conf:/etc/nginx/templates/default.conf.template
+      - ./proxy.conf:/etc/nginx/conf.d/default.conf
     restart: unless-stopped
     networks:
       - inner
