@@ -6,7 +6,7 @@ import {
 } from '../../fixtures/query-range-fixtures';
 
 Cypress.Keyboard.defaults({
-  keystrokeDelay: 15,
+  keystrokeDelay: 40,
 });
 
 const LOGS_ALERTS_PAGE_URL = '/monitoring/alerts/test-alert';
