@@ -5,6 +5,10 @@ import {
 } from '../../fixtures/query-range-fixtures';
 import { podsLabelValuesResponse } from '../../fixtures/resource-api-fixtures';
 
+Cypress.Keyboard.defaults({
+  keystrokeDelay: 40,
+});
+
 const LOGS_DEV_PAGE_URL = '/dev-monitoring/ns/my-namespace/logs';
 const QUERY_RANGE_STREAMS_URL_MATCH =
   '/api/proxy/plugin/logging-view-plugin/backend/api/logs/v1/application/loki/api/v1/query_range?query=%7B*';
@@ -102,7 +106,6 @@ describe('Logs Dev Page', () => {
         .type('{selectAll}')
         .type('{ job = "some_job" }', {
           parseSpecialCharSequences: false,
-          delay: 1,
         })
         .type('{enter}');
     });
@@ -409,14 +412,16 @@ describe('Logs Dev Page', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
       queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
-    );
+    ).as('queryRangeStreams');
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
       'queryRangeMatrix',
     );
 
     cy.visit(LOGS_DEV_PAGE_URL);
 
-    cy.getByTestId(TestIds.ToggleHistogramButton).click();
+    cy.wait('@queryRangeStreams');
+
+    cy.byTestID(TestIds.ToggleHistogramButton).click();
 
     cy.getByTestId(TestIds.LogsHistogram)
       .should('exist')
@@ -438,9 +443,10 @@ describe('Logs Dev Page', () => {
         );
     });
 
-    cy.getByTestId(TestIds.ExecuteQueryButton).click();
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as('executeMatrix');
+    cy.byTestID(TestIds.ExecuteQueryButton).click();
 
-    cy.wait('@queryRangeMatrix');
+    cy.wait('@executeMatrix');
 
     cy.getByTestId(TestIds.LogsMetrics).should('exist');
     cy.getByTestId(TestIds.ToggleHistogramButton).should('be.disabled');
@@ -455,11 +461,18 @@ describe('Logs Dev Page', () => {
         });
     });
 
-    cy.getByTestId(TestIds.ExecuteQueryButton).click();
-    cy.getByTestId(TestIds.LogsMetrics).should('not.exist');
-    cy.getByTestId(TestIds.ToggleHistogramButton).should('be.enabled');
-    cy.getByTestId(TestIds.ToggleHistogramButton).click();
-    cy.getByTestId(TestIds.LogsHistogram)
+    cy.intercept(
+      QUERY_RANGE_STREAMS_URL_MATCH,
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
+    ).as('executeStreams');
+    cy.byTestID(TestIds.ExecuteQueryButton).click();
+
+    cy.wait('@executeStreams');
+
+    cy.byTestID(TestIds.LogsMetrics).should('not.exist');
+    cy.byTestID(TestIds.ToggleHistogramButton).should('be.enabled');
+    cy.byTestID(TestIds.ToggleHistogramButton).click();
+    cy.byTestID(TestIds.LogsHistogram)
       .should('exist')
       .within(() => {
         cy.get('svg g > path').should('have.length.above', 0);

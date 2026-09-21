@@ -1,4 +1,20 @@
-import { DEFAULT_SCHEMA, Schema, SchemaConfig } from './logs.types';
+import { DEFAULT_SCHEMA, Direction, Schema, SchemaConfig } from './logs.types';
+
+export const ONE_HOUR_IN_NS = 3_600_000_000_000n;
+
+export const getPaginationRange = (
+  lastTimestampNs: string,
+  direction: Direction,
+  spanNs: bigint = ONE_HOUR_IN_NS,
+): { startNs: string; endNs: string } => {
+  const lastTs = BigInt(lastTimestampNs);
+
+  if (direction === 'forward') {
+    return { startNs: String(lastTs + 1n), endNs: String(lastTs + spanNs) };
+  }
+
+  return { startNs: String(lastTs - spanNs), endNs: String(lastTs - 1n) };
+};
 
 /**
  * Converts a value into a string with scale prefix
