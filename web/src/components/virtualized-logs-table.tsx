@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { AutoSizer, CellMeasurer, CellMeasurerCache, WindowScroller } from 'react-virtualized';
 import { MeasuredCellParent } from 'react-virtualized/dist/es/CellMeasurer';
 import { LogTableData } from '../logs.types';
+import { TestIds } from '../test-ids';
 import { CenteredContainer } from './centered-container';
 import { ErrorMessage } from './error-message';
 
@@ -351,10 +352,11 @@ export const VirtualizedLogsTable = ({
           )}
         </WithScrollContainer>
 
-        {!isLoading && hasMoreLogsData && (
+        {!(isLoading || isLoadingMore) && hasMoreLogsData && (
           <Tbody>
             <Tr
               className="co-logs-table__row-info co-logs-table__row-more-data"
+              data-test={TestIds.LoadMoreLogs}
               onClick={() => {
                 setScrollToIndex(data.length - 1);
                 onLoadMore?.();

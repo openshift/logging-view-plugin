@@ -22,7 +22,7 @@
     "cypress:run": "cypress run",
     "cypress:run:ci": "NO_COLOR=1 cypress run --spec \"cypress/e2e/integration/*.cy.ts\" --browser electron",
     "test": "concurrently -n \"unit,e2e\" --kill-others-on-fail \"npm run test:unit\" \"npm run test:e2e\"",
-    "test:unit": "TZ=UTC jest --config jest.config.js",
+    "test:unit": "TZ=UTC jest --config jest.config.js --runInBand --ci",
     "test:e2e": "./scripts/run-cypress.sh",
     "test:unit:watch": "TZ=UTC jest --config jest.config.js --watch",
     "test:unit:coverage": "TZ=UTC jest --config jest.config.js --coverage",

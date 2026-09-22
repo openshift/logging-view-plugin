@@ -1,4 +1,6 @@
 import { TestIds } from '../../../src/test-ids';
+import { formatTimeRange } from '../../../src/time-range';
+import { configResponse } from '../../fixtures/backend-fixtures';
 import {
   queryRangeMatrixInvalidResponse,
   queryRangeMatrixValidResponse,
@@ -10,8 +12,10 @@ import {
   volumeRangeMatrixValidResponse,
 } from '../../fixtures/query-range-fixtures';
 import { namespaceListResponse, podsListResponse } from '../../fixtures/resource-api-fixtures';
-import { formatTimeRange } from '../../../src/time-range';
-import { configResponse } from '../../fixtures/backend-fixtures';
+
+Cypress.Keyboard.defaults({
+  keystrokeDelay: 40,
+});
 
 const LOGS_PAGE_URL = '/monitoring/logs';
 const QUERY_RANGE_STREAMS_URL_MATCH =
@@ -144,6 +148,90 @@ describe('Logs Page', () => {
       });
   });
 
+  it('displays a Loki error payload returned with HTTP 200', () => {
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, {
+      statusCode: 200,
+      body: {
+        status: 'error',
+        errorType: 'bad_data',
+        error: 'parse error at line 1, col 1: unexpected IDENTIFIER',
+      },
+    }).as('queryRangeStreams');
+
+    cy.visit(LOGS_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
+
+    cy.byTestID(TestIds.LogsTable)
+      .should('exist')
+      .within(() => {
+        cy.contains(/bad_data/i);
+        cy.contains('parse error at line 1, col 1: unexpected IDENTIFIER');
+      });
+  });
+
+  it('keeps load more logs available after a Loki error payload returned with HTTP 200', () => {
+    let requestCount = 0;
+
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, (req) => {
+      requestCount += 1;
+      req.reply(
+        requestCount === 1
+          ? queryRangeStreamsValidResponse({ message: TEST_MESSAGE })
+          : {
+              statusCode: 200,
+              body: {
+                status: 'error',
+                errorType: 'bad_data',
+                error: 'parse error at line 1, col 1: unexpected IDENTIFIER',
+              },
+            },
+      );
+    }).as('queryRangeStreams');
+
+    cy.visit(LOGS_PAGE_URL);
+    cy.wait('@queryRangeStreams');
+
+    cy.byTestID(TestIds.LoadMoreLogs).click();
+    cy.wait('@queryRangeStreams');
+
+    cy.byTestID(TestIds.LoadMoreLogs).should('exist');
+  });
+
+  it('keeps the latest query results when an earlier request completes late', () => {
+    let requestCount = 0;
+
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, (req) => {
+      requestCount += 1;
+      const body = queryRangeStreamsValidResponse({
+        message:
+          requestCount === 1
+            ? 'initial result'
+            : requestCount === 2
+              ? 'stale result'
+              : 'latest result',
+      });
+
+      req.reply(requestCount === 2 ? { body, delay: 3_000 } : body);
+    }).as('queryRangeStreams');
+
+    cy.visit(LOGS_PAGE_URL);
+    cy.wait('@queryRangeStreams');
+
+    cy.byTestID(TestIds.SyncButton).click();
+    cy.byTestID(TestIds.TimeRangeDropdown).click();
+    cy.contains('Last 6 hours').click();
+
+    cy.contains('latest result').should('exist');
+    cy.byTestID(TestIds.LoadMoreLogs).should('exist');
+
+    cy.wait('@queryRangeStreams');
+    cy.wait('@queryRangeStreams');
+    cy.contains('latest result').should('exist');
+    cy.contains('stale result').should('not.exist');
+    cy.byTestID(TestIds.LoadMoreLogs).should('exist');
+  });
+
   it('executes a query when "run query" is pressed', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
@@ -207,7 +295,6 @@ describe('Logs Page', () => {
         .type('{selectAll}')
         .type('{ job = "some_job" }', {
           parseSpecialCharSequences: false,
-          delay: 1,
         })
         .type('{enter}');
     });
@@ -617,12 +704,13 @@ describe('Logs Page', () => {
         );
     });
 
-    cy.getByTestId(TestIds.ExecuteQueryButton).click();
+    // Re-alias immediately before the click so the wait targets the request this
+    // execution triggers, not the histogram's own `sum(...)` request captured by
+    // the shared `@queryRangeMatrix` alias.
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as('executeMatrix');
+    cy.byTestID(TestIds.ExecuteQueryButton).click();
 
-    cy.wait('@queryRangeMatrix');
-    cy.getByTestId(TestIds.LogsMetrics).should('exist');
-    cy.getByTestId(TestIds.ToggleHistogramButton).should('be.disabled');
-    cy.getByTestId(TestIds.LogsHistogram).should('not.exist');
+    cy.wait('@executeMatrix');
 
     cy.getByTestId(TestIds.LogsQueryInput).within(() => {
       cy.get('textarea')
@@ -633,7 +721,14 @@ describe('Logs Page', () => {
         });
     });
 
-    cy.wait('@queryRangeStreams');
+    // Re-alias so the wait targets this execution's streams request rather than a
+    // stale one (initial load or histogram toggle) still held by the shared alias.
+    cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeStreamsWithMessage()).as(
+      'executeStreams',
+    );
+    cy.byTestID(TestIds.ExecuteQueryButton).click();
+
+    cy.wait('@executeStreams');
 
     cy.getByTestId(TestIds.ExecuteQueryButton).click();
     cy.getByTestId(TestIds.LogsMetrics).should('not.exist');

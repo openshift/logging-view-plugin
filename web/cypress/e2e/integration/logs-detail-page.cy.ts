@@ -4,6 +4,10 @@ import {
   queryRangeStreamsValidResponse,
 } from '../../fixtures/query-range-fixtures';
 
+Cypress.Keyboard.defaults({
+  keystrokeDelay: 40,
+});
+
 const LOGS_DETAIL_PAGE_URL = '/k8s/ns/my-namespace/pods/test-pod-name';
 const LOGS_DETAIL_PAGE_URL_OPENSHIFT_NS = '/k8s/ns/openshift-api/pods/test-pod-name';
 const QUERY_RANGE_MATRIX_URL_MATCH =
@@ -55,7 +59,6 @@ describe('Logs Detail Page', () => {
         .type('{selectAll}')
         .type('{ job = "some_job" }', {
           parseSpecialCharSequences: false,
-          delay: 1,
         })
         .type('{enter}');
     });
@@ -204,9 +207,10 @@ describe('Logs Detail Page', () => {
         );
     });
 
-    cy.getByTestId(TestIds.ExecuteQueryButton).click();
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as('executeMatrix');
+    cy.byTestID(TestIds.ExecuteQueryButton).click();
 
-    cy.wait('@queryRangeMatrix');
+    cy.wait('@executeMatrix');
 
     cy.getByTestId(TestIds.LogsMetrics).should('exist');
     cy.getByTestId(TestIds.ToggleHistogramButton).should('be.disabled');
@@ -221,12 +225,20 @@ describe('Logs Detail Page', () => {
         });
     });
 
-    cy.wait('@queryRangeStreams');
-    cy.getByTestId(TestIds.ExecuteQueryButton).click();
-    cy.getByTestId(TestIds.LogsMetrics).should('not.exist');
-    cy.getByTestId(TestIds.ToggleHistogramButton).should('be.enabled');
-    cy.getByTestId(TestIds.ToggleHistogramButton).click();
-    cy.getByTestId(TestIds.LogsHistogram)
+    // Re-alias so the wait targets this execution's streams request rather than a
+    // stale one (initial load or histogram toggle) still held by the shared alias.
+    cy.intercept(
+      QUERY_RANGE_STREAMS_URL_MATCH,
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
+    ).as('executeStreams');
+    cy.byTestID(TestIds.ExecuteQueryButton).click();
+
+    cy.wait('@executeStreams');
+
+    cy.byTestID(TestIds.LogsMetrics).should('not.exist');
+    cy.byTestID(TestIds.ToggleHistogramButton).should('be.enabled');
+    cy.byTestID(TestIds.ToggleHistogramButton).click();
+    cy.byTestID(TestIds.LogsHistogram)
       .should('exist')
       .within(() => {
         cy.get('svg g > path').should('have.length.above', 0);
