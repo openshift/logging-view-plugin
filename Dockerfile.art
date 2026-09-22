@@ -7,7 +7,7 @@ USER 0
 ENV HUSKY=0
 COPY web/package*.json web/
 COPY Makefile Makefile
-RUN install-frontend-ci
+RUN make install-frontend-ci
 
 COPY web/ web/
 RUN make build-frontend
