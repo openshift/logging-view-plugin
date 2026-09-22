@@ -695,23 +695,16 @@ describe('Logs Page', () => {
 
     cy.byTestID(TestIds.ShowQueryToggle).click();
 
-    cy.byTestID(TestIds.LogsQueryInput).within(() => {
-      cy.get('textarea')
-        .type('{selectAll}')
-        .type('{backspace}')
-        .type(
-          'sum by (level) (count_over_time({ kubernetes_namespace_name="my-namespace" })[10m])',
-          {
-            parseSpecialCharSequences: false,
-          },
-        );
-    });
+    const matrixQuery =
+      'sum by (level) (count_over_time({ kubernetes_namespace_name="my-namespace" })[10m])';
+
+    cy.setLogQueryInput(matrixQuery);
 
     // Re-alias immediately before the click so the wait targets the request this
     // execution triggers, not the histogram's own `sum(...)` request captured by
     // the shared `@queryRangeMatrix` alias.
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as('executeMatrix');
-    cy.byTestID(TestIds.ExecuteQueryButton).click();
+    cy.byTestID(TestIds.ExecuteQueryButton).should('be.enabled').click();
 
     cy.wait('@executeMatrix');
 
@@ -719,21 +712,18 @@ describe('Logs Page', () => {
     cy.byTestID(TestIds.ToggleHistogramButton).should('be.disabled');
     cy.byTestID(TestIds.LogsHistogram).should('not.exist');
 
-    cy.byTestID(TestIds.LogsQueryInput).within(() => {
-      cy.get('textarea')
-        .type('{selectAll}')
-        .type('{backspace}')
-        .type('{ kubernetes_namespace_name="my-namespace" }', {
-          parseSpecialCharSequences: false,
-        });
-    });
+    cy.byTestID(TestIds.LogsQueryInput).should('not.have.attr', 'data-test-query', matrixQuery);
+
+    const streamsQuery = '{ kubernetes_namespace_name="my-namespace" }';
+
+    cy.setLogQueryInput(streamsQuery);
 
     // Re-alias so the wait targets this execution's streams request rather than a
     // stale one (initial load or histogram toggle) still held by the shared alias.
     cy.intercept(QUERY_RANGE_STREAMS_URL_MATCH, queryRangeStreamsWithMessage()).as(
       'executeStreams',
     );
-    cy.byTestID(TestIds.ExecuteQueryButton).click();
+    cy.byTestID(TestIds.ExecuteQueryButton).should('be.enabled').click();
 
     cy.wait('@executeStreams');
 
