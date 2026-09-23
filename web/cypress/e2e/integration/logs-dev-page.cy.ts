@@ -6,7 +6,7 @@ import {
 import { podsLabelValuesResponse } from '../../fixtures/resource-api-fixtures';
 
 Cypress.Keyboard.defaults({
-  keystrokeDelay: 15,
+  keystrokeDelay: 40,
 });
 
 const LOGS_DEV_PAGE_URL = '/dev-monitoring/ns/my-namespace/logs';
@@ -106,7 +106,6 @@ describe('Logs Dev Page', () => {
         .type('{selectAll}')
         .type('{ job = "some_job" }', {
           parseSpecialCharSequences: false,
-          delay: 1,
         })
         .type('{enter}');
     });
@@ -134,7 +133,9 @@ describe('Logs Dev Page', () => {
         cy.contains(TEST_MESSAGE);
       });
 
-    cy.byTestID(TestIds.SeverityDropdown).click();
+    cy.byTestID(TestIds.SeverityDropdown).within(() => {
+      cy.get('button').should('not.be.disabled').click();
+    });
     cy.contains('warning').click();
 
     cy.get('@queryRangeStreams.all').should('have.length.at.least', 1);
@@ -404,12 +405,14 @@ describe('Logs Dev Page', () => {
     cy.intercept(
       QUERY_RANGE_STREAMS_URL_MATCH,
       queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
-    );
+    ).as('queryRangeStreams');
     cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as(
       'queryRangeMatrix',
     );
 
     cy.visit(LOGS_DEV_PAGE_URL);
+
+    cy.wait('@queryRangeStreams');
 
     cy.byTestID(TestIds.ToggleHistogramButton).click();
 
@@ -421,36 +424,34 @@ describe('Logs Dev Page', () => {
 
     cy.byTestID(TestIds.ShowQueryToggle).click();
 
-    cy.byTestID(TestIds.LogsQueryInput).within(() => {
-      cy.get('textarea')
-        .type('{selectAll}')
-        .type('{backspace}')
-        .type(
-          'sum by (level) (count_over_time({ kubernetes_namespace_name="my-namespace" })[10m])',
-          {
-            parseSpecialCharSequences: false,
-          },
-        );
-    });
+    const matrixQuery =
+      'sum by (level) (count_over_time({ kubernetes_namespace_name="my-namespace" })[10m])';
 
-    cy.byTestID(TestIds.ExecuteQueryButton).click({ force: true });
+    cy.setLogQueryInput(matrixQuery);
 
-    cy.wait('@queryRangeMatrix');
+    cy.intercept(QUERY_RANGE_MATRIX_URL_MATCH, queryRangeMatrixValidResponse()).as('executeMatrix');
+    cy.byTestID(TestIds.ExecuteQueryButton).should('be.enabled').click();
+
+    cy.wait('@executeMatrix');
 
     cy.byTestID(TestIds.LogsMetrics).should('exist');
     cy.byTestID(TestIds.ToggleHistogramButton).should('be.disabled');
     cy.byTestID(TestIds.LogsHistogram).should('not.exist');
 
-    cy.byTestID(TestIds.LogsQueryInput).within(() => {
-      cy.get('textarea')
-        .type('{selectAll}')
-        .type('{backspace}')
-        .type('{ kubernetes_namespace_name="my-namespace" }', {
-          parseSpecialCharSequences: false,
-        });
-    });
+    cy.byTestID(TestIds.LogsQueryInput).should('not.have.attr', 'data-test-query', matrixQuery);
 
-    cy.byTestID(TestIds.ExecuteQueryButton).click();
+    const streamsQuery = '{ kubernetes_namespace_name="my-namespace" }';
+
+    cy.setLogQueryInput(streamsQuery);
+
+    cy.intercept(
+      QUERY_RANGE_STREAMS_URL_MATCH,
+      queryRangeStreamsValidResponse({ message: TEST_MESSAGE }),
+    ).as('executeStreams');
+    cy.byTestID(TestIds.ExecuteQueryButton).should('be.enabled').click();
+
+    cy.wait('@executeStreams');
+
     cy.byTestID(TestIds.LogsMetrics).should('not.exist');
     cy.byTestID(TestIds.ToggleHistogramButton).should('be.enabled');
     cy.byTestID(TestIds.ToggleHistogramButton).click();

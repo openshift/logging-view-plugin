@@ -26,6 +26,8 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LogTableData, Schema } from '../logs.types';
+import { getSeverityColor, Severity } from '../severity';
+import { TestIds } from '../test-ids';
 import { CenteredContainer } from './centered-container';
 import { ErrorMessage } from './error-message';
 
@@ -98,6 +100,13 @@ export const TableData: FC<PropsWithChildren<TableDataProps>> = ({
     </Td>
   ) : null;
 TableData.displayName = 'TableData';
+
+const getRowSeverityStyle = (severity: string): CSSProperties => {
+  if (!severity) {
+    return {};
+  }
+  return { '--lv-severity-color': getSeverityColor(severity as Severity) } as CSSProperties;
+};
 
 type VirtualizedTableBodyProps<D, R = unknown> = {
   Row: ComponentType<RowProps<D, R>>;
@@ -217,7 +226,7 @@ const VirtualizedTableBody = ({
             id={getRowId?.(rowArgs.obj) ?? key}
             index={index}
             trKey={key}
-            style={style}
+            style={{ ...style, ...getRowSeverityStyle(rowArgs.obj.severity) }}
             title={getRowTitle?.(rowArgs.obj)}
             className={getRowClassName?.(rowArgs.obj)}
           >
@@ -408,18 +417,27 @@ export const VirtualizedLogsTable = ({
           )}
         </WithScrollContainer>
 
-        {!isLoading && hasMoreLogsData && (
+        {!dataIsEmpty && (
           <Tbody>
             <Tr
-              className="lv-plugin__table__row-info lv-plugin__table__row-more-data"
+              className={`lv-plugin__table__row-info lv-plugin__table__row-more-data ${hasMoreLogsData ? 'lv-plugin__table__row-more-data--clickable' : ''}`}
+              data-test={TestIds.LoadMoreLogs}
               onClick={() => {
-                setScrollToIndex(data.length - 1);
-                onLoadMore?.();
+                if (!isLoading && !isLoadingMore && hasMoreLogsData) {
+                  setScrollToIndex(data.length - 1);
+                  onLoadMore?.();
+                }
               }}
             >
-              <Td colSpan={colSpan} key="more-data-row">
-                {t('More data available')}, {isLoadingMore ? t('Loading...') : t('Click to load')}
-              </Td>
+              {hasMoreLogsData ? (
+                <Td colSpan={colSpan} key="more-data-row">
+                  {t('More data available')}, {isLoadingMore ? t('Loading...') : t('Click to load')}
+                </Td>
+              ) : (
+                <Td colSpan={colSpan} key="no-more-data-row">
+                  {t('No more data available')}
+                </Td>
+              )}
             </Tr>
           </Tbody>
         )}
