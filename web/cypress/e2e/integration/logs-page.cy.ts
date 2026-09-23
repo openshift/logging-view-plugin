@@ -359,13 +359,12 @@ describe('Logs Page', () => {
 
     cy.byTestID(TestIds.TenantToggle).click();
     cy.contains('infrastructure').click();
-    cy.wait(50); // Wait for frontend to update after clicking
-
-    cy.wait('@queryRangeStreamsInfrastructure');
 
     cy.wait('@queryRangeStreamsInfrastructure');
 
     cy.byTestID(TestIds.ExecuteQueryButton).click();
+
+    cy.wait('@queryRangeStreamsInfrastructure');
 
     cy.byTestID(TestIds.LogsHistogram)
       .should('exist')
