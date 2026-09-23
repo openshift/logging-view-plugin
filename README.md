@@ -67,6 +67,14 @@ make test-unit
 make test-frontend
 ```
 
+#### Security scan
+
+Install [gosec](https://github.com/securego/gosec?tab=readme-ov-file#install) then run:
+
+```sh
+make security-scan-backend
+```
+
 #### Open Cypress UI
 
 ```sh

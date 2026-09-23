@@ -68,7 +68,7 @@ npm run test:unit
 In order to run the e2e tests, you need first to build the plugin in standalone mode
 
 ```sh
-npm run build:standalone:instrumented
+npm run build:standalone
 ```
 
 and then run the cypress tests
