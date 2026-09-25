@@ -216,6 +216,7 @@ const getNamespaceAttributeOptions = (
   tenant: string,
   config: Config,
   schema: Schema,
+  seedNamespaces: string[] = [],
 ): (() => Promise<Option[]>) => {
   const { namespaceLabel } = getAttributeLabels(schema);
 
@@ -247,9 +248,21 @@ const getNamespaceAttributeOptions = (
       labelName: namespaceLabel,
     })().then((options) => options.filter((opt) => lokiTenantFilter(opt.value)));
 
-    return Promise.allSettled<Option[]>([filteredProjectList, filteredLokiNamespaceList]).then(
-      mergeSettledResults,
+    // Fine-grained ("Namespaced access") Loki RBAC cannot be enumerated by the
+    // Projects API nor the Loki gateway (both 403). Seed the known namespaces so
+    // the filter is never empty for these users, mirroring how the console shell
+    // falls back to the active namespace.
+    const seededList = Promise.resolve(
+      seedNamespaces
+        .filter((namespace) => lokiTenantFilter(namespace))
+        .map((namespace) => ({ option: namespace, value: namespace })),
     );
+
+    return Promise.allSettled<Option[]>([
+      filteredProjectList,
+      filteredLokiNamespaceList,
+      seededList,
+    ]).then(mergeSettledResults);
   };
 };
 
@@ -433,16 +446,10 @@ export const availableDevConsoleAttributes = (
       name: 'Namespaces',
       label: namespaceLabel,
       id: 'namespace',
-      options: projectsDataSource((resource) => {
-        switch (tenant) {
-          case 'infrastructure':
-            return namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
-          case 'application':
-            return !namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
-        }
-
-        return true;
-      }),
+      // Fine-grained log access is independent of project ownership, so union the
+      // projects list with Loki's namespaces and seed the active namespace for
+      // users who can enumerate neither.
+      options: getNamespaceAttributeOptions(tenant, config, schema, namespace ? [namespace] : []),
       valueType: 'checkbox-select',
     },
     {

@@ -18,6 +18,7 @@ import {
   queryFromFilters,
 } from '../attribute-filters';
 import { CenteredContainer } from '../components/centered-container';
+import { queryHasNamespaceFilter } from '../components/error-message-utils';
 import { Filters } from '../components/filters/filter.types';
 import { LogsHistogram } from '../components/logs-histogram';
 import { LogsMetrics } from '../components/logs-metrics';
@@ -38,6 +39,9 @@ const LogsPage: React.FC = () => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
   const [isHistogramVisible, setIsHistogramVisible] = React.useState(false);
+  // Namespace scope of the last executed query — classifies 403s against the
+  // query that ran, not the pending filter selection.
+  const [queriedWithNamespace, setQueriedWithNamespace] = React.useState(false);
 
   const { config, configLoaded } = useLogsConfig();
 
@@ -103,6 +107,8 @@ const LogsPage: React.FC = () => {
 
   const runQuery = ({ queryToUse }: { queryToUse?: string } = {}) => {
     if (!configLoaded) return;
+
+    setQueriedWithNamespace(queryHasNamespaceFilter(queryToUse ?? query));
 
     getLogs({ query: queryToUse ?? query, tenant, timeRange, direction, schema });
 
@@ -299,7 +305,7 @@ const LogsPage: React.FC = () => {
             isStreaming={isStreaming}
             error={logsError}
             timezone={timezone}
-            hasNamespaceFilter={Boolean(filters?.namespace?.size)}
+            hasNamespaceFilter={queriedWithNamespace}
             schema={schema}
           />
         )}
