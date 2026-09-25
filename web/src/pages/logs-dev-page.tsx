@@ -66,6 +66,7 @@ const LogsDevPage: FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => {
     hasMoreLogsData,
     getHistogram,
     toggleStreaming,
+    queriedWithNamespace,
   } = useLogs();
 
   const {
@@ -111,16 +112,12 @@ const LogsDevPage: FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => {
   const runQuery = ({ queryToUse }: { queryToUse?: string } = {}) => {
     if (!configLoaded) return;
 
-    getLogs({
-      query: queryToUse ?? query,
-      timeRange,
-      direction,
-      tenant,
-      schema,
-    });
+    const queryForRequest = queryToUse ?? query;
+
+    getLogs({ query: queryForRequest, timeRange, direction, tenant, schema });
 
     if (isHistogramVisible) {
-      getHistogram({ query: queryToUse ?? query, timeRange, tenant, schema });
+      getHistogram({ query: queryForRequest, timeRange, tenant, schema });
     }
   };
 
@@ -336,7 +333,8 @@ const LogsDevPage: FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => {
             isStreaming={isStreaming}
             error={logsError}
             timezone={timezone}
-            hasNamespaceFilter={Boolean(filters?.namespace?.size)}
+            hasNamespaceFilter={queriedWithNamespace}
+            tenant={tenant}
             schema={schema}
           />
         )}
