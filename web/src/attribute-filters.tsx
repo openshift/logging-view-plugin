@@ -11,6 +11,7 @@ import {
   namespaceBelongsToInfrastructureTenant,
   notEmptyString,
   notUndefined,
+  removeQuoteWrapper,
 } from './value-utils';
 
 const RESOURCES_ENDPOINT = '/api/kubernetes/api/v1';
@@ -195,13 +196,16 @@ const getTenantNamespaceQuery = (tenant: string, namespaceLabel: string): string
   }
 };
 
-const mergeSettledResults = (results: Array<PromiseSettledResult<Option[]>>): Option[] => {
-  const allRejected = results.every((r) => r.status === 'rejected');
-  if (allRejected && results.length > 0) {
+const mergeSettledResults = (
+  results: Array<PromiseSettledResult<Option[]>>,
+  fallback: Option[] = [],
+): Option[] => {
+  const allRejected = results.length > 0 && results.every((r) => r.status === 'rejected');
+  if (allRejected && fallback.length === 0) {
     throw (results[0] as PromiseRejectedResult).reason;
   }
 
-  const uniqueValues = new Set<string>();
+  const uniqueValues = new Set<string>(fallback.map((option) => option.value));
   results.forEach((result) => {
     if (result.status === 'fulfilled') {
       result.value.forEach((option) => uniqueValues.add(option.value));
@@ -216,6 +220,7 @@ const getNamespaceAttributeOptions = (
   tenant: string,
   config: Config,
   schema: Schema,
+  seedNamespaces: string[] = [],
 ): (() => Promise<Option[]>) => {
   const { namespaceLabel } = getAttributeLabels(schema);
 
@@ -239,7 +244,7 @@ const getNamespaceAttributeOptions = (
     return true;
   };
 
-  return () => {
+  return async () => {
     const filteredProjectList = projectsDataSource(tenantFilter)();
     const filteredLokiNamespaceList = lokiLabelValuesDataSource({
       config,
@@ -247,9 +252,16 @@ const getNamespaceAttributeOptions = (
       labelName: namespaceLabel,
     })().then((options) => options.filter((opt) => lokiTenantFilter(opt.value)));
 
-    return Promise.allSettled<Option[]>([filteredProjectList, filteredLokiNamespaceList]).then(
-      mergeSettledResults,
-    );
+    const seeded = seedNamespaces
+      .filter((namespace) => lokiTenantFilter(namespace))
+      .map((namespace) => ({ option: namespace, value: namespace }));
+
+    const settled = await Promise.allSettled<Option[]>([
+      filteredProjectList,
+      filteredLokiNamespaceList,
+    ]);
+
+    return mergeSettledResults(settled, seeded);
   };
 };
 
@@ -433,16 +445,10 @@ export const availableDevConsoleAttributes = (
       name: 'Namespaces',
       label: namespaceLabel,
       id: 'namespace',
-      options: projectsDataSource((resource) => {
-        switch (tenant) {
-          case 'infrastructure':
-            return namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
-          case 'application':
-            return !namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
-        }
-
-        return true;
-      }),
+      // Fine-grained log access is independent of project ownership, so union the
+      // projects list with Loki's namespaces and seed the active namespace for
+      // users who can enumerate neither.
+      options: getNamespaceAttributeOptions(tenant, config, schema, namespace ? [namespace] : []),
       valueType: 'checkbox-select',
     },
     {
@@ -622,9 +628,6 @@ export const queryFromFilters = ({
   return query.toString();
 };
 
-const removeQuotes = (value?: string) => (value ? value.replace(/"/g, '') : '');
-const removeBacktick = (value?: string) => (value ? value.replace(/`/g, '') : '');
-
 export const filtersFromQuery = ({
   query,
   attributes,
@@ -644,7 +647,7 @@ export const filtersFromQuery = ({
     if (label && label.length > 0) {
       for (const selector of logQLQuery.streamSelector) {
         if (selector.label === label && selector.value) {
-          filters[id] = new Set(selector.value.split('|').map(removeQuotes));
+          filters[id] = new Set(removeQuoteWrapper(selector.value).split('|'));
         }
       }
     }
@@ -657,15 +660,15 @@ export const filtersFromQuery = ({
       !filters.severity
     ) {
       const severityValues: Array<Severity> = pipelineStage.labelsInFilter
-        .flatMap(({ value }) => (value ? value.split('|') : []))
-        .map(removeQuotes)
+        .map(({ value }) => (value ? removeQuoteWrapper(value) : ''))
+        .flatMap((value) => value.split('|'))
         .map(severityFromString)
         .filter(notUndefined);
       if (severityValues.length > 0) {
         filters.severity = new Set(severityValues);
       }
     } else if (pipelineStage.operator === '|=' && !filters.content) {
-      filters.content = new Set([removeBacktick(pipelineStage.value)]);
+      filters.content = new Set([removeQuoteWrapper(pipelineStage.value)]);
     }
   }
 

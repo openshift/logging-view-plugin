@@ -37,6 +37,7 @@ interface LogsTableProps {
   error?: unknown;
   timezone?: string;
   hasNamespaceFilter?: boolean;
+  tenant?: string;
   schema: Schema;
 }
 
@@ -242,6 +243,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   error,
   timezone,
   hasNamespaceFilter,
+  tenant,
   schema,
 }) => {
   const [expandedItems, setExpandedItems] = React.useState<Set<number>>(new Set());
@@ -402,6 +404,7 @@ export const LogsTable: React.FC<LogsTableProps> = ({
         isLoadingMore={isLoadingMore}
         shouldResize={showStats || React.Children.count(children) != prevChildrenCount}
         hasNamespaceFilter={hasNamespaceFilter}
+        tenant={tenant}
         schema={schema}
         expandedItems={expandedItems}
         showResources={showResources}
