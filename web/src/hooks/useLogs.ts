@@ -23,6 +23,7 @@ import {
 import { intervalFromTimeRange, numericTimeRange, timeRangeFromDuration } from '../time-range';
 import { getPaginationRange, msToNs } from '../value-utils';
 
+import { queryHasNamespaceFilter } from '../components/error-message-utils';
 import { LogQLQuery } from '../logql-query';
 
 const DEFAULT_TIME_SPAN = '1h';
@@ -53,6 +54,7 @@ type State = {
   isStreaming: boolean;
   config: Config;
   configLoaded: boolean;
+  queriedWithNamespace: boolean;
 };
 
 type Action =
@@ -65,6 +67,7 @@ type Action =
     }
   | {
       type: 'logsRequest';
+      payload: { queriedWithNamespace: boolean };
     }
   | {
       type: 'moreLogsRequest';
@@ -185,6 +188,7 @@ const reducer = (state: State, action: Action): State => {
         isLoadingMoreLogsData: false,
         isStreaming: false,
         isLoadingVolumeData: false,
+        queriedWithNamespace: action.payload.queriedWithNamespace,
       };
     case 'startStreaming':
       return {
@@ -321,6 +325,7 @@ export const useLogs = (
       isStreaming,
       config,
       configLoaded,
+      queriedWithNamespace,
     },
     dispatch,
   ] = React.useReducer(reducer, {
@@ -332,6 +337,7 @@ export const useLogs = (
     isStreaming: false,
     config: defaultConfig,
     configLoaded: false,
+    queriedWithNamespace: false,
   });
 
   const fetchConfig = React.useCallback(async () => {
@@ -442,7 +448,12 @@ export const useLogs = (
 
       const { start, end } = numericTimeRange(currentTimeRange.current);
 
-      dispatch({ type: 'logsRequest' });
+      dispatch({
+        type: 'logsRequest',
+        payload: {
+          queriedWithNamespace: queryHasNamespaceFilter(query, currentTenant.current),
+        },
+      });
 
       if (logsAbort.current) {
         logsAbort.current();
@@ -708,5 +719,6 @@ export const useLogs = (
     histogramError,
     toggleStreaming,
     config,
+    queriedWithNamespace,
   };
 };

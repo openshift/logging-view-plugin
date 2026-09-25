@@ -79,6 +79,7 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
     getHistogram,
     toggleStreaming,
     config,
+    queriedWithNamespace,
   } = useLogs();
 
   const handleToggleStreaming = () => {
@@ -163,7 +164,7 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
   const attributeList = React.useMemo(
     () =>
       namespace
-        ? availableDevConsoleAttributes(getInitialTenantFromNamespace(namespace), config)
+        ? availableDevConsoleAttributes(getInitialTenantFromNamespace(namespace), config, namespace)
         : [],
     [namespace, config],
   );
@@ -306,6 +307,8 @@ const LogsDevPage: React.FC<LogsDevPageProps> = ({ ns: namespaceFromProps }) => 
             showStats={areStatsShown}
             isStreaming={isStreaming}
             error={logsError}
+            hasNamespaceFilter={queriedWithNamespace}
+            tenant={tenant}
           />
         )}
       </Grid>
