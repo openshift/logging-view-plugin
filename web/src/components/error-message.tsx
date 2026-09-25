@@ -12,6 +12,7 @@ import { isFetchError } from '../cancellable-fetch';
 import { Schema } from '../logs.types';
 import { getStreamLabelsFromSchema, ResourceLabel } from '../parse-resources';
 import { capitalize, notUndefined } from '../value-utils';
+import { getForbiddenKind } from './error-message-utils';
 import './error-message.css';
 
 interface ErrorMessageProps {
@@ -59,32 +60,18 @@ const ForbiddenWithNamespace: React.FC<{ t: TFunction }> = ({ t }) => (
   </Suggestion>
 );
 
-const ForbiddenWithoutNamespace: React.FC<{ t: TFunction; schema: Schema }> = ({ t, schema }) => (
+const SelectNamespacePrompt: React.FC<{ t: TFunction; schema: Schema }> = ({ t, schema }) => (
   <Suggestion>
     <p>
-      <strong>{t('Try selecting a specific namespace')}</strong>
-      {' - '}
-      {t('you may have access to view logs in specific namespaces but not cluster-wide.')}
-    </p>
-    <p>
       {t(
-        'Use the namespace filter or the query input, in the example below, to scope your query to namespaces you have access to.',
+        'You may have access to view logs in specific namespaces but not cluster-wide. Use the namespace filter or the query input, in the example below, to scope your query to namespaces you have access to.',
       )}
     </p>
     <p>
       <CodeBlock>
-        <CodeBlockCode id="namespace-code-content">{queryWithNamespaceCode(schema)}</CodeBlockCode>
-      </CodeBlock>
-    </p>
-    <p>
-      {t(
-        'If you still see this error after selecting a namespace, ask your administrator to grant you the required role',
-      )}
-      :
-    </p>
-    <p>
-      <CodeBlock>
-        <CodeBlockCode id="code-content">{roleCode}</CodeBlockCode>
+        <CodeBlockCode id="select-namespace-code-content">
+          {queryWithNamespaceCode(schema)}
+        </CodeBlockCode>
       </CodeBlock>
     </p>
   </Suggestion>
@@ -149,7 +136,10 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
   let errorMessage = (error as Error).message || String(error);
   let title = t('You may consider the following query changes to avoid this error');
   const status = isFetchError(error) ? error.status : undefined;
-  const isForbidden = status === 403;
+  const forbiddenKind = getForbiddenKind(status, hasNamespaceFilter);
+  const isForbidden = forbiddenKind !== 'none';
+  // Unscoped 403: prompt to select a namespace instead of the forbidden error (OU-578).
+  const isSelectNamespacePrompt = forbiddenKind === 'no-namespace';
 
   if (status !== undefined) {
     switch (status) {
@@ -158,10 +148,14 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
         errorMessage = 'cannot connect to LokiStack';
         break;
       case 403:
-        title = hasNamespaceFilter
-          ? t('Missing permissions to get logs in this namespace')
-          : t('Missing permissions to get logs');
-        errorMessage = 'forbidden';
+        if (isSelectNamespacePrompt) {
+          // Alert title renders from errorMessage, so set the translated string here.
+          errorMessage = t('Select a namespace to view logs');
+          title = errorMessage;
+        } else {
+          title = t('Missing permissions to get logs in this namespace');
+          errorMessage = 'forbidden';
+        }
         break;
     }
   }
@@ -180,15 +174,17 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
 
   const forbiddenSuggestion = React.useMemo(() => {
     if (!isForbidden) return null;
-    return hasNamespaceFilter ? (
-      <ForbiddenWithNamespace t={t} />
-    ) : (
-      <ForbiddenWithoutNamespace t={t} schema={schema} />
-    );
-  }, [isForbidden, hasNamespaceFilter, t, schema]);
+    if (isSelectNamespacePrompt) {
+      return <SelectNamespacePrompt t={t} schema={schema} />;
+    }
+    return <ForbiddenWithNamespace t={t} />;
+  }, [isForbidden, isSelectNamespacePrompt, t, schema]);
 
   const hasSuggestions = (suggestions && suggestions.length > 0) || forbiddenSuggestion;
-  const variant = isForbidden ? 'warning' : 'danger';
+  // The prompt is informational, not a permission failure.
+  const variant = isSelectNamespacePrompt ? 'info' : isForbidden ? 'warning' : 'danger';
+  // The prompt's call to action is already in the Alert title; skip the duplicate heading.
+  const helpText = isSelectNamespacePrompt ? null : title;
 
   return (
     <>
@@ -202,7 +198,7 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
 
       {hasSuggestions ? (
         <TextContent>
-          <Text component={TextVariants.p}>{title}</Text>
+          {helpText ? <Text component={TextVariants.p}>{helpText}</Text> : null}
 
           {forbiddenSuggestion}
           {suggestions}
