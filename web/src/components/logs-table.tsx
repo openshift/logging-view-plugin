@@ -49,6 +49,7 @@ interface LogsTableProps {
   error?: unknown;
   timezone?: string;
   hasNamespaceFilter?: boolean;
+  tenant?: string;
   schema: Schema;
 }
 
@@ -250,6 +251,7 @@ export const LogsTable: FC<PropsWithChildren<LogsTableProps>> = ({
   error,
   timezone,
   hasNamespaceFilter,
+  tenant,
   schema,
 }) => {
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
@@ -410,6 +412,7 @@ export const LogsTable: FC<PropsWithChildren<LogsTableProps>> = ({
         isLoadingMore={isLoadingMore}
         shouldResize={showStats || Children.count(children) != prevChildrenCount}
         hasNamespaceFilter={hasNamespaceFilter}
+        tenant={tenant}
         schema={schema}
         expandedItems={expandedItems}
         showResources={showResources}
