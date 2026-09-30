@@ -4,6 +4,7 @@ import {
   namespaceBelongsToInfrastructureTenant,
   notEmptyString,
   notUndefined,
+  removeQuoteWrapper,
 } from './value-utils';
 import { cancellableFetch } from './cancellable-fetch';
 import { Attribute, AttributeList, Filters, Option } from './components/filters/filter.types';
@@ -142,6 +143,74 @@ const resourceDataSource =
     return filteredItems.flatMap(mapper).filter(({ value }) => notEmptyString(value));
   };
 
+const mergeSettledResults = (
+  results: Array<PromiseSettledResult<Option[]>>,
+  fallback: Option[] = [],
+): Option[] => {
+  const allRejected = results.length > 0 && results.every((r) => r.status === 'rejected');
+  if (allRejected && fallback.length === 0) {
+    throw (results[0] as PromiseRejectedResult).reason;
+  }
+
+  const uniqueValues = new Set<string>(fallback.map((option) => option.value));
+  results.forEach((result) => {
+    if (result.status === 'fulfilled') {
+      result.value.forEach((option) => uniqueValues.add(option.value));
+    }
+  });
+  return Array.from(uniqueValues)
+    .sort()
+    .map((v) => ({ option: v, value: v }));
+};
+
+const getNamespaceAttributeOptions = (
+  tenant: string,
+  config: Config,
+  seedNamespaces: string[] = [],
+): (() => Promise<Option[]>) => {
+  const namespaceLabel = 'kubernetes_namespace_name';
+
+  const tenantFilter = (resource: K8sResourceCommon) => {
+    switch (tenant) {
+      case 'infrastructure':
+        return namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
+      case 'application':
+        return !namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
+    }
+    return true;
+  };
+
+  const lokiTenantFilter = (namespace: string) => {
+    switch (tenant) {
+      case 'infrastructure':
+        return namespaceBelongsToInfrastructureTenant(namespace);
+      case 'application':
+        return !namespaceBelongsToInfrastructureTenant(namespace);
+    }
+    return true;
+  };
+
+  return async () => {
+    const filteredProjectList = projectsDataSource(tenantFilter)();
+    const filteredLokiNamespaceList = lokiLabelValuesDataSource({
+      config,
+      tenant,
+      labelName: namespaceLabel,
+    })().then((options) => options.filter((opt) => lokiTenantFilter(opt.value)));
+
+    const seeded = seedNamespaces
+      .filter((namespace) => lokiTenantFilter(namespace))
+      .map((namespace) => ({ option: namespace, value: namespace }));
+
+    const settled = await Promise.allSettled<Option[]>([
+      filteredProjectList,
+      filteredLokiNamespaceList,
+    ]);
+
+    return mergeSettledResults(settled, seeded);
+  };
+};
+
 // The logs-page and the logs-dev-page both need a default set of attributes to pass
 // to queryFromFilters and filtersFromQuery which only need id and label
 export const initialAvailableAttributes: AttributeList = [
@@ -272,42 +341,92 @@ export const availableAttributes = (tenant: string, config: Config): AttributeLi
   ];
 };
 
-export const availableDevConsoleAttributes = (tenant: string, config: Config): AttributeList => [
-  {
+export const availableDevConsoleAttributes = (
+  tenant: string,
+  config: Config,
+  namespace?: string,
+): AttributeList => {
+  const namespaceLabel = 'kubernetes_namespace_name';
+  const podLabel = 'kubernetes_pod_name';
+  const containerLabel = 'kubernetes_container_name';
+
+  const contentAttribute: Attribute = {
     name: 'Content',
     id: 'content',
     valueType: 'text',
-  },
-  {
-    name: 'Namespaces',
-    label: 'kubernetes_namespace_name',
-    id: 'namespace',
-    options: projectsDataSource(),
-    valueType: 'checkbox-select',
-  },
-  {
-    name: 'Pods',
-    label: 'kubernetes_pod_name',
-    id: 'pod',
-    options: lokiLabelValuesDataSource({
-      config,
-      tenant,
-      labelName: 'kubernetes_pod_name',
-    }),
-    valueType: 'checkbox-select',
-  },
-  {
-    name: 'Containers',
-    label: 'kubernetes_container_name',
-    id: 'container',
-    options: lokiLabelValuesDataSource({
-      config,
-      tenant,
-      labelName: 'kubernetes_container_name',
-    }),
-    valueType: 'checkbox-select',
-  },
-];
+  };
+
+  // When tenant is audit, only the content attribute is available
+  if (tenant === 'audit') {
+    return [contentAttribute];
+  }
+
+  const lokiNamespaceQuery = namespace ? `{ ${namespaceLabel}="${namespace}" }` : undefined;
+
+  return [
+    contentAttribute,
+    {
+      name: 'Namespaces',
+      label: namespaceLabel,
+      id: 'namespace',
+      // Fine-grained log access is independent of project ownership, so union the
+      // projects list with Loki's namespaces and seed the active namespace for
+      // users who can enumerate neither.
+      options: getNamespaceAttributeOptions(tenant, config, namespace ? [namespace] : []),
+      valueType: 'checkbox-select',
+    },
+    {
+      name: 'Pods',
+      label: podLabel,
+      id: 'pod',
+      options: () => {
+        const sources: Array<Promise<Option[]>> = [
+          lokiLabelValuesDataSource({
+            config,
+            tenant,
+            labelName: podLabel,
+            query: lokiNamespaceQuery,
+          })(),
+        ];
+        if (namespace) {
+          sources.push(resourceDataSource({ resource: 'pods', namespace })());
+        }
+        return Promise.allSettled(sources).then(mergeSettledResults);
+      },
+      valueType: 'checkbox-select',
+    },
+    {
+      name: 'Containers',
+      label: containerLabel,
+      id: 'container',
+      options: () => {
+        const sources: Array<Promise<Option[]>> = [
+          lokiLabelValuesDataSource({
+            config,
+            tenant,
+            labelName: containerLabel,
+            query: lokiNamespaceQuery,
+          })(),
+        ];
+        if (namespace) {
+          sources.push(
+            resourceDataSource({
+              resource: 'pods',
+              namespace,
+              mapper: (resource) =>
+                resource?.spec?.containers.map((c) => ({
+                  option: c.name,
+                  value: c.name,
+                })) ?? [],
+            })(),
+          );
+        }
+        return Promise.allSettled(sources).then(mergeSettledResults);
+      },
+      valueType: 'checkbox-select',
+    },
+  ];
+};
 
 export const availablePodAttributes = (
   namespace: string,
@@ -390,19 +509,6 @@ export const queryFromFilters = ({
   });
 
   return query.toString();
-};
-
-const quotationMarks = ['"', '`', "'"];
-
-const removeQuoteWrapper = (value?: string) => {
-  if (!value) return '';
-  if (value.length < 2) return value;
-  const startValue = value[0];
-  const endValue = value[value.length - 1];
-  if (startValue === endValue && quotationMarks.includes(startValue)) {
-    return value.slice(1, value.length - 1);
-  }
-  return value;
 };
 
 export const filtersFromQuery = ({

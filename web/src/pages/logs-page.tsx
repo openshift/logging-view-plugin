@@ -74,6 +74,7 @@ const LogsPage: React.FC = () => {
     getHistogram,
     toggleStreaming,
     config,
+    queriedWithNamespace,
   } = useLogs();
 
   const handleToggleStreaming = () => {
@@ -270,6 +271,8 @@ const LogsPage: React.FC = () => {
             direction={direction}
             isStreaming={isStreaming}
             error={logsError}
+            hasNamespaceFilter={queriedWithNamespace}
+            tenant={tenant}
           />
         )}
       </Grid>

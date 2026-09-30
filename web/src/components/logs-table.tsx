@@ -34,6 +34,8 @@ interface LogsTableProps {
   showStats?: boolean;
   isStreaming?: boolean;
   error?: unknown;
+  hasNamespaceFilter?: boolean;
+  tenant?: string;
 }
 
 const isJSONObject = (value: string): boolean => {
@@ -253,6 +255,8 @@ export const LogsTable: React.FC<LogsTableProps> = ({
   isStreaming,
   children,
   error,
+  hasNamespaceFilter,
+  tenant,
 }) => {
   const [expandedItems, setExpandedItems] = React.useState<Set<number>>(new Set());
   const [prevChildrenCount, setPrevChildrenCount] = React.useState(0);
@@ -381,6 +385,8 @@ export const LogsTable: React.FC<LogsTableProps> = ({
         onLoadMore={handleLoadMore}
         isLoadingMore={isLoadingMore}
         shouldResize={showStats || React.Children.count(children) != prevChildrenCount}
+        hasNamespaceFilter={hasNamespaceFilter}
+        tenant={tenant}
       />
     </div>
   );

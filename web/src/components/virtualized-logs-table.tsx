@@ -28,6 +28,8 @@ interface VirtualizedLogsTableProps<D> {
   onLoadMore?: () => void;
   shouldResize?: boolean;
   csvData?: string;
+  hasNamespaceFilter?: boolean;
+  tenant?: string;
 }
 
 export type TableRowProps = {
@@ -253,6 +255,8 @@ export const VirtualizedLogsTable = ({
   hasMoreLogsData,
   onLoadMore,
   shouldResize,
+  hasNamespaceFilter,
+  tenant,
 }: VirtualizedLogsTableProps<LogTableData>) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
   const colSpan = columns.length + 3;
@@ -288,7 +292,11 @@ export const VirtualizedLogsTable = ({
             <Tr className="co-logs-table__row-info">
               <Td colSpan={colSpan} key="error-row">
                 <div className="co-logs-table__row-error">
-                  <ErrorMessage error={error} />
+                  <ErrorMessage
+                    error={error}
+                    hasNamespaceFilter={hasNamespaceFilter}
+                    tenant={tenant}
+                  />
                 </div>
               </Td>
             </Tr>
