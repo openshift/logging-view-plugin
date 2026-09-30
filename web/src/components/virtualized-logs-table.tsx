@@ -4,7 +4,7 @@ import { Table, Tbody, Td, Th, Thead, ThProps, Tr } from '@patternfly/react-tabl
 import { VirtualTableBody } from '@patternfly/react-virtualized-extension';
 import { Scroll } from '@patternfly/react-virtualized-extension/dist/esm/components/Virtualized/types';
 import classNames from 'classnames';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AutoSizer, CellMeasurer, CellMeasurerCache, WindowScroller } from 'react-virtualized';
 import { MeasuredCellParent } from 'react-virtualized/dist/es/CellMeasurer';
@@ -136,7 +136,19 @@ VirtualizedTableBodyProps<LogTableData, any>) => {
     keyMapper: (rowIndex) => rowIndex,
   });
 
-  const activeColumnIDs = React.useMemo(() => new Set(columns.map((c) => c.id)), [columns]);
+  const tableBodyRef = useRef<VirtualTableBody>(null);
+
+  const isFirstWidth = useRef(true);
+  useEffect(() => {
+    if (isFirstWidth.current) {
+      isFirstWidth.current = false;
+      return;
+    }
+    cellMeasurementCache.clearAll();
+    tableBodyRef.current?.recomputeRowHeights();
+  }, [width]);
+
+  const activeColumnIDs = useMemo(() => new Set(columns.map((c) => c.id)), [columns]);
 
   const rowRenderer = ({
     index,
@@ -187,6 +199,7 @@ VirtualizedTableBodyProps<LogTableData, any>) => {
 
   return (
     <VirtualTableBody
+      ref={tableBodyRef}
       autoHeight
       className="pf-c-table pf-m-compact pf-m-border-rows pf-c-virtualized pf-c-window-scroller"
       deferredMeasurementCache={cellMeasurementCache}
