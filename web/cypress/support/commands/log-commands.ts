@@ -17,6 +17,7 @@ declare global {
       removeLogViewRolesFromUser(index: string, project: string);
       showLogQueryInput();
       closeLogQueryInput();
+      setLogQueryInput(query: string);
       runLogQuery(logQL: string);
       assertLogsInLogsTable();
       assertFieldsInLogDetail(indexFields: IndexField[]): Chainable<void>;
@@ -55,6 +56,27 @@ Cypress.Commands.add('closeLogQueryInput', () => {
       cy.wrap($btn).click({ force: true });
     }
   });
+});
+
+// Reliably set the LogQL query input in a single React onChange.
+Cypress.Commands.add('setLogQueryInput', (query: string) => {
+  cy.byTestID(TestIds.LogsQueryInput)
+    .find('textarea')
+    .then(($textarea) => {
+      const textarea = $textarea[0] as HTMLTextAreaElement;
+      const win = textarea.ownerDocument.defaultView ?? window;
+      const nativeValueSetter = Object.getOwnPropertyDescriptor(
+        win.HTMLTextAreaElement.prototype,
+        'value',
+      )?.set;
+      nativeValueSetter?.call(textarea, query);
+      textarea.dispatchEvent(new win.Event('input', { bubbles: true }));
+    });
+  cy.byTestID(TestIds.LogsQueryInput).find('textarea').should('have.value', query);
+  cy.location('search').should((search) => {
+    expect(new URLSearchParams(search).get('q')).to.eq(query.trim());
+  });
+  cy.byTestID(TestIds.LogsQueryInput).should('have.attr', 'data-test-query', query.trim());
 });
 
 Cypress.Commands.add('runLogQuery', (logQL: string) => {

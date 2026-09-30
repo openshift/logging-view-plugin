@@ -55,7 +55,11 @@ export const LogsQueryInput: FC<LogsQueryInputProps> = ({
     !isValid || (invalidQueryErrorMessage !== undefined && invalidQueryErrorMessage !== null);
 
   return (
-    <div className="lv-plugin__expression-input" data-test={TestIds.LogsQueryInput}>
+    <div
+      className="lv-plugin__expression-input"
+      data-test={TestIds.LogsQueryInput}
+      data-test-query={value}
+    >
       <Form className="lv-plugin__expression-input__form">
         {hasError && (
           <FormAlert>

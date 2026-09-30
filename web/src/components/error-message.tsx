@@ -1,16 +1,18 @@
 import { Alert, CodeBlock, CodeBlockCode, Content, ContentVariants } from '@patternfly/react-core';
+import { TFunction } from 'i18next';
+import { FC, PropsWithChildren, ReactElement, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isFetchError } from '../cancellable-fetch';
 import { Schema } from '../logs.types';
 import { getStreamLabelsFromSchema, ResourceLabel } from '../parse-resources';
 import { capitalize, notUndefined } from '../value-utils';
+import { ForbiddenKind, getForbiddenKind } from './error-message-utils';
 import './error-message.css';
-import { FC, PropsWithChildren, ReactElement, useMemo } from 'react';
-import { TFunction } from 'i18next';
 
 interface ErrorMessageProps {
   error: unknown | Error;
   hasNamespaceFilter?: boolean;
+  tenant?: string;
   schema: Schema;
 }
 
@@ -23,6 +25,20 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: cluster-logging-application-view
+subjects:
+- kind: User
+  name: <testuser>
+  apiGroup: rbac.authorization.k8s.io
+`;
+
+const auditRoleCode = `apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: view-audit-logs
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-logging-audit-view
 subjects:
 - kind: User
   name: <testuser>
@@ -53,32 +69,30 @@ const ForbiddenWithNamespace: FC<{ t: TFunction }> = ({ t }) => (
   </Suggestion>
 );
 
-const ForbiddenWithoutNamespace: FC<{ t: TFunction; schema: Schema }> = ({ t, schema }) => (
+const AuditForbidden: FC<{ t: TFunction }> = ({ t }) => (
   <Suggestion>
-    <p>
-      <strong>{t('Try selecting a specific namespace')}</strong>
-      {' - '}
-      {t('you may have access to view logs in specific namespaces but not cluster-wide.')}
-    </p>
-    <p>
-      {t(
-        'Use the namespace filter or the query input, in the example below, to scope your query to namespaces you have access to.',
-      )}
-    </p>
+    <p>{t('You do not have permission to view audit logs.')}</p>
+    <p>{t('Ask your administrator to grant you the audit logs role')}:</p>
     <p>
       <CodeBlock>
-        <CodeBlockCode id="namespace-code-content">{queryWithNamespaceCode(schema)}</CodeBlockCode>
+        <CodeBlockCode id="audit-role-code-content">{auditRoleCode}</CodeBlockCode>
       </CodeBlock>
     </p>
+  </Suggestion>
+);
+
+const SelectNamespacePrompt: React.FC<{ t: TFunction; schema: Schema }> = ({ t, schema }) => (
+  <Suggestion>
     <p>
       {t(
-        'If you still see this error after selecting a namespace, ask your administrator to grant you the required role',
+        'You may have access to view logs in specific namespaces but not cluster-wide. Use the namespace filter or the query input, in the example below, to scope your query to namespaces you have access to.',
       )}
-      :
     </p>
     <p>
       <CodeBlock>
-        <CodeBlockCode id="code-content">{roleCode}</CodeBlockCode>
+        <CodeBlockCode id="select-namespace-code-content">
+          {queryWithNamespaceCode(schema)}
+        </CodeBlockCode>
       </CodeBlock>
     </p>
   </Suggestion>
@@ -133,27 +147,69 @@ const messages: (t: TFunction) => Record<string, ReactElement> = (t) => ({
   ),
 });
 
-export const ErrorMessage: FC<ErrorMessageProps> = ({ error, hasNamespaceFilter, schema }) => {
+type ForbiddenPresentation = {
+  errorMessage: string;
+  helpText: string | null;
+  variant: 'info' | 'warning';
+  suggestion: ReactElement;
+};
+
+const forbiddenPresentation = (
+  kind: Exclude<ForbiddenKind, 'none'>,
+  t: TFunction,
+  schema: Schema,
+): ForbiddenPresentation => {
+  switch (kind) {
+    case 'no-namespace':
+      return {
+        errorMessage: t('Select a namespace to view logs'),
+        helpText: null,
+        variant: 'info',
+        suggestion: <SelectNamespacePrompt t={t} schema={schema} />,
+      };
+    case 'audit':
+      return {
+        errorMessage: 'forbidden',
+        helpText: t('Missing permissions to get audit logs'),
+        variant: 'warning',
+        suggestion: <AuditForbidden t={t} />,
+      };
+    case 'namespace-selected':
+      return {
+        errorMessage: 'forbidden',
+        helpText: t('Missing permissions to get logs in this namespace'),
+        variant: 'warning',
+        suggestion: <ForbiddenWithNamespace t={t} />,
+      };
+  }
+};
+
+export const ErrorMessage: FC<ErrorMessageProps> = ({
+  error,
+  hasNamespaceFilter,
+  tenant,
+  schema,
+}) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
-  let errorMessage = (error as Error).message || String(error);
-  let title = t('You may consider the following query changes to avoid this error');
   const status = isFetchError(error) ? error.status : undefined;
-  const isForbidden = status === 403;
+  const forbiddenKind = getForbiddenKind(status, hasNamespaceFilter, tenant);
+  const forbidden =
+    forbiddenKind !== 'none' ? forbiddenPresentation(forbiddenKind, t, schema) : null;
 
-  if (status !== undefined) {
-    switch (status) {
-      case 502:
-        title = t('This plugin requires Loki Operator and LokiStack to be running in the cluster');
-        errorMessage = 'cannot connect to LokiStack';
-        break;
-      case 403:
-        title = hasNamespaceFilter
-          ? t('Missing permissions to get logs in this namespace')
-          : t('Missing permissions to get logs');
-        errorMessage = 'forbidden';
-        break;
-    }
+  let errorMessage = (error as Error).message || String(error);
+  let helpText: string | null = t(
+    'You may consider the following query changes to avoid this error',
+  );
+  let variant: 'danger' | 'warning' | 'info' = 'danger';
+
+  if (status === 502) {
+    helpText = t('This plugin requires Loki Operator and LokiStack to be running in the cluster');
+    errorMessage = 'cannot connect to LokiStack';
+  } else if (forbidden) {
+    errorMessage = forbidden.errorMessage;
+    helpText = forbidden.helpText;
+    variant = forbidden.variant;
   }
 
   const suggestions = useMemo(() => {
@@ -168,17 +224,7 @@ export const ErrorMessage: FC<ErrorMessageProps> = ({ error, hasNamespaceFilter,
       .filter(notUndefined);
   }, [errorMessage, t]);
 
-  const forbiddenSuggestion = useMemo(() => {
-    if (!isForbidden) return null;
-    return hasNamespaceFilter ? (
-      <ForbiddenWithNamespace t={t} />
-    ) : (
-      <ForbiddenWithoutNamespace t={t} schema={schema} />
-    );
-  }, [isForbidden, hasNamespaceFilter, t, schema]);
-
-  const hasSuggestions = (suggestions && suggestions.length > 0) || forbiddenSuggestion;
-  const variant = isForbidden ? 'warning' : 'danger';
+  const hasSuggestions = (suggestions && suggestions.length > 0) || forbidden;
 
   return (
     <>
@@ -192,8 +238,9 @@ export const ErrorMessage: FC<ErrorMessageProps> = ({ error, hasNamespaceFilter,
 
       {hasSuggestions ? (
         <Content>
-          <Content component={ContentVariants.p}>{title}</Content>
-          {forbiddenSuggestion}
+          {helpText ? <Content component={ContentVariants.p}>{helpText}</Content> : null}
+
+          {forbidden?.suggestion}
           {suggestions}
         </Content>
       ) : null}
