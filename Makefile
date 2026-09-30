@@ -2,7 +2,6 @@ VERSION     ?= latest
 PLATFORMS   ?= linux/arm64,linux/amd64
 ORG         ?= openshift-observability-ui
 IMAGE		?= quay.io/${ORG}/logging-view-plugin:${VERSION}
-FEATURES	?=
 
 .PHONY: install-frontend
 install-frontend:
@@ -77,11 +76,11 @@ start-frontend:
 
 .PHONY: start-backend
 start-backend: build-backend
-	./plugin-backend -port 9002 -features "${FEATURES}"
+	./plugin-backend -port 9002
 
 .PHONY: start-devspace-backend
 start-devspace-backend:
-	/opt/app-root/plugin-backend -port=9443 -cert=/var/serving-cert/tls.crt -key=/var/serving-cert/tls.key -plugin-config-path=/etc/plugin/config/config.yaml -static-path=/opt/app-root/web/dist -config-path=/opt/app-root/config
+	/opt/app-root/plugin-backend -port=9443 -cert=/var/serving-cert/tls.crt -key=/var/serving-cert/tls.key -plugin-config-path=/etc/plugin/config/config.yaml -static-path=/opt/app-root/web/dist
 
 .PHONY: build-image
 build-image:

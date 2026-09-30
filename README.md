@@ -195,29 +195,30 @@ make build-image
 
 ## Features
 
-From 5.6.1+, apart from the core functionality, the plugin offers additional features that can be enabled using the `-features` flag with comma separated values. For example:
+The plugin always serves its complete manifest. All capabilities are enabled:
 
-`-features=dev-console,alerts`
-
-In OpenShift console, these features will be enabled by the Cluster Logging Operator based on the cluster version.
-
-### Feature list
-
-| Feature       | Description                                                                                                                                                                |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `dev-console` | Adds the logging view to the developer perspective                                                                                                                         |
-| `alerts`      | Merges the OpenShift console alerts with log-based alerts defined in the Loki ruler. Adds a log-based metrics chart in the alert detail view                               |
-| `dev-alerts`  | Merges the OpenShift console alerts with log-based alerts defined in the Loki ruler. Adds a log-based metrics chart in the alert detail view for the developer perspective |
+- Logs in the administrator and developer perspectives, including aggregated logs on pod details.
+- Log-based alert sources for user and platform alerts in both perspectives.
+- Log-based metrics charts in alert details.
 
 ### Compatibility matrix
 
-| CLO version | OCP versions                    | Features                                              |
-| ----------- | ------------------------------- | ----------------------------------------------------- |
-| 5.5         | 4.10 (tech preview), 4.11, 4.12 | _No features configuration, just core functionallity_ |
-| 5.6.1+      | 4.10 (tech preview), 4.11       | _No additional features, just core functionallity_    |
-| 5.6.1+      | 4.12, 4.13                      | `dev-console`                                         |
-| 5.7         | 4.11                            | _No additional features, just core functionallity_    |
-| 5.7         | 4.11.52+                        | `dev-console`                                         |
-| 5.7         | 4.12                            | `dev-console`                                         |
-| 5.7         | 4.13                            | `dev-console`, `alerts`                               |
-| 5.8         | 4.14                            | `dev-console`, `alerts`, `dev-alerts`                 |
+| CLO version | OCP versions                              | Features                                           |
+| ----------- | ----------------------------------------- | -------------------------------------------------- |
+| 5.5         | 4.10 (tech preview), 4.11, 4.12             | _No features configuration, just core functionality_ |
+| 5.6.1+      | 4.10 (tech preview), 4.11                   | _No additional features, just core functionality_   |
+| 5.6.1+      | 4.12, 4.13                                | `dev-console`                                      |
+| 5.7         | 4.11                                      | _No additional features, just core functionality_   |
+| 5.7         | 4.11.52+                                  | `dev-console`                                      |
+| 5.7         | 4.12                                      | `dev-console`                                      |
+| 5.7         | 4.13                                      | `dev-console`, `alerts`                            |
+| 5.8         | 4.14                                      | `dev-console`, `alerts`, `dev-alerts`                |
+| > 5.8       | Versions supported by the CLO release      | All features enabled by default                    |
+
+### Migrating to OCP 5.1
+
+The `-features` and `-config-path` flags are deprecated and accepted for compatibility with existing deployments, but their values are ignored. All features remain enabled and manifest patches are no longer applied. Deployment arguments and operators can remove these flags independently of the plugin upgrade.
+
+Remove the obsolete `LOGGING_VIEW_PLUGIN_FEATURES` and `LOGGING_VIEW_PLUGIN_MANIFEST_CONFIG_PATH` environment variables and manifest patch configuration mounts. The `/features` endpoint has been removed; clients should use the complete `plugin-manifest.json` instead.
+
+Runtime plugin configuration remains available through `-plugin-config-path`, `LOGGING_VIEW_PLUGIN_CONFIG_PATH`, and the `/config` endpoint, including schema, query timeout, and log limits.
