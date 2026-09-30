@@ -186,6 +186,17 @@ const VirtualizedTableBody = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expandedItems, showResources]);
 
+  const isFirstWidth = useRef(true);
+  useEffect(() => {
+    if (isFirstWidth.current) {
+      isFirstWidth.current = false;
+      return;
+    }
+    cellMeasurementCache.clearAll();
+    tableBodyRef.current?.recomputeRowHeights();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [width]);
+
   const activeColumnIDs = useMemo(() => new Set(columns.map((c) => c.id)), [columns]);
 
   const rowRenderer = ({
