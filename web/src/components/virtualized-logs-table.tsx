@@ -4,7 +4,7 @@ import { Table, Tbody, Td, Th, Thead, ThProps, Tr } from '@patternfly/react-tabl
 import { VirtualTableBody } from '@patternfly/react-virtualized-extension';
 import { Scroll } from '@patternfly/react-virtualized-extension/dist/esm/components/Virtualized/types';
 import classNames from 'classnames';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AutoSizer, CellMeasurer, CellMeasurerCache, WindowScroller } from 'react-virtualized';
 import { MeasuredCellParent } from 'react-virtualized/dist/es/CellMeasurer';
@@ -157,7 +157,17 @@ VirtualizedTableBodyProps<LogTableData, any>) => {
     tableBodyRef.current?.forceUpdateVirtualGrid();
   }, [expandedItems, showResources]);
 
-  const activeColumnIDs = React.useMemo(() => new Set(columns.map((c) => c.id)), [columns]);
+  const isFirstWidth = useRef(true);
+  useEffect(() => {
+    if (isFirstWidth.current) {
+      isFirstWidth.current = false;
+      return;
+    }
+    cellMeasurementCache.clearAll();
+    tableBodyRef.current?.recomputeRowHeights();
+  }, [width]);
+
+  const activeColumnIDs = useMemo(() => new Set(columns.map((c) => c.id)), [columns]);
 
   const rowRenderer = ({
     index,
