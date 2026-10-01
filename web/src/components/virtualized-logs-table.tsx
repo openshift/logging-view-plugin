@@ -29,6 +29,7 @@ interface VirtualizedLogsTableProps<D> {
   shouldResize?: boolean;
   csvData?: string;
   hasNamespaceFilter?: boolean;
+  tenant?: string;
   schema: Schema;
   expandedItems?: Set<number>;
   showResources?: boolean;
@@ -279,6 +280,7 @@ export const VirtualizedLogsTable = ({
   onLoadMore,
   shouldResize,
   hasNamespaceFilter,
+  tenant,
   schema,
   expandedItems,
   showResources,
@@ -320,6 +322,7 @@ export const VirtualizedLogsTable = ({
                   <ErrorMessage
                     error={error}
                     hasNamespaceFilter={hasNamespaceFilter}
+                    tenant={tenant}
                     schema={schema}
                   />
                 </div>
