@@ -3,7 +3,6 @@ module github.com/openshift/logging-view-plugin
 go 1.26.7
 
 require (
-	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/sirupsen/logrus v1.9.3

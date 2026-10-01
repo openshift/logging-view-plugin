@@ -27,9 +27,7 @@ type Config struct {
 	Port             int
 	CertFile         string
 	PrivateKeyFile   string
-	Features         map[string]bool
 	StaticPath       string
-	ConfigPath       string
 	PluginConfigPath string
 	TLSMinVersion    uint16
 	TLSCipherSuites  []uint16
@@ -190,11 +188,8 @@ func setupRoutes(cfg *Config) *mux.Router {
 
 	r.PathPrefix("/health").HandlerFunc(healthHandler())
 
-	// serve plugin manifest according to enabled features
+	// serve the complete plugin manifest
 	r.Path("/plugin-manifest.json").Handler(manifestHandler(cfg))
-
-	// serve enabled features list to the front-end
-	r.PathPrefix("/features").HandlerFunc(featuresHandler(cfg))
 
 	// serve plugin configuration to the front-end
 	r.PathPrefix("/config").HandlerFunc(configHandler(cfg))
@@ -251,23 +246,6 @@ func corsHeaderMiddleware(cfg *Config) func(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
-}
-
-func featuresHandler(cfg *Config) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		jsonFeatures, err := json.Marshal(cfg.Features)
-
-		if err != nil {
-			slog.WithError(err).Errorf("cannot marshall, features were: %v", string(jsonFeatures))
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		if _, err := w.Write(jsonFeatures); err != nil {
-			slog.WithError(err).Error("cannot write features response")
-		}
-	})
 }
 
 func configHandler(cfg *Config) http.HandlerFunc {

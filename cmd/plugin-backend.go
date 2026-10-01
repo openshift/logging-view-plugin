@@ -13,12 +13,12 @@ import (
 )
 
 var (
+	_                  = flag.String("features", "", "deprecated: ignored; all features are enabled")
+	_                  = flag.String("config-path", "", "deprecated: ignored; manifest patches are no longer used")
 	portArg            = flag.Int("port", 0, "server port to listen on (default: 9002)")
 	certArg            = flag.String("cert", "", "cert file path to enable TLS (disabled by default)")
 	keyArg             = flag.String("key", "", "private key file path to enable TLS (disabled by default)")
-	featuresArg        = flag.String("features", "", "enabled features, comma separated")
 	staticPathArg      = flag.String("static-path", "", "static files path to serve frontend (default: './web/dist')")
-	configPathArg      = flag.String("config-path", "", "config files path (default: './config')")
 	pluginConfigArg    = flag.String("plugin-config-path", "", "plugin yaml configuration")
 	logLevelArg        = flag.String("log-level", logrus.InfoLevel.String(), "verbosity of logs\noptions: ['panic', 'fatal', 'error', 'warn', 'info', 'debug', 'trace']\n'trace' level will log all incoming requests\n(default 'error')")
 	tlsMinVersionArg   = flag.String("tls-min-version", "VersionTLS12", "minimum TLS version supported. Values are from tls package constants (https://golang.org/pkg/crypto/tls/#pkg-constants)")
@@ -32,20 +32,11 @@ func main() {
 	port := mergeEnvValueInt("PORT", *portArg, 9002)
 	cert := mergeEnvValue("CERT_FILE_PATH", *certArg, "")
 	key := mergeEnvValue("PRIVATE_KEY_FILE_PATH", *keyArg, "")
-	features := mergeEnvValue("LOGGING_VIEW_PLUGIN_FEATURES", *featuresArg, "")
 	staticPath := mergeEnvValue("LOGGING_VIEW_PLUGIN_STATIC_PATH", *staticPathArg, "./web/dist")
-	configPath := mergeEnvValue("LOGGING_VIEW_PLUGIN_MANIFEST_CONFIG_PATH", *configPathArg, "./config")
 	pluginConfigPath := mergeEnvValue("LOGGING_VIEW_PLUGIN_CONFIG_PATH", *pluginConfigArg, "/etc/plugin/config.yaml")
 	logLevel := mergeEnvValue("LOGGING_VIEW_PLUGIN_LOG_LEVEL", *logLevelArg, logrus.InfoLevel.String())
 	tlsMinVersion := mergeEnvValue("TLS_MIN_VERSION", *tlsMinVersionArg, "VersionTLS12")
 	tlsCipherSuites := mergeEnvValue("TLS_CIPHER_SUITES", *tlsCipherSuitesArg, "")
-
-	featuresList := strings.Fields(strings.Join(strings.Split(strings.ToLower(features), ","), " "))
-
-	featuresSet := make(map[string]bool)
-	for _, s := range featuresList {
-		featuresSet[s] = true
-	}
 
 	logrusLevel, err := logrus.ParseLevel(logLevel)
 	if err != nil {
@@ -54,8 +45,6 @@ func main() {
 	}
 
 	logrus.SetLevel(logrusLevel)
-
-	log.Infof("enabled features: %+q\n", featuresList)
 
 	// Parse TLS configuration using k8sapiflag
 	tlsMinVer, err := k8sapiflag.TLSVersion(tlsMinVersion)
@@ -76,9 +65,7 @@ func main() {
 		Port:             port,
 		CertFile:         cert,
 		PrivateKeyFile:   key,
-		Features:         featuresSet,
 		StaticPath:       staticPath,
-		ConfigPath:       configPath,
 		PluginConfigPath: pluginConfigPath,
 		TLSMinVersion:    tlsMinVer,
 		TLSCipherSuites:  tlsCiphers,
@@ -120,4 +107,3 @@ func mergeEnvValueInt(key string, arg int, defaultValue int) int {
 
 	return defaultValue
 }
-

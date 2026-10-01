@@ -104,9 +104,16 @@ func TestServerRunning(t *testing.T) {
 		t.Fatalf("Failed: could not fetch health check: %v", err)
 	}
 
-	if _, err = getRequestResults(t, httpClient, serverURL+"/features"); err != nil {
-		t.Fatalf("Failed: could not fetch features endpoint: %v", err)
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, serverURL+"/features", nil)
+	require.NoError(t, err)
+	response, err := httpClient.Do(request)
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, response.Body.Close())
+	}()
+	require.Equal(t, http.StatusNotFound, response.StatusCode)
 
 	// sanity check - make sure we cannot get to a bogus context path
 	if _, err = getRequestResults(t, httpClient, serverURL+"/badroot"); err == nil {

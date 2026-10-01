@@ -20,7 +20,6 @@ COPY go.sum go.sum
 
 RUN make install-backend
 
-COPY config/ config/
 COPY cmd/ cmd/
 COPY pkg/ pkg/
 
@@ -35,6 +34,5 @@ USER 1001
 
 COPY --from=web-builder /opt/app-root/src/web/dist ./web/dist
 COPY --from=go-builder /opt/app-root/plugin-backend ./
-COPY --from=go-builder /opt/app-root/config ./config
 
 ENTRYPOINT ["./plugin-backend"]
