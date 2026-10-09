@@ -2,7 +2,7 @@ jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({ K8sResourceCommon: {
 jest.mock('../cancellable-fetch', () => ({ cancellableFetch: jest.fn() }));
 jest.mock('../loki-client', () => ({ executeLabelValue: jest.fn(), executeSeries: jest.fn() }));
 
-import { availableDevConsoleAttributes } from '../attribute-filters';
+import { availableAttributes, availableDevConsoleAttributes } from '../attribute-filters';
 import { cancellableFetch } from '../cancellable-fetch';
 import { Option } from '../components/filters/filter.types';
 import { executeLabelValue } from '../loki-client';
@@ -22,7 +22,18 @@ const getNamespaceOptions = async (namespace: string): Promise<string[]> => {
   return options.map((option) => option.value);
 };
 
-describe('Developer view namespace options (OU-578)', () => {
+const getAdminNamespaceOptionsFn = (): (() => Promise<Option[]>) => {
+  const attributes = availableAttributes('application', {} as Config);
+  const namespaceAttribute = attributes.find((attribute) => attribute.id === 'namespace');
+  return namespaceAttribute?.options as () => Promise<Option[]>;
+};
+
+const getAdminNamespaceOptions = async (): Promise<string[]> => {
+  const options = await getAdminNamespaceOptionsFn()();
+  return options.map((option) => option.value);
+};
+
+describe('Developer view namespace options', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -61,8 +72,6 @@ describe('Developer view namespace options (OU-578)', () => {
   });
 
   it('includes the active namespace when projects is empty and Loki label values are forbidden', async () => {
-    // Pure fine-grained access: no owned projects and the Loki gateway 403s the
-    // unscoped label-values request, so only the active namespace remains (OU-578).
     mockCancellableFetch.mockReturnValue({
       request: () => Promise.resolve({ items: [] }),
       abort: jest.fn(),
@@ -90,5 +99,59 @@ describe('Developer view namespace options (OU-578)', () => {
     });
 
     await expect(getNamespaceOptionsFn()()).rejects.toThrow('projects forbidden');
+  });
+});
+
+describe('Admin view namespace options', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const mockResourceByEndpoint = ({
+    projects,
+    namespaces,
+  }: {
+    projects: () => Promise<unknown>;
+    namespaces: () => Promise<unknown>;
+  }) => {
+    mockCancellableFetch.mockImplementation((endpoint: string) => ({
+      request: endpoint.includes('project.openshift.io') ? projects : namespaces,
+      abort: jest.fn(),
+    }));
+  };
+
+  it('lists projects when the cluster-scoped namespaces list is forbidden', async () => {
+    // The real bug: a namespace-restricted user cannot list cluster-scoped
+    // namespaces (403), but the projects API returns the namespaces they own.
+    mockResourceByEndpoint({
+      projects: () => Promise.resolve({ items: [{ metadata: { name: 'test-11' } }] }),
+      namespaces: () => Promise.reject(new Error('namespaces is forbidden')),
+    });
+    mockExecuteLabelValue.mockReturnValue({
+      request: () => Promise.reject(new Error('loki forbidden')),
+      abort: jest.fn(),
+    });
+
+    const values = await getAdminNamespaceOptions();
+
+    expect(values).toEqual(['test-11']);
+  });
+
+  it('merges namespaces from the projects API, the k8s namespaces API and Loki labels', async () => {
+    mockResourceByEndpoint({
+      projects: () => Promise.resolve({ items: [{ metadata: { name: 'ns-from-projects' } }] }),
+      namespaces: () =>
+        Promise.resolve({ kind: 'NamespaceList', items: [{ metadata: { name: 'ns-from-k8s' } }] }),
+    });
+    mockExecuteLabelValue.mockReturnValue({
+      request: () => Promise.resolve({ data: ['ns-from-loki'] }),
+      abort: jest.fn(),
+    });
+
+    const values = await getAdminNamespaceOptions();
+
+    expect(values).toContain('ns-from-projects');
+    expect(values).toContain('ns-from-k8s');
+    expect(values).toContain('ns-from-loki');
   });
 });

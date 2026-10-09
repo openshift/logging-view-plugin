@@ -170,17 +170,7 @@ const getNamespaceAttributeOptions = (
 ): (() => Promise<Option[]>) => {
   const namespaceLabel = 'kubernetes_namespace_name';
 
-  const tenantFilter = (resource: K8sResourceCommon) => {
-    switch (tenant) {
-      case 'infrastructure':
-        return namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
-      case 'application':
-        return !namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
-    }
-    return true;
-  };
-
-  const lokiTenantFilter = (namespace: string) => {
+  const namespaceMatchesTenant = (namespace: string) => {
     switch (tenant) {
       case 'infrastructure':
         return namespaceBelongsToInfrastructureTenant(namespace);
@@ -190,20 +180,28 @@ const getNamespaceAttributeOptions = (
     return true;
   };
 
+  const tenantFilter = (resource: K8sResourceCommon) =>
+    namespaceMatchesTenant(resource.metadata?.name || '');
+
   return async () => {
     const filteredProjectList = projectsDataSource(tenantFilter)();
+    const filteredNamespaceList = resourceDataSource({
+      resource: 'namespaces',
+      filter: tenantFilter,
+    })();
     const filteredLokiNamespaceList = lokiLabelValuesDataSource({
       config,
       tenant,
       labelName: namespaceLabel,
-    })().then((options) => options.filter((opt) => lokiTenantFilter(opt.value)));
+    })().then((options) => options.filter((opt) => namespaceMatchesTenant(opt.value)));
 
     const seeded = seedNamespaces
-      .filter((namespace) => lokiTenantFilter(namespace))
+      .filter((namespace) => namespaceMatchesTenant(namespace))
       .map((namespace) => ({ option: namespace, value: namespace }));
 
     const settled = await Promise.allSettled<Option[]>([
       filteredProjectList,
+      filteredNamespaceList,
       filteredLokiNamespaceList,
     ]);
 
@@ -252,19 +250,7 @@ export const availableAttributes = (tenant: string, config: Config): AttributeLi
       name: 'Namespaces',
       label: 'kubernetes_namespace_name',
       id: 'namespace',
-      options: resourceDataSource({
-        resource: 'namespaces',
-        filter: (resource) => {
-          switch (tenant) {
-            case 'infrastructure':
-              return namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
-            case 'application':
-              return !namespaceBelongsToInfrastructureTenant(resource.metadata?.name || '');
-          }
-
-          return true;
-        },
-      }),
+      options: getNamespaceAttributeOptions(tenant, config),
       valueType: 'checkbox-select',
     },
     {
