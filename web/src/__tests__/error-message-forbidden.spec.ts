@@ -1,6 +1,6 @@
 import { getForbiddenKind, queryHasNamespaceFilter } from '../components/error-message-utils';
 
-describe('forbidden classification for the admin logs view (OU-578)', () => {
+describe('forbidden classification for the admin logs view', () => {
   it('classifies a 403 with no namespace selected as a friendly select-namespace prompt', () => {
     // Admin without cluster-wide access hits the unscoped query; not a genuine
     // failure yet, they just need to scope to a namespace they can read.
@@ -37,7 +37,7 @@ describe('forbidden classification for the admin logs view (OU-578)', () => {
   });
 });
 
-describe('queryHasNamespaceFilter (executed-query namespace scope for OU-578)', () => {
+describe('queryHasNamespaceFilter', () => {
   // Detection is value-agnostic: any namespace scope counts, even a namespace
   // that does not exist.
   it('detects the namespace label', () => {
