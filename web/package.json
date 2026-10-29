@@ -133,9 +133,6 @@
     "victory-zoom-container": "^37.3.6"
   },
   "overrides": {
-    "js-yaml": "4.3.2",
-    "@istanbuljs/load-nyc-config": {
-      "js-yaml": "3.15.2"
-    }
+    "compression": "1.8.2"
   }
 }
