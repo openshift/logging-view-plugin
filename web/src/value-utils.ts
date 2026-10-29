@@ -102,6 +102,20 @@ export const getInitialTenantFromNamespace = (namespace?: string): string => {
 export const namespaceBelongsToInfrastructureTenant = (namespace: string): boolean =>
   /^openshift-|^openshift$|^default$|^kube-/.test(namespace);
 
+const quotationMarks = ['"', '`', "'"];
+
+// Strips a single matching pair of surrounding quotes from a LogQL string value.
+export const removeQuoteWrapper = (value?: string): string => {
+  if (!value) return '';
+  if (value.length < 2) return value;
+  const startValue = value[0];
+  const endValue = value[value.length - 1];
+  if (startValue === endValue && quotationMarks.includes(startValue)) {
+    return value.slice(1, value.length - 1);
+  }
+  return value;
+};
+
 export const capitalize = (str?: string): string => {
   if (!str) {
     return '';

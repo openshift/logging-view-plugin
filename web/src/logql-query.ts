@@ -187,6 +187,7 @@ const sortPipelineWithBoundaries = (pipeline: Array<PipelineStage>): Array<Pipel
 
 export class LogQLQuery {
   streamSelector: Array<LabelMatcher> = [];
+  streamSelectors: Array<Array<LabelMatcher>> = [];
   pipeline: Array<PipelineStage> = [];
   streamSelectorBounds: ExpressionBounds | undefined = undefined;
   pipelineBounds: ExpressionBounds | undefined = undefined;
@@ -194,7 +195,7 @@ export class LogQLQuery {
 
   constructor(query: string) {
     const syntaxTree = parser.parse(query);
-    let parsedMatchers: Array<LabelMatcher> = [];
+    const parsedSelectors: Array<Array<LabelMatcher>> = [];
     let parsedPipeline: Array<PipelineStage> = [];
 
     let parsedMatcherBounds: ExpressionBounds | undefined = undefined;
@@ -202,10 +203,11 @@ export class LogQLQuery {
 
     syntaxTree.iterate({
       enter(node) {
-        if (node.name === 'Selector' && parsedMatchers.length === 0) {
-          parsedMatchers = parseMatchers(syntaxTree, node, query);
-
-          parsedMatcherBounds = { from: node.from, to: node.to };
+        if (node.name === 'Selector') {
+          if (parsedSelectors.length === 0) {
+            parsedMatcherBounds = { from: node.from, to: node.to };
+          }
+          parsedSelectors.push(parseMatchers(syntaxTree, node, query));
 
           return false;
         } else if (node.name === 'PipelineExpr' && parsedPipeline.length === 0) {
@@ -218,7 +220,8 @@ export class LogQLQuery {
       },
     });
 
-    this.streamSelector = parsedMatchers;
+    this.streamSelector = parsedSelectors[0] ?? [];
+    this.streamSelectors = parsedSelectors;
     this.pipeline = parsedPipeline;
     this.streamSelectorBounds = parsedMatcherBounds;
     this.pipelineBounds = parsedPipelineBounds;
