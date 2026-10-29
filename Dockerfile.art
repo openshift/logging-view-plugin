@@ -42,7 +42,7 @@ COPY --from=go-builder /opt/app-root/plugin-backend /opt/app-root
 
 ENTRYPOINT ["/opt/app-root/plugin-backend", "-static-path", "/opt/app-root/web/dist"]
 
-ARG VERSION=v6.2.0
+ARG VERSION=v6.3.0
 LABEL version="${VERSION}" \
       release="${VERSION}" \
       vendor="Red Hat, Inc." \
