@@ -17,7 +17,6 @@ COPY go.sum go.sum
 
 RUN make install-backend
 
-COPY config/ config/
 COPY cmd/ cmd/
 COPY pkg/ pkg/
 
