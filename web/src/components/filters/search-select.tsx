@@ -32,39 +32,54 @@ interface SearchSelectProps {
 
 const ERROR_VALUE = '__attribute_error';
 const NO_RESULTS = 'no results';
+const LOADING_MORE_VALUE = '__attribute_loading_more';
 
 const createItemId = (value: string) => `select-multi-typeahead-${value.replace(' ', '-')}`;
 
-const getOptionComponents = (
-  attributeOptions: SelectOptionProps[],
-  attributeError: Error | undefined,
-  attributeLoading: boolean,
-  selections: Array<string>,
-  focusedItemIndex: number | null,
-  onInputKeyDown: (event: React.KeyboardEvent) => void,
-  emptyStateMessage?: string | null,
-) => {
+const OptionComponents: React.FC<{
+  viewableOptions: SelectOptionProps[];
+  attributeError: Error | undefined;
+  attributeLoading: boolean;
+  attributeLoadingMore: boolean;
+  selections: Array<string>;
+  focusedItemIndex: number | null;
+  onInputKeyDown: (event: React.KeyboardEvent) => void;
+  emptyStateMessage?: string | null;
+}> = ({
+  viewableOptions: attributeOptions,
+  attributeError,
+  attributeLoading,
+  attributeLoadingMore,
+  selections,
+  focusedItemIndex,
+  onInputKeyDown,
+  emptyStateMessage,
+}) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
   if (attributeLoading) {
-    return [
-      <SelectOption isLoading key="custom-loading" value="loading" hasCheckbox={false}>
-        <Spinner size="lg" />
-      </SelectOption>,
-    ];
+    return (
+      <>
+        <SelectOption isLoading key="custom-loading" value="loading" hasCheckbox={false}>
+          <Spinner size="lg" />
+        </SelectOption>
+      </>
+    );
   }
 
   if (attributeError) {
-    return [
-      <SelectOption key="error" value={ERROR_VALUE}>
-        <Alert
-          variant="danger"
-          isInline
-          isPlain
-          title={attributeError.message || String(attributeError)}
-        />
-      </SelectOption>,
-    ];
+    return (
+      <>
+        <SelectOption key="error" value={ERROR_VALUE}>
+          <Alert
+            variant="danger"
+            isInline
+            isPlain
+            title={attributeError.message || String(attributeError)}
+          />
+        </SelectOption>
+      </>
+    );
   }
 
   const sortedOptions = attributeOptions.sort((a, b) => {
@@ -84,19 +99,21 @@ const getOptionComponents = (
   });
 
   if (sortedOptions.length === 0) {
-    return [
-      <SelectOption key="no-results" value={NO_RESULTS} isAriaDisabled>
-        <Alert
-          variant="warning"
-          isInline
-          isPlain
-          title={emptyStateMessage || t('No results found')}
-        />
-      </SelectOption>,
-    ];
+    return (
+      <>
+        <SelectOption key="no-results" value={NO_RESULTS} isAriaDisabled>
+          <Alert
+            variant="warning"
+            isInline
+            isPlain
+            title={emptyStateMessage || t('No results found')}
+          />
+        </SelectOption>
+      </>
+    );
   }
 
-  return sortedOptions.map((attributeOption, index) => (
+  const optionElements = sortedOptions.map((attributeOption, index) => (
     <SelectOption
       key={attributeOption.value || attributeOption.children}
       value={attributeOption.value}
@@ -109,6 +126,22 @@ const getOptionComponents = (
       {attributeOption.children ?? attributeOption.value}
     </SelectOption>
   ));
+
+  if (attributeLoadingMore) {
+    optionElements.push(
+      <SelectOption
+        isLoading
+        key="loading-more"
+        value={LOADING_MORE_VALUE}
+        hasCheckbox={false}
+        data-test="attribute-options-loading-more"
+      >
+        <Spinner size="md" aria-label={t('Loading more options')} />
+      </SelectOption>,
+    );
+  }
+
+  return <>{optionElements}</>;
 };
 
 export const SearchSelect: React.FC<SearchSelectProps> = ({
@@ -120,8 +153,13 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
-  const { getAttributeOptions, attributeOptions, attributeError, attributeLoading } =
-    useAttributeValueData(attribute);
+  const {
+    getAttributeOptions,
+    attributeOptions,
+    attributeError,
+    attributeLoading,
+    attributeLoadingMore,
+  } = useAttributeValueData(attribute);
   const [selections, setSelections] = React.useState<Array<string>>([]);
   const [viewableOptions, setViewableOptions] = React.useState<SelectOptionProps[]>([]);
 
@@ -219,7 +257,7 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
 
     let expandedFilters: Map<string, Set<string>> | undefined = undefined;
 
-    if (selectedValue && selectedValue !== ERROR_VALUE) {
+    if (selectedValue && selectedValue !== ERROR_VALUE && selectedValue !== LOADING_MORE_VALUE) {
       if (!isCheckbox) {
         expandedFilters = attribute.expandSelection
           ? attribute.expandSelection(new Set([selectedValue]))
@@ -394,15 +432,16 @@ export const SearchSelect: React.FC<SearchSelectProps> = ({
           isAriaMultiselectable
           key={`select-list-${attribute.id}-${viewableOptions.length}`}
         >
-          {getOptionComponents(
-            viewableOptions,
-            attributeError,
-            attributeLoading,
-            selections,
-            focusedItemIndex,
-            onInputKeyDown,
-            emptyStateMessage,
-          )}
+          <OptionComponents
+            viewableOptions={viewableOptions}
+            attributeError={attributeError}
+            attributeLoading={attributeLoading}
+            attributeLoadingMore={attributeLoadingMore}
+            selections={selections}
+            focusedItemIndex={focusedItemIndex}
+            onInputKeyDown={onInputKeyDown}
+            emptyStateMessage={emptyStateMessage}
+          />
         </SelectList>
       </Select>
     </div>
