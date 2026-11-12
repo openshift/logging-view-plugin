@@ -24,13 +24,15 @@ import (
 var slog = logrus.WithField("module", "server")
 
 type Config struct {
-	Port             int
-	CertFile         string
-	PrivateKeyFile   string
-	StaticPath       string
-	PluginConfigPath string
-	TLSMinVersion    uint16
-	TLSCipherSuites  []uint16
+	Port                int
+	CertFile            string
+	PrivateKeyFile      string
+	StaticPath          string
+	PluginConfigPath    string
+	TLSMinVersion       uint16
+	TLSMaxVersion       uint16
+	TLSCipherSuites     []uint16
+	TLSCurvePreferences []tls.CurveID
 }
 
 func (c *Config) IsTLSEnabled() bool {
@@ -114,21 +116,15 @@ func createHTTPServer(ctx context.Context, cfg *Config) (*http.Server, error) {
 	router := setupRoutes(cfg)
 	router.Use(corsHeaderMiddleware(cfg))
 
-	// clients must use TLS 1.2 or higher
 	tlsConfig := &tls.Config{}
 
 	tlsEnabled := cfg.IsTLSEnabled()
 	if tlsEnabled {
-		// Set MinVersion - default to TLS 1.2 if not specified
-		if cfg.TLSMinVersion != 0 {
-			tlsConfig.MinVersion = cfg.TLSMinVersion
-		} else {
-			tlsConfig.MinVersion = tls.VersionTLS12
+		baseTLSConfig, err := newBaseTLSConfig(cfg)
+		if err != nil {
+			return nil, err
 		}
-
-		if len(cfg.TLSCipherSuites) > 0 {
-			tlsConfig.CipherSuites = cfg.TLSCipherSuites
-		}
+		tlsConfig = baseTLSConfig
 
 		// Build and run the controller which reloads the certificate and key
 		// files whenever they change.
