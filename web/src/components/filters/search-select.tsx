@@ -31,6 +31,7 @@ import { TestIds } from '../../test-ids';
 import { useAttributeValueData } from './attribute-value-data';
 import { Attribute, Filters } from './filter.types';
 import { isOption } from './filters-from-params';
+import { preserveUnlistedSelections } from './preserve-unlisted-selections';
 
 interface SearchSelectProps {
   attribute: Attribute;
@@ -136,6 +137,7 @@ const OptionComponents: FC<{
     optionElements.push(
       <SelectOption
         isLoading
+        isDisabled
         key="loading-more"
         value={LOADING_MORE_VALUE}
         hasCheckbox={false}
@@ -287,6 +289,15 @@ export const SearchSelect: FC<SearchSelectProps> = ({
           expandedFilters = attribute.expandSelection
             ? attribute.expandSelection(changedSelections)
             : undefined;
+        }
+
+        if (expandedFilters && attributeLoadingMore && attribute.expandSelection) {
+          expandedFilters = preserveUnlistedSelections({
+            filters,
+            expandSelection: attribute.expandSelection,
+            listedSelections: selections,
+            expandedSelections: expandedFilters,
+          });
         }
 
         onSelect(changedSelections, expandedFilters);

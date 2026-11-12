@@ -39,6 +39,12 @@ export const useAttributeValueData = (attribute: Attribute): UseAttributeValueDa
           setAttributeLoadingMore(false);
           setAttributeOptions(uniqueOptions(attribute.options));
         } else {
+          // Drop results from a previous request (e.g. another tenant) so they cannot be
+          // selected while the new request is pending
+          setAttributeOptions([]);
+          setAttributeLoading(true);
+          setAttributeLoadingMore(false);
+
           const onPartial = (partialOptions: Array<Option>) => {
             // An empty partial would flash the empty state before slower sources reply
             if (!isCurrent() || partialOptions.length === 0) {
