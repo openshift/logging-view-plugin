@@ -318,10 +318,14 @@ func startTLSTestServer(t *testing.T, conf *Config) tlsTestServer {
 	conf.Port = testPort
 	conf.CertFile = filepath.Join(tmpDir, "server.cert")
 	conf.PrivateKeyFile = filepath.Join(tmpDir, "server.key")
-	require.NoError(t, generateCertificate(t, conf.CertFile, conf.PrivateKeyFile, hostPort))
+	require.NoError(t, generateCertificate(t, conf.CertFile, conf.PrivateKeyFile, testHostname))
 
 	tmpDirAssets := prepareServerAssets(t)
-	t.Cleanup(func() { os.RemoveAll(tmpDirAssets) })
+	t.Cleanup(func() {
+		if err := os.RemoveAll(tmpDirAssets); err != nil {
+			t.Errorf("failed to remove test assets %q: %v", tmpDirAssets, err)
+		}
+	})
 
 	_, cleanup := startTestServer(t, conf)
 	t.Cleanup(cleanup)

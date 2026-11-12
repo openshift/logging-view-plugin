@@ -63,11 +63,6 @@ func TestParseCurves(t *testing.T) {
 			input:    "CurveP256,X25519,secp256r1,curvep256,X25519",
 			expected: []tls.CurveID{tls.CurveP256, tls.X25519},
 		},
-		{
-			name:     "unknown names are skipped when at least one name is valid",
-			input:    "X25519,NotACurve,CurveP256",
-			expected: []tls.CurveID{tls.X25519, tls.CurveP256},
-		},
 	}
 
 	for _, tt := range tests {
@@ -79,11 +74,21 @@ func TestParseCurves(t *testing.T) {
 	}
 }
 
-func TestParseCurvesFailsWhenNoNameIsValid(t *testing.T) {
-	for _, input := range []string{"NotACurve,AlsoNotACurve", "p384", ",,"} {
-		t.Run(input, func(t *testing.T) {
-			curves, err := ParseCurves(input)
-			require.Error(t, err)
+func TestParseCurvesFails(t *testing.T) {
+	tests := []struct {
+		input     string
+		expectErr string
+	}{
+		{input: "X25519,NotACurve,CurveP256", expectErr: "1 unknown TLS curves configured"},
+		{input: "NotACurve,AlsoNotACurve", expectErr: "2 unknown TLS curves configured"},
+		{input: "p384", expectErr: "1 unknown TLS curves configured"},
+		{input: ",,", expectErr: "no valid TLS curves configured"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			curves, err := ParseCurves(tt.input)
+			require.EqualError(t, err, tt.expectErr)
 			require.Nil(t, curves)
 		})
 	}
@@ -122,11 +127,6 @@ func TestParseCipherSuites(t *testing.T) {
 			input:    "TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384,tls_aes_128_gcm_sha256",
 			expected: []uint16{tls.TLS_AES_128_GCM_SHA256, tls.TLS_AES_256_GCM_SHA384},
 		},
-		{
-			name:     "unknown names are skipped when at least one name is valid",
-			input:    "TLS_AES_128_GCM_SHA256,ECDHE-RSA-AES128-GCM-SHA256",
-			expected: []uint16{tls.TLS_AES_128_GCM_SHA256},
-		},
 	}
 
 	for _, tt := range tests {
@@ -138,11 +138,21 @@ func TestParseCipherSuites(t *testing.T) {
 	}
 }
 
-func TestParseCipherSuitesFailsWhenNoNameIsValid(t *testing.T) {
-	for _, input := range []string{"NotACipher", "ECDHE-RSA-AES128-GCM-SHA256", ",,"} {
-		t.Run(input, func(t *testing.T) {
-			ciphers, err := ParseCipherSuites(input)
-			require.Error(t, err)
+func TestParseCipherSuitesFails(t *testing.T) {
+	tests := []struct {
+		input     string
+		expectErr string
+	}{
+		{input: "TLS_AES_128_GCM_SHA256,ECDHE-RSA-AES128-GCM-SHA256", expectErr: "1 unknown TLS cipher suites configured"},
+		{input: "NotACipher", expectErr: "1 unknown TLS cipher suites configured"},
+		{input: "NotACipher,TLS_AES_128_GCM_SHA256,AlsoNotACipher", expectErr: "2 unknown TLS cipher suites configured"},
+		{input: ",,", expectErr: "no valid TLS cipher suites configured"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			ciphers, err := ParseCipherSuites(tt.input)
+			require.EqualError(t, err, tt.expectErr)
 			require.Nil(t, ciphers)
 		})
 	}
@@ -158,6 +168,7 @@ func TestCipherSuiteNames(t *testing.T) {
 
 func TestNewBaseTLSConfig(t *testing.T) {
 	pqOnly := []tls.CurveID{tls.X25519MLKEM768, tls.SecP256r1MLKEM768, tls.SecP384r1MLKEM1024}
+	tls13Only := []uint16{tls.TLS_AES_128_GCM_SHA256, tls.TLS_AES_256_GCM_SHA384}
 
 	tests := []struct {
 		name        string
@@ -235,6 +246,38 @@ func TestNewBaseTLSConfig(t *testing.T) {
 				MinVersion:       tls.VersionTLS12,
 				MaxVersion:       tls.VersionTLS12,
 				CurvePreferences: []tls.CurveID{tls.X25519MLKEM768, tls.CurveP256},
+			},
+		},
+		{
+			name:        "warns about TLS 1.3 only cipher suites when TLS 1.2 is also allowed",
+			cfg:         Config{TLSCipherSuites: tls13Only},
+			expected:    &tls.Config{MinVersion: tls.VersionTLS12, CipherSuites: tls13Only},
+			expectWarns: true,
+		},
+		{
+			name: "rejects TLS 1.3 only cipher suites when TLS 1.3 is disabled",
+			cfg: Config{
+				TLSMaxVersion:   tls.VersionTLS12,
+				TLSCipherSuites: tls13Only,
+			},
+			expectErr: "no TLS 1.2 cipher suite",
+		},
+		{
+			name: "accepts TLS 1.3 only cipher suites when TLS 1.3 is the minimum",
+			cfg: Config{
+				TLSMinVersion:   tls.VersionTLS13,
+				TLSCipherSuites: tls13Only,
+			},
+			expected: &tls.Config{MinVersion: tls.VersionTLS13, CipherSuites: tls13Only},
+		},
+		{
+			name: "accepts a TLS 1.2 cipher suite next to TLS 1.3 ones",
+			cfg: Config{
+				TLSCipherSuites: []uint16{tls.TLS_AES_128_GCM_SHA256, tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256},
+			},
+			expected: &tls.Config{
+				MinVersion:   tls.VersionTLS12,
+				CipherSuites: []uint16{tls.TLS_AES_128_GCM_SHA256, tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256},
 			},
 		},
 	}

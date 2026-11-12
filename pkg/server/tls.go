@@ -76,12 +76,12 @@ func parseTLSList[T comparable](list string, known map[string]T, kind string) ([
 		}
 	}
 
-	if len(values) == 0 {
-		return nil, fmt.Errorf("no valid TLS %s configured", kind)
+	if unknown > 0 {
+		return nil, fmt.Errorf("%d unknown TLS %s configured", unknown, kind)
 	}
 
-	if unknown > 0 {
-		slog.Warnf("Skipping %d unknown TLS %s", unknown, kind)
+	if len(values) == 0 {
+		return nil, fmt.Errorf("no valid TLS %s configured", kind)
 	}
 
 	return values, nil
@@ -89,6 +89,12 @@ func parseTLSList[T comparable](list string, known map[string]T, kind string) ([
 
 func isSupportedCipherSuite(id uint16) bool {
 	return slices.ContainsFunc(tls.CipherSuites(), func(s *tls.CipherSuite) bool { return s.ID == id })
+}
+
+func isTLS12CipherSuite(id uint16) bool {
+	return slices.ContainsFunc(tls.CipherSuites(), func(s *tls.CipherSuite) bool {
+		return s.ID == id && slices.Contains(s.SupportedVersions, tls.VersionTLS12)
+	})
 }
 
 func isSupportedCurve(id tls.CurveID) bool {
@@ -124,6 +130,26 @@ func newBaseTLSConfig(cfg *Config) (*tls.Config, error) {
 		}
 	}
 
+	tls13Enabled := tlsConfig.MaxVersion == 0 || tlsConfig.MaxVersion >= tls.VersionTLS13
+
+	// crypto/tls ignores CipherSuites for TLS 1.3, so a list of only TLS 1.3
+	// suites leaves TLS 1.2 without any cipher to negotiate.
+	if len(tlsConfig.CipherSuites) > 0 && tlsConfig.MinVersion < tls.VersionTLS13 &&
+		!slices.ContainsFunc(tlsConfig.CipherSuites, isTLS12CipherSuite) {
+		if !tls13Enabled {
+			return nil, fmt.Errorf(
+				"TLS cipher suites %q contain no TLS 1.2 cipher suite, but max TLS version is %q: no configured cipher suite can be negotiated",
+				CipherSuiteNames(tlsConfig.CipherSuites),
+				tls.VersionName(tlsConfig.MaxVersion),
+			)
+		}
+		slog.Warnf(
+			"TLS cipher suites %q contain no TLS 1.2 cipher suite, but min TLS version is %q: TLS 1.2 clients will fail the handshake",
+			CipherSuiteNames(tlsConfig.CipherSuites),
+			tls.VersionName(tlsConfig.MinVersion),
+		)
+	}
+
 	for _, id := range tlsConfig.CurvePreferences {
 		if !isSupportedCurve(id) {
 			return nil, fmt.Errorf("unsupported TLS curve %#04x", uint16(id))
@@ -131,7 +157,6 @@ func newBaseTLSConfig(cfg *Config) (*tls.Config, error) {
 	}
 
 	if len(tlsConfig.CurvePreferences) > 0 && !slices.ContainsFunc(tlsConfig.CurvePreferences, isTLS12Curve) {
-		tls13Enabled := tlsConfig.MaxVersion == 0 || tlsConfig.MaxVersion >= tls.VersionTLS13
 		if !tls13Enabled {
 			return nil, fmt.Errorf(
 				"TLS curves %q only contain hybrid post-quantum groups which require TLS 1.3, but max TLS version is %q",
