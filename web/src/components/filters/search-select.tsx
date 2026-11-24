@@ -31,6 +31,7 @@ import { TestIds } from '../../test-ids';
 import { useAttributeValueData } from './attribute-value-data';
 import { Attribute, Filters } from './filter.types';
 import { isOption } from './filters-from-params';
+import { preserveUnlistedSelections } from './preserve-unlisted-selections';
 
 interface SearchSelectProps {
   attribute: Attribute;
@@ -43,6 +44,7 @@ interface SearchSelectProps {
 
 const ERROR_VALUE = '__attribute_error';
 const NO_RESULTS = 'no results';
+const LOADING_MORE_VALUE = '__attribute_loading_more';
 
 const createItemId = (value: string) => `select-multi-typeahead-${value.replace(' ', '-')}`;
 
@@ -50,6 +52,7 @@ const OptionComponents: FC<{
   viewableOptions: SelectOptionProps[];
   attributeError: Error | undefined;
   attributeLoading: boolean;
+  attributeLoadingMore: boolean;
   selections: Array<string>;
   focusedItemIndex: number | null;
   onInputKeyDown: (event: KeyboardEvent) => void;
@@ -58,6 +61,7 @@ const OptionComponents: FC<{
   viewableOptions: attributeOptions,
   attributeError,
   attributeLoading,
+  attributeLoadingMore,
   selections,
   focusedItemIndex,
   onInputKeyDown,
@@ -115,7 +119,7 @@ const OptionComponents: FC<{
     ];
   }
 
-  return sortedOptions.map((attributeOption, index) => (
+  const optionElements = sortedOptions.map((attributeOption, index) => (
     <SelectOption
       key={attributeOption.value || attributeOption.children}
       value={attributeOption.value}
@@ -128,6 +132,23 @@ const OptionComponents: FC<{
       {attributeOption.children ?? attributeOption.value}
     </SelectOption>
   ));
+
+  if (attributeLoadingMore) {
+    optionElements.push(
+      <SelectOption
+        isLoading
+        isDisabled
+        key="loading-more"
+        value={LOADING_MORE_VALUE}
+        hasCheckbox={false}
+        data-test="attribute-options-loading-more"
+      >
+        <Spinner size="md" aria-label={t('Loading more options')} />
+      </SelectOption>,
+    );
+  }
+
+  return optionElements;
 };
 
 export const SearchSelect: FC<SearchSelectProps> = ({
@@ -139,8 +160,13 @@ export const SearchSelect: FC<SearchSelectProps> = ({
 }) => {
   const { t } = useTranslation('plugin__logging-view-plugin');
 
-  const { getAttributeOptions, attributeOptions, attributeError, attributeLoading } =
-    useAttributeValueData(attribute);
+  const {
+    getAttributeOptions,
+    attributeOptions,
+    attributeError,
+    attributeLoading,
+    attributeLoadingMore,
+  } = useAttributeValueData(attribute);
   const [selections, setSelections] = useState<Array<string>>([]);
   const [viewableOptions, setViewableOptions] = useState<SelectOptionProps[]>([]);
 
@@ -241,7 +267,7 @@ export const SearchSelect: FC<SearchSelectProps> = ({
 
     let expandedFilters: Map<string, Set<string>> | undefined = undefined;
 
-    if (selectedValue && selectedValue !== ERROR_VALUE) {
+    if (selectedValue && selectedValue !== ERROR_VALUE && selectedValue !== LOADING_MORE_VALUE) {
       if (!isCheckbox) {
         expandedFilters = attribute.expandSelection
           ? attribute.expandSelection(new Set([selectedValue]))
@@ -263,6 +289,15 @@ export const SearchSelect: FC<SearchSelectProps> = ({
           expandedFilters = attribute.expandSelection
             ? attribute.expandSelection(changedSelections)
             : undefined;
+        }
+
+        if (expandedFilters && attributeLoadingMore && attribute.expandSelection) {
+          expandedFilters = preserveUnlistedSelections({
+            filters,
+            expandSelection: attribute.expandSelection,
+            listedSelections: selections,
+            expandedSelections: expandedFilters,
+          });
         }
 
         onSelect(changedSelections, expandedFilters);
@@ -423,6 +458,7 @@ export const SearchSelect: FC<SearchSelectProps> = ({
             viewableOptions={viewableOptions}
             attributeError={attributeError}
             attributeLoading={attributeLoading}
+            attributeLoadingMore={attributeLoadingMore}
             selections={selections}
             focusedItemIndex={focusedItemIndex}
             onInputKeyDown={onInputKeyDown}
