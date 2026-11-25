@@ -1,6 +1,12 @@
 import { K8sResourceCommon } from '@openshift-console/dynamic-plugin-sdk';
 import { cancellableFetch } from './cancellable-fetch';
-import { Attribute, AttributeList, Filters, Option } from './components/filters/filter.types';
+import {
+  Attribute,
+  AttributeList,
+  Filters,
+  OnPartialOptions,
+  Option,
+} from './components/filters/filter.types';
 import { LabelMatcher, LogQLQuery, PipelineStage } from './logql-query';
 import { Config, Schema, SeriesResponse } from './logs.types';
 import { executeLabelValue, executeSeries } from './loki-client';
@@ -196,6 +202,14 @@ const getTenantNamespaceQuery = (tenant: string, namespaceLabel: string): string
   }
 };
 
+const mergeOptionLists = (lists: Array<Option[]>): Option[] => {
+  const uniqueValues = new Set<string>();
+  lists.forEach((list) => list.forEach((option) => uniqueValues.add(option.value)));
+  return Array.from(uniqueValues)
+    .sort()
+    .map((v) => ({ option: v, value: v }));
+};
+
 const mergeSettledResults = (
   results: Array<PromiseSettledResult<Option[]>>,
   fallback: Option[] = [],
@@ -205,15 +219,49 @@ const mergeSettledResults = (
     throw (results[0] as PromiseRejectedResult).reason;
   }
 
-  const uniqueValues = new Set<string>(fallback.map((option) => option.value));
-  results.forEach((result) => {
-    if (result.status === 'fulfilled') {
-      result.value.forEach((option) => uniqueValues.add(option.value));
+  return mergeOptionLists([
+    fallback,
+    ...results.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : [])),
+  ]);
+};
+
+/**
+ * Resolves with the merge of every source, like `allSettled` + `mergeSettledResults`.
+ * While sources are still pending, `onPartial` receives the merge of the fallback and
+ * the sources fulfilled so far, so a fast source is not held back by a slow one.
+ * The final, complete list is only delivered through the returned promise.
+ */
+export const mergeSourcesProgressively = (
+  sources: Array<Promise<Option[]>>,
+  fallback: Option[] = [],
+  onPartial?: OnPartialOptions,
+): Promise<Option[]> => {
+  if (onPartial) {
+    const fulfilled: Array<Option[]> = [fallback];
+    let pending = sources.length;
+
+    if (fallback.length > 0 && pending > 0) {
+      onPartial(mergeOptionLists(fulfilled));
     }
-  });
-  return Array.from(uniqueValues)
-    .sort()
-    .map((v) => ({ option: v, value: v }));
+
+    sources.forEach((source) => {
+      source.then(
+        (options) => {
+          pending -= 1;
+          fulfilled.push(options);
+          // the last source to settle is reported by the final resolution instead
+          if (pending > 0) {
+            onPartial(mergeOptionLists(fulfilled));
+          }
+        },
+        () => {
+          pending -= 1;
+        },
+      );
+    });
+  }
+
+  return Promise.allSettled(sources).then((results) => mergeSettledResults(results, fallback));
 };
 
 const getNamespaceAttributeOptions = (
@@ -221,7 +269,7 @@ const getNamespaceAttributeOptions = (
   config: Config,
   schema: Schema,
   seedNamespaces: string[] = [],
-): (() => Promise<Option[]>) => {
+): ((filters?: Filters, onPartial?: OnPartialOptions) => Promise<Option[]>) => {
   const { namespaceLabel } = getAttributeLabels(schema);
 
   const tenantFilter = (resource: K8sResourceCommon) => {
@@ -244,7 +292,7 @@ const getNamespaceAttributeOptions = (
     return true;
   };
 
-  return async () => {
+  return (_filters, onPartial) => {
     const filteredProjectList = projectsDataSource(tenantFilter)();
     const filteredLokiNamespaceList = lokiLabelValuesDataSource({
       config,
@@ -256,12 +304,11 @@ const getNamespaceAttributeOptions = (
       .filter((namespace) => lokiTenantFilter(namespace))
       .map((namespace) => ({ option: namespace, value: namespace }));
 
-    const settled = await Promise.allSettled<Option[]>([
-      filteredProjectList,
-      filteredLokiNamespaceList,
-    ]);
-
-    return mergeSettledResults(settled, seeded);
+    return mergeSourcesProgressively(
+      [filteredProjectList, filteredLokiNamespaceList],
+      seeded,
+      onPartial,
+    );
   };
 };
 
@@ -333,10 +380,10 @@ export const availableAttributes = ({
       name: 'Pods',
       label: podLabel,
       id: 'pod',
-      options: (filters) => {
+      options: (filters, onPartial) => {
         const selectedNamespaces = filters?.namespace ? Array.from(filters.namespace) : undefined;
 
-        return getPodAttributeOptions(tenant, config, schema, selectedNamespaces)();
+        return getPodAttributeOptions(tenant, config, schema, selectedNamespaces)(onPartial);
       },
       valueType: 'checkbox-select',
       emptyStateMessage: (filters) => {
@@ -351,10 +398,10 @@ export const availableAttributes = ({
       name: 'Containers',
       label: containerLabel,
       id: 'container',
-      options: (filters) => {
+      options: (filters, onPartial) => {
         const selectedNamespaces = filters?.namespace ? Array.from(filters.namespace) : undefined;
 
-        return getContainerAttributeOptions(tenant, config, schema, selectedNamespaces)();
+        return getContainerAttributeOptions(tenant, config, schema, selectedNamespaces)(onPartial);
       },
       expandSelection: (selections) => {
         const podSelections = new Set<string>();
@@ -455,7 +502,7 @@ export const availableDevConsoleAttributes = (
       name: 'Pods',
       label: podLabel,
       id: 'pod',
-      options: () => {
+      options: (_filters, onPartial) => {
         const sources: Array<Promise<Option[]>> = [
           lokiLabelValuesDataSource({
             config,
@@ -467,7 +514,7 @@ export const availableDevConsoleAttributes = (
         if (namespace) {
           sources.push(resourceDataSource({ resource: 'pods', namespace })());
         }
-        return Promise.allSettled(sources).then(mergeSettledResults);
+        return mergeSourcesProgressively(sources, [], onPartial);
       },
       valueType: 'checkbox-select',
     },
@@ -475,7 +522,7 @@ export const availableDevConsoleAttributes = (
       name: 'Containers',
       label: containerLabel,
       id: 'container',
-      options: () => {
+      options: (_filters, onPartial) => {
         const sources: Array<Promise<Option[]>> = [
           lokiLabelValuesDataSource({
             config,
@@ -497,7 +544,7 @@ export const availableDevConsoleAttributes = (
             })(),
           );
         }
-        return Promise.allSettled(sources).then(mergeSettledResults);
+        return mergeSourcesProgressively(sources, [], onPartial);
       },
       valueType: 'checkbox-select',
     },
@@ -846,7 +893,7 @@ const getPodAttributeOptions = (
   config: Config,
   schema: Schema,
   namespaces?: Array<string>,
-): (() => Promise<Option[]>) => {
+): ((onPartial?: OnPartialOptions) => Promise<Option[]>) => {
   const { podLabel } = getAttributeLabels(schema);
 
   const namespacedPodsResources: Array<Promise<Option[]>> = [];
@@ -883,16 +930,20 @@ const getPodAttributeOptions = (
           })(),
         ];
 
-  return () =>
-    Promise.allSettled<Promise<Option[]>>([
-      lokiLabelValuesDataSource({
-        config,
-        tenant,
-        labelName: podLabel,
-        query: namespacesQuery ? `{ ${namespacesQuery} }` : undefined,
-      })(),
-      ...podResource,
-    ]).then(mergeSettledResults);
+  return (onPartial) =>
+    mergeSourcesProgressively(
+      [
+        lokiLabelValuesDataSource({
+          config,
+          tenant,
+          labelName: podLabel,
+          query: namespacesQuery ? `{ ${namespacesQuery} }` : undefined,
+        })(),
+        ...podResource,
+      ],
+      [],
+      onPartial,
+    );
 };
 
 const getContainerAttributeOptions = (
@@ -900,7 +951,7 @@ const getContainerAttributeOptions = (
   config: Config,
   schema: Schema,
   namespaces?: Array<string>,
-): (() => Promise<Option[]>) => {
+): ((onPartial?: OnPartialOptions) => Promise<Option[]>) => {
   const { containerLabel, podLabel } = getAttributeLabels(schema);
 
   const namespacedPodsResources: Array<Promise<Option[]>> = [];
@@ -956,27 +1007,31 @@ const getContainerAttributeOptions = (
           })(),
         ];
 
-  return () =>
-    Promise.allSettled<Promise<Option[]>>([
-      lokiSeriesDataSource({
-        config,
-        tenant,
-        match: [seriesQuery],
-        mapper: (response) => {
-          const uniqueContainers = new Set<string>();
+  return (onPartial) =>
+    mergeSourcesProgressively(
+      [
+        lokiSeriesDataSource({
+          config,
+          tenant,
+          match: [seriesQuery],
+          mapper: (response) => {
+            const uniqueContainers = new Set<string>();
 
-          response.data.forEach((item) => {
-            if (item[containerLabel] && item[podLabel]) {
-              uniqueContainers.add(`${item[podLabel]} / ${item[containerLabel]}`);
-            }
-          });
+            response.data.forEach((item) => {
+              if (item[containerLabel] && item[podLabel]) {
+                uniqueContainers.add(`${item[podLabel]} / ${item[containerLabel]}`);
+              }
+            });
 
-          return Array.from(uniqueContainers).map((container) => ({
-            option: container,
-            value: container,
-          }));
-        },
-      })(),
-      ...podResource,
-    ]).then(mergeSettledResults);
+            return Array.from(uniqueContainers).map((container) => ({
+              option: container,
+              value: container,
+            }));
+          },
+        })(),
+        ...podResource,
+      ],
+      [],
+      onPartial,
+    );
 };
